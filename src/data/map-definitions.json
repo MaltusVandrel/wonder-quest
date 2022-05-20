@@ -1,0 +1,6 @@
+{
+    "0":{"name":"void","cost":9999999,"color":"0x222222"},
+    "1":{"name":"plains","cost":1,"color":"0xaadd55"},
+    "2":{"name":"florest","cost":3,"color":"0x779933"},
+    "3":{"name":"mountain","cost":9,"color":"0x885533"}
+}
