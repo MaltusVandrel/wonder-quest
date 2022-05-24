@@ -1,4 +1,5 @@
 import * as Phaser from "phaser";
+import { ColorUtils } from "src/utils/color-utils";
 import mapData from "../data/map-data.json";
 import mapDefinitions from "../data/map-definitions.json";
 export class MapScene extends Phaser.Scene {
@@ -7,7 +8,7 @@ export class MapScene extends Phaser.Scene {
         color: '#000000'
     };
     
-    size:number=50;
+    size:number=20;
     offset:number=this.size/2;
     map:any=[];
     player:Phaser.GameObjects.Ellipse|undefined;
@@ -19,6 +20,7 @@ export class MapScene extends Phaser.Scene {
     
     mapHeight=[];
     lockPath:boolean=false;
+    pathSteps:any[]=[];
     invalidCellCost=9999999;
     
     constructor (config:string | Phaser.Types.Scenes.SettingsConfig) {
@@ -40,6 +42,7 @@ export class MapScene extends Phaser.Scene {
             } 
         }
         this.doPlayer();
+      
     }
     calculatePath(x:number,y:number):void{
         let targetCellCost={...mapDefinitions}[mapData[y][x]]?.cost;
@@ -77,7 +80,7 @@ export class MapScene extends Phaser.Scene {
                 let dY=direction[1];
                 let sX=pX+dX;
                 let sY=pY+dY;
-                if(!(sX>=0&&sX<mapData.length))continue;
+                if(!(sX>=0&&sX<mapData[0].length))continue;
                 if(!(sY>=0&&sY<mapData.length))continue;
                 let cost={...mapDefinitions}[mapData[sY][sX]]?.cost;
                 if(!uncoveredCells[sX+';'+sY]){
@@ -85,7 +88,7 @@ export class MapScene extends Phaser.Scene {
                     let cellCost=cost!=undefined?cost:0;//peso 
                     let pathCost=Math.abs(sX-x)+Math.abs(sY-y);//H 
                     let totalCost=baseCost+pathCost+cellCost;
-                    uncoveredCells[sX+';'+sY]={cost:totalCost,stepped:false,x:sX,y:sY};
+                    uncoveredCells[sX+';'+sY]={cost:totalCost,stepped:false,x:sX,y:sY,direction:direction};
                 }
             }
 
@@ -105,46 +108,65 @@ export class MapScene extends Phaser.Scene {
             pX=lowestPath.x;
             pY=lowestPath.y;
             uncoveredCells[pX+";"+pY].stepped=true;
-            steps.push({x:pX,y:pY});
+            steps.push({x:pX,y:pY,cell:uncoveredCells[pX+";"+pY]});
         }
-        console.log("#======START=======#")
-        let first=true;
-       
+        
+        
+        //limpar adjacentes
+        for(let numDirections of directions){
+            adjacentsFor:for(let i=steps.length-1;i>0;i--){
+                let targeStep=steps[i];
+                let tX=targeStep.x;
+                let tY=targeStep.y;            
+                for(let j=i-2;j>=0;j--){
+                    let otherStep=steps[j];
+                    let oX=otherStep.x;
+                    let oY=otherStep.y;
+                    directionsFor:for(let direction of directions){
+                        let dX=direction[0];
+                        let dY=direction[1];
+                        if(((dX+oX)==tX)&&((dY+oY)==tY)){
+                            let startSteps=steps.slice(0,j+1);
+                            let endSteps=steps.slice(i,steps.length);
+                            let newLength=startSteps.length+endSteps.length;
+                            let diffLength=steps.length-newLength;
+                            steps=startSteps.concat(endSteps);
+                            i=i-diffLength;
+                            j=j-diffLength;
+                            break directionsFor;
+                        }
+                    }     
+                }            
+            }
+        }
+        //exibir path
         this.pathLayer?.getAll().forEach(element => {
            element.destroy(); 
         });
+        var graphics = this.add.graphics();
+        graphics.lineStyle(2, 0xffffff, 1);
+
         for(let i=1;i<steps.length;i++){
             let lastStep=steps[i-1];
             let step=steps[i];
             let key= step.x+";"+step.y;
-            console.log(key);
-            /*
-            let l =this.add.line(
-                lastStep.x*this.size,
-                lastStep.y*this.size,
-                this.offset,
-                this.offset,
-                step.x+this.size ,
-                step.y+this.size,
-                0xffffff
-                );
-            this.pathLayer?.add(l);    
-            */
-
-        }   
-        console.log("#==================#")
-
-        let l =this.add.line(
             
-            0,
-            0,
-            originalX*this.size+(this.offset*(originalX-x)),
-            originalY*this.size+(this.offset*(originalY-y)),
-            x*this.size,
-            y*this.size,
-            0xffffff
+            let d=step.cell.direction;
+            let dx=d[0];
+            let dy=d[1];
+           
+            graphics.lineBetween(
+                (lastStep.x*this.size)+this.offset, 
+                (lastStep.y*this.size)+this.offset, 
+                (step.x*this.size)+this.offset, 
+                (step.y*this.size)+this.offset 
             );
-        this.pathLayer?.add(l); 
+        
+        }   
+        this.pathLayer?.add(graphics); 
+        this.pathSteps=steps;
+       
+
 
     }
     movePlayerToCell(x:number,y:number):void{
@@ -153,53 +175,38 @@ export class MapScene extends Phaser.Scene {
         let cautionException=100000-1;
         let pX=this.player?.getData('x');
         let pY=this.player?.getData('y');
+        let stepIndex=0;
+        if(this.pathSteps==undefined||this.pathSteps.length<=0)return;
+        this.lockPath=true;
 
-        
         let playerStep=()=>{
-            if(pX!=x){
-                if(pX>x){
-                    pX--;
-                }else{
-                    pX++;
-                }
-            }
-            if(pY!=y){
-                if(pY>y){
-                    pY--;
-                }else{
-                    pY++;
-                }
-            }
-            this.player?.setX(this.size*pX+this.offset);
-            this.player?.setY(this.size*pY+this.offset);
-            this.player?.setData("x",pX);
-            this.player?.setData("y",pY);
-            moves++;
-            if((
-                pX!=x||pY!=y)
-                &&moves<maximumTiles
-                &&moves<cautionException
-            ){
-                
+            let step= this.pathSteps[stepIndex];
+            let x=step.x;
+            let y=step.y;
+            
+            this.player?.setX(this.size*x+this.offset);
+            this.player?.setY(this.size*y+this.offset);
+            this.player?.setData("x",x);
+            this.player?.setData("y",y);
+            stepIndex++;
+            if((stepIndex)<this.pathSteps.length){                
                 setTimeout(playerStep,90);
             }else{
                 this.lockPath=false;
+                this.pathLayer?.getAll().forEach(element => {
+                    element.destroy(); 
+                });
             }
         }
-        if((
-            pX!=x||pY!=y)
-            &&moves<maximumTiles
-            &&moves<cautionException
-        ){
-            this.lockPath=true;
-            setTimeout(playerStep,300);
-
-        }
+        playerStep();
         
     }
     doPlayer(){
-        this.player=this.add.ellipse(this.size+this.offset,this.size+this.offset,20,20,0xffff00);
-        this.player.setStrokeStyle(2,0x000000);
+        let playerSize=this.offset-2;
+        let strokeSize=playerSize>25?3:(playerSize>15?2:1);
+        this.player=this.add.ellipse(this.size+this.offset,this.size+this.offset,playerSize,playerSize,0xffff00);
+        
+        this.player.setStrokeStyle(strokeSize,0x000000);
         this.player.setData({y:1,x:1});
         this.player.setInteractive();
         this.player.addListener("pointerup",()=>{
@@ -214,50 +221,33 @@ export class MapScene extends Phaser.Scene {
         let cell =this.add.rectangle(x*this.size + this.offset, y*this.size+ this.offset, this.size, this.size, fillColor);
         cell.fillColor=fillColor;
         cell.setInteractive();
-        cell.addListener("pointerover", () => { 
-            let integer = cell.fillColor;
-            let color=this.integerToColor(integer);
-            color.brighten(20);
-            color.saturate(25);
-            cell.fillColor=this.colorToInteger(color);
-            cell.setStrokeStyle(2,0xffffff);
-            this.calculatePath(x,y);
-        })
-        cell.addListener("pointerout", () => { cell.fillColor = fillColor; 
-            cell.setStrokeStyle(0,0xffffff);
-            
-        })
-        cell.addListener("pointerup",()=>{
-            if(!this.lockPath)this.movePlayerToCell(x,y);
-        })
+        if(defs.isValid){
+            cell.addListener("pointerover", () => { 
+                let integer = cell.fillColor;
+                let color=ColorUtils.integerToColor(integer);
+                color.brighten(20);
+                color.saturate(25);
+                cell.fillColor=ColorUtils.colorToInteger(color);
+                cell.setStrokeStyle(2,0xffffff);
+                if(!this.lockPath)this.calculatePath(x,y);
+            })
+            cell.addListener("pointerout", () => { cell.fillColor = fillColor; 
+                cell.setStrokeStyle(0,0xffffff);
+                
+            })
+            cell.addListener("pointerup",()=>{
+                if(!this.lockPath){
+                    this.calculatePath(x,y);
+                    this.movePlayerToCell(x,y);
+                }
+            })
+        }
         cell.setData({y:y,x:x});
         this.tileLayer?.add(cell);
         this.map[y][x]={...defs,x:x,y:y,element:cell};
 
     }
-    colorToInteger(color:Phaser.Display.Color):number{
-        return this.hexToInteger(this.colorToHex(color));
-    }
-    integerToColor(integer:number):Phaser.Display.Color{
-        return this.hexToColor(integer.toString(16));
-    }
-
-    channelToHex(channel:number):string {
-        var hex = channel.toString(16);
-        return ((hex.length === 1) ? "0" + hex : hex);
-    }
-    rgbToHexString(r:number,g:number,b:number):string{
-        return "0x"+this.channelToHex(r)+this.channelToHex(g)+this.channelToHex(b);
-    }
-    hexToColor(hexColor:string):Phaser.Display.Color{
-        return Phaser.Display.Color.ValueToColor(hexColor);
-    }
-    hexToInteger(hexColor:string):number{
-        return parseInt(hexColor,16);
-    }
-    colorToHex(color:Phaser.Display.Color):string{
-        return this.rgbToHexString(color.red,color.green,color.blue);
-    }
+    
     
 }
 
