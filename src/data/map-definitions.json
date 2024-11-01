@@ -1,7 +1,12 @@
 {
-    "0":{"name":"void","cost":9999999,"isValid":false,"color":"0x222222"},
-    "1":{"name":"plains","cost":1.5,"isValid":true,"color":"0xaadd55"},
-    "2":{"name":"florest","cost":3,"isValid":true,"color":"0x779933"},
-    "3":{"name":"mountain","cost":5,"isValid":true,"color":"0x885533"},
-    "4":{"name":"water","cost":5,"isValid":false,"color":"0x0055AA"}
+  "0": {
+    "name": "void",
+    "cost": 9999999,
+    "isValid": false,
+    "color": "0x222222"
+  },
+  "1": { "name": "plains", "cost": 1, "isValid": true, "color": "0xaadd55" },
+  "2": { "name": "florest", "cost": 3, "isValid": true, "color": "0x779933" },
+  "3": { "name": "mountain", "cost": 5, "isValid": true, "color": "0x885533" },
+  "4": { "name": "water", "cost": 5, "isValid": false, "color": "0x0055AA" }
 }
