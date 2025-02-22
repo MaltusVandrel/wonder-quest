@@ -22,9 +22,8 @@ export class AppComponent implements OnInit {
     };
     
     const game = new Phaser.Game(config);
-      
 
-    }
+  }
   
 
 }

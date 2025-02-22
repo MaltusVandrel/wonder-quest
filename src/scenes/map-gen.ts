@@ -12,7 +12,7 @@ export class MapGenScene extends Phaser.Scene {
         color: '#000000',
       };
     
-      size: number = 1;
+      size: number = 16;
       offset: number = this.size / 2;
       map: any = [];
       player: Phaser.GameObjects.Ellipse | undefined;
@@ -26,41 +26,70 @@ export class MapGenScene extends Phaser.Scene {
       lockPath: boolean = false;
       pathSteps: any[] = [];
       invalidCellCost = 9999999;
-      height = 512;
-      width = 512;
+      height = 38;
+      width = 50;
       elevationMap:any[] = [];
       moistureMap:any[] = [];
-    
+      offsetX: number = 0;
+      offsetY: number = 0;
+      seed:String = Math.random().toString();
+      prng = Alea(this.seed);
+      elevationNoise = createNoise2D(this.prng);
+      moistureNoise = createNoise2D(this.prng);
       constructor(config: string | Phaser.Types.Scenes.SettingsConfig) {
         super(config);
       }
       create() {
-        // Parâmetros para ruído e seed
-        const seed:String = 'uma-frase-normal';
-        const prng = Alea(seed);
-        // Dois geradores de ruído: um para elevação e outro para umidade (pode-se usar o mesmo PRNG com offset)
-        const elevationNoise = createNoise2D(prng);
-        const moistureNoise = createNoise2D(prng);
-        
-        for (let y = 0; y < this.height; y++) {
-          this.elevationMap[y] = [];
-          this.moistureMap[y] = [];
-          for (let x = 0; x < this.width; x++) {
-            // Gera a elevação com 6 octaves; ajuste o scale para controlar o zoom
-            let e = this.fractalNoise(x, y, elevationNoise, 6, 0.5, 2.0, 100);
-            // Gera a umidade com 4 octaves (pode-se aplicar um offset para variar)
-            let m = this.fractalNoise(x + 100, y + 100, moistureNoise, 4, 0.5, 2.0, 150);
-            // Os valores iniciais estão aproximadamente em [-1, 1]; remapeia para [0, 1]
-            e = (e + 1) / 2;
-            m = (m + 1) / 2;
-            this.elevationMap[y][x] = e;
-            this.moistureMap[y][x] = m;
-          }
-        }
+        this.tileLayer = this.add.layer();
 
-        //applyErosion(elevationMap, 3);
-        
+        this.input.keyboard?.on('keydown-D', () => {
+            this.offsetX += 1;
+            this.generateMap();
+            this.drawMap();
+        });
+        this.input.keyboard?.on('keydown-W', () => {
+            this.offsetY -= 1;
+            this.generateMap();
+            this.drawMap();
+        });
+        this.input.keyboard?.on('keydown-A', () => {
+            this.offsetX -= 1;
+            this.generateMap();
+            this.drawMap();
+        });
+        this.input.keyboard?.on('keydown-S', () => {
+            this.offsetY += 1;
+            this.generateMap();
+            this.drawMap();
+        });
+       
+        this.generateMap();
         this.drawMap();
+      }
+      generateMap() {
+         // Parâmetros para ruído e seed
+        
+         // Dois geradores de ruído: um para elevação e outro para umidade (pode-se usar o mesmo PRNG com offset)
+         
+         
+         for (let y = 0; y < this.height; y++) {
+           this.elevationMap[y] = [];
+           this.moistureMap[y] = [];
+           for (let x = 0; x < this.width; x++) {
+             // Gera a elevação com 6 octaves; ajuste o scale para controlar o zoom
+             let e = this.fractalNoise(x + this.offsetX, y + this.offsetY, this.elevationNoise, 6, 0.5, 2.0, 100);
+             // Gera a umidade com 4 octaves (pode-se aplicar um offset para variar)
+             let m = this.fractalNoise(x + this.offsetX, y + this.offsetY, this.moistureNoise, 4, 0.5, 2.0, 150);
+             // Os valores iniciais estão aproximadamente em [-1, 1]; remapeia para [0, 1]
+             e = (e + 1) / 2;
+             m = (m + 1) / 2;
+             this.elevationMap[y][x] = e;
+             this.moistureMap[y][x] = m;
+           }
+         }
+ 
+         //applyErosion(elevationMap, 3);
+         
       }
       
       
@@ -141,20 +170,21 @@ export class MapGenScene extends Phaser.Scene {
 
   // Desenha o mapa no canvas, colorindo cada célula conforme o bioma
    drawMap() {
-    
+    this.tileLayer?.removeAll();
     for (let y = 0; y < this.height; y++) {
       for (let x = 0; x < this.width; x++) {
         const e = this.elevationMap[y][x];
         const m = this.moistureMap[y][x];
         const color = this.getBiomeColor(e, m);
 
-        this.add.rectangle(
+        let cell = this.add.rectangle(
             x * this.size + this.offset,
             y * this.size + this.offset,
             this.size,
             this.size,
             color
           );
+        this.tileLayer?.add(cell);  
       }
     }
     
