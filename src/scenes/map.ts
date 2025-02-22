@@ -43,6 +43,7 @@ export class MapScene extends Phaser.Scene {
     }
     this.doPlayer();
   }
+  
   calculatePath(x: number, y: number): void {
     let targetCellCost = { ...mapDefinitions }[mapData[y][x]]?.cost;
     if (targetCellCost == null || targetCellCost >= this.invalidCellCost)
