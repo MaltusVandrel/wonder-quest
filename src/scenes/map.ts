@@ -1,5 +1,5 @@
 import * as Phaser from 'phaser';
-import { ColorUtils } from 'src/utils/color-utils';
+import { ColorUtils } from 'src/utils/color.util';
 import mapData from '../data/map-data.json';
 import mapDefinitions from '../data/map-definitions.json';
 export class MapScene extends Phaser.Scene {
@@ -43,7 +43,7 @@ export class MapScene extends Phaser.Scene {
     }
     this.doPlayer();
   }
-  
+
   calculatePath(x: number, y: number): void {
     let targetCellCost = { ...mapDefinitions }[mapData[y][x]]?.cost;
     if (targetCellCost == null || targetCellCost >= this.invalidCellCost)

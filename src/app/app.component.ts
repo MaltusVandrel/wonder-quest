@@ -11,18 +11,20 @@ import { MapGenScene } from 'src/scenes/map-gen';
 })
 export class AppComponent implements OnInit {
   title = 'wonder-quest';
-
-  ngOnInit(): void {
-    const config = {
-        type: Phaser.AUTO,
-        parent: 'phaser-example',
-        width: 800,
-        height: 600,
-        scene: [ MapGenScene ]
-    };
-    
-    const game = new Phaser.Game(config);
-
+  width = 800;
+  height = 600;
+  config:any;
+  game:Phaser.Game|undefined;
+  constructor() { }
+  ngOnInit(): void {    
+   this.config = {
+      type: Phaser.AUTO,
+      parent: 'phaser-example',
+      width: this.width,
+      height: this.height,
+      scene: [ MapGenScene]
+  };
+    this.game=new Phaser.Game(this.config); 
   }
   
 
