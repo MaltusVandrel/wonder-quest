@@ -7,14 +7,14 @@ import Alea from 'alea';
 import { createNoise2D, NoiseFunction2D } from 'simplex-noise';
 import { MapGeneratorUtils } from 'src/utils/map-generator.util';
 
-export class MapGenScene extends Phaser.Scene {
+export class MapScene extends Phaser.Scene {
     textStyle: Phaser.Types.GameObjects.Text.TextStyle = {
         font: '10px Courier',
         color: '#000000',
       };
     
-      size: number = 16;
-      offset: number = this.size / 2;
+      tileSize: number = 16;
+      centeringOffset: number = this.tileSize / 2;
       map: any = [];
       player: Phaser.GameObjects.Ellipse | undefined;
     
@@ -27,25 +27,31 @@ export class MapGenScene extends Phaser.Scene {
       lockPath: boolean = false;
       pathSteps: any[] = [];
       invalidCellCost = 9999999;
-      height = 38;
-      width = 50;
+      height = 0;
+      width = 0;
       offsetX: number = 0;
       offsetY: number = 0;
    
       constructor(config: string | Phaser.Types.Scenes.SettingsConfig) {
-          super(config);
+          super({ key: 'MapScene' });
+
       }
-      preload() {
-        // Load the tiles image
+      preload() {        
         this.load.spritesheet('tiles', '../assets/tiles.png', { frameWidth: 32, frameHeight: 32 });
-        
-    }
+        window.addEventListener('resize', () => {
+          this.updateToCanvasSize();
+          this.mapUpdate();
+        }); 
+      }
+      updateToCanvasSize(){
+        const height=parseInt(this.game?.scale?.height+"");
+        const width=parseInt(this.game?.scale?.width+"");
+        this.height=Math.ceil(height/this.tileSize);
+        this.width=Math.ceil(width/this.tileSize);
+      }
       create() {
         MapGeneratorUtils.initSeed("cool-cool");
-        const height=parseInt(this.game?.config?.height+"");
-        const width=parseInt(this.game?.config?.width+"");
-        this.height=Math.ceil(height/this.size);
-        this.width=Math.ceil(width/this.size);       
+        this.updateToCanvasSize();      
 
         this.tileLayer = this.add.layer();
         const moveActions =[
@@ -55,18 +61,18 @@ export class MapGenScene extends Phaser.Scene {
             {key:'keydown-S',x:0,y:1}  
         ];
         for(let action of moveActions){
-            this.input.keyboard?.on(action.key, () => {
-               
+            this.input.keyboard?.on(action.key, () => {               
                 this.offsetX += action.x;
                 this.offsetY += action.y;
-                MapGeneratorUtils.generateChunk(this.height, this.width, this.offsetX, this.offsetY);  
-                this.drawMap();
+                this.mapUpdate();
             });
         }       
+        this.mapUpdate();
+      }
+      mapUpdate(){
         MapGeneratorUtils.generateChunk(this.height, this.width, this.offsetX, this.offsetY);
         this.drawMap();
       }
-      
   // Desenha o mapa no canvas, colorindo cada célula conforme o bioma
    drawMap() {
     this.tileLayer?.removeAll();
@@ -74,10 +80,10 @@ export class MapGenScene extends Phaser.Scene {
       for (let x = 0; x < this.width; x++) {
         const color = MapGeneratorUtils.getBiomeColor(x+this.offsetX, y+this.offsetY);
         let cell = this.add.rectangle(
-            x * this.size + this.offset,
-            y * this.size + this.offset,
-            this.size,
-            this.size,
+            x * this.tileSize + this.centeringOffset,
+            y * this.tileSize + this.centeringOffset,
+            this.tileSize,
+            this.tileSize,
             color
         );           
         

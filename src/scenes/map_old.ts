@@ -2,7 +2,7 @@ import * as Phaser from 'phaser';
 import { ColorUtils } from 'src/utils/color.util';
 import mapData from '../data/map-data.json';
 import mapDefinitions from '../data/map-definitions.json';
-export class MapScene extends Phaser.Scene {
+export class MapOldScene extends Phaser.Scene {
   textStyle: Phaser.Types.GameObjects.Text.TextStyle = {
     font: '10px Courier',
     color: '#000000',
