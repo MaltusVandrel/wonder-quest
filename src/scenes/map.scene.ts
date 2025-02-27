@@ -12,7 +12,7 @@ export class MapScene extends Phaser.Scene {
     color: '#000000',
   };
 
-  tileSize: number = 16;
+  tileSize: number = 24;
   centeringOffset: number = this.tileSize / 2;
   map: any = [];
   player: Phaser.GameObjects.Ellipse | undefined;
@@ -84,7 +84,7 @@ export class MapScene extends Phaser.Scene {
     this.tileLayer?.removeAll();
     for (let y = 0; y < this.height; y++) {
       for (let x = 0; x < this.width; x++) {
-        const color = MapGeneratorUtils.getBiomeColor(
+        const biome = MapGeneratorUtils.getBiomeData(
           x + this.offsetX,
           y + this.offsetY
         );
@@ -93,8 +93,9 @@ export class MapScene extends Phaser.Scene {
           y * this.tileSize + this.centeringOffset,
           this.tileSize,
           this.tileSize,
-          color
+          biome.color
         );
+        cell.setData(biome);
 
         /*
         const frame = this.getTileFrame(e, m);
