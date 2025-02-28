@@ -66,9 +66,11 @@ export class MapScene extends Phaser.Scene {
         this.offsetX += action.x;
         this.offsetY += action.y;
         this.mapUpdate();
+        this.playerUpdate(-this.offsetX, -this.offsetY);
       });
     }
     this.mapUpdate();
+    this.doPlayer();
   }
   mapUpdate() {
     MapGeneratorUtils.generateChunk(
@@ -138,5 +140,33 @@ export class MapScene extends Phaser.Scene {
         this.tileLayer?.add(cell);
       }
     }
+  }
+
+  doPlayer() {
+    let playerSize = this.centeringOffset - 2;
+    let strokeSize = playerSize > 25 ? 3 : playerSize > 15 ? 2 : 1;
+    this.player = this.add.ellipse(
+      Math.ceil(this.width / 2) * this.tileSize + this.centeringOffset,
+      Math.ceil(this.height / 2) * this.tileSize + this.centeringOffset,
+      playerSize,
+      playerSize,
+      0xffff00
+    );
+    this.player.setData({
+      initialY:
+        Math.ceil(this.height / 2) * this.tileSize + this.centeringOffset,
+      initialX:
+        Math.ceil(this.width / 2) * this.tileSize + this.centeringOffset,
+    });
+    this.player.setStrokeStyle(strokeSize, 0x333333);
+    this.player.setInteractive();
+    this.playerLayer?.add(this.player);
+  }
+
+  playerUpdate(x: number, y: number) {
+    this.player?.setPosition(
+      this.player.getData('initialX') + x * this.tileSize,
+      this.player.getData('initialY') + y * this.tileSize
+    );
   }
 }
