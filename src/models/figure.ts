@@ -4,7 +4,7 @@ import { STAT_KEYS } from '../data/bank/stats';
 import { Stat } from './stats';
 import { ChildComponent } from './child-component';
 import { Gauge } from './gauge';
-import { CalcUtil } from 'src/utils/calc-util';
+import { CalcUtil } from 'src/utils/calc.utils';
 
 export class Figure {
   //gauge

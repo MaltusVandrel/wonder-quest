@@ -47,6 +47,7 @@ export class MapGeneratorUtils {
   static prngList: any = [];
   static noises: any = [];
   static generatedTilesData: any = [];
+  static generatedBiome: any = [];
 
   static initSeed(seed: String) {
     this.seed = seed;
@@ -66,8 +67,9 @@ export class MapGeneratorUtils {
 
     // Dois geradores de ruído: um para elevação e outro para umidade (pode-se usar o mesmo PRNG com offset)
     for (let layer of this.layers) {
-      if (!this.generatedTilesData[layer.key])
+      if (!this.generatedTilesData[layer.key]) {
         this.generatedTilesData[layer.key] = [];
+      }
       for (let y = 0; y < height; y++) {
         if (!this.generatedTilesData[layer.key][y + offsetY]) {
           this.generatedTilesData[layer.key][y + offsetY] = [];
@@ -92,6 +94,30 @@ export class MapGeneratorUtils {
         }
       }
     }
+    if (!this.generatedBiome) {
+      this.generatedBiome = [];
+    }
+    for (let y = 0; y < height; y++) {
+      if (!this.generatedBiome[y + offsetY]) {
+        this.generatedBiome[y + offsetY] = [];
+      }
+      for (let x = 0; x < width; x++) {
+        if (this.generatedBiome[y + offsetY][x + offsetX]) continue;
+        this.generatedBiome[y + offsetY][x + offsetX] = BiomeUtils.getBiomeData(
+          x + offsetX,
+          y + offsetY,
+          this.generatedTilesData.elevation[y + offsetY][x + offsetX],
+          this.generatedTilesData.moisture[y + offsetY][x + offsetX],
+          this.generatedTilesData.temperature[y + offsetY][x + offsetX],
+          this.generatedTilesData.localVariation[y + offsetY][x + offsetX],
+          this.generatedTilesData.wonder[y + offsetY][x + offsetX]
+        );
+      }
+    }
+  }
+
+  static getBiomeData(x: number, y: number): any {
+    return this.generatedBiome[y][x];
   }
 
   // Função que gera ruído fractal (fBm) – soma de vários octaves de ruído
@@ -119,9 +145,6 @@ export class MapGeneratorUtils {
     return noiseValue / maxAmplitude;
   }
 
-  static getBiomeData(x: number, y: number) {
-    return BiomeUtils.getBiomeData(x, y, this.generatedTilesData);
-  }
   getTileFrame(e: number, m: number): number {
     // Define the logic to select the appropriate frame based on elevation and moisture
     // For example, you can map different ranges of e and m to different frames

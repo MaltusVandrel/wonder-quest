@@ -1,10 +1,10 @@
 import * as Phaser from 'phaser';
-import { ColorUtils } from 'src/utils/color.util';
+import { ColorUtils } from 'src/utils/color.utils';
 import mapData from '../data/map-data.json';
 import mapDefinitions from '../data/map-definitions.json';
 import Alea from 'alea';
 import { createNoise2D, NoiseFunction2D } from 'simplex-noise';
-import { MapGeneratorUtils } from 'src/utils/map-generator.util';
+import { MapGeneratorUtils } from 'src/utils/map-generator.utils';
 
 export class MapScene extends Phaser.Scene {
   textStyle: Phaser.Types.GameObjects.Text.TextStyle = {
@@ -81,7 +81,9 @@ export class MapScene extends Phaser.Scene {
   }
   // Desenha o mapa no canvas, colorindo cada célula conforme o bioma
   drawMap() {
-    this.tileLayer?.removeAll();
+    this.tileLayer?.getAll().forEach((element) => {
+      element.destroy();
+    });
     for (let y = 0; y < this.height; y++) {
       for (let x = 0; x < this.width; x++) {
         const biome = MapGeneratorUtils.getBiomeData(
@@ -96,6 +98,32 @@ export class MapScene extends Phaser.Scene {
           biome.color
         );
         cell.setData(biome);
+        cell.setInteractive();
+
+        cell.addListener('pointerover', () => {
+          let color = Phaser.Display.Color.ValueToColor(cell.getData('color'));
+          color.brighten(20);
+          color.saturate(25);
+          cell.fillColor = ColorUtils.colorToInteger(color);
+          cell.setStrokeStyle(2, 0xffffff);
+          //if (!this.lockPath) this.calculatePath(x, y);
+        });
+        cell.addListener('pointerout', () => {
+          cell.fillColor = cell.getData('color');
+          cell.setStrokeStyle(0, 0xffffff);
+        });
+        /*
+        cell.addListener('pointerout', () => {
+          cell.fillColor = cell.getData('color');
+          cell.setStrokeStyle(0, 0xffffff);
+        });
+        cell.addListener('pointerup', () => {
+          if (!this.lockPath) {
+            this.calculatePath(x, y);
+            this.movePlayerToCell(x, y);
+          }
+        });
+        */
 
         /*
         const frame = this.getTileFrame(e, m);
@@ -106,7 +134,7 @@ export class MapScene extends Phaser.Scene {
             frame
         );
         */
-        cell.setData({ y: y + this.offsetY, x: x + this.offsetX });
+        //cell.setData({ y: y + this.offsetY, x: x + this.offsetX });
         this.tileLayer?.add(cell);
       }
     }

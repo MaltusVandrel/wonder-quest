@@ -1,5 +1,5 @@
 import * as Phaser from 'phaser';
-import { ColorUtils } from 'src/utils/color.util';
+import { ColorUtils } from 'src/utils/color.utils';
 import mapData from '../data/map-data.json';
 import mapDefinitions from '../data/map-definitions.json';
 export class MapOldScene extends Phaser.Scene {
