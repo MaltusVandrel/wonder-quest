@@ -5,6 +5,7 @@ import mapDefinitions from '../data/map-definitions.json';
 import Alea from 'alea';
 import { createNoise2D, NoiseFunction2D } from 'simplex-noise';
 import { MapGeneratorUtils } from 'src/utils/map-generator.utils';
+import { MapPathUtils } from 'src/utils/map-path.utils';
 
 export class MapScene extends Phaser.Scene {
   textStyle: Phaser.Types.GameObjects.Text.TextStyle = {
@@ -21,8 +22,7 @@ export class MapScene extends Phaser.Scene {
   pathLayer: Phaser.GameObjects.Layer | undefined;
   playerLayer: Phaser.GameObjects.Layer | undefined;
   textLayer: Phaser.GameObjects.Layer | undefined;
-
-  mapHeight = [];
+  pathLayerGraphics: Phaser.GameObjects.Graphics | undefined;
   lockPath: boolean = false;
   pathSteps: any[] = [];
   invalidCellCost = 9999999;
@@ -67,6 +67,7 @@ export class MapScene extends Phaser.Scene {
         this.offsetY += action.y;
         this.mapUpdate();
         this.playerUpdate(-this.offsetX, -this.offsetY);
+        this.clearBullshit();
       });
     }
     this.mapUpdate();
@@ -108,25 +109,20 @@ export class MapScene extends Phaser.Scene {
           color.saturate(25);
           cell.fillColor = ColorUtils.colorToInteger(color);
           cell.setStrokeStyle(2, 0xffffff);
-          //if (!this.lockPath) this.calculatePath(x, y);
+          if (!this.lockPath) this.doPath(x, y);
         });
         cell.addListener('pointerout', () => {
           cell.fillColor = cell.getData('color');
           cell.setStrokeStyle(0, 0xffffff);
         });
         /*
-        cell.addListener('pointerout', () => {
-          cell.fillColor = cell.getData('color');
-          cell.setStrokeStyle(0, 0xffffff);
-        });
         cell.addListener('pointerup', () => {
           if (!this.lockPath) {
             this.calculatePath(x, y);
             this.movePlayerToCell(x, y);
           }
         });
-        */
-
+*/
         /*
         const frame = this.getTileFrame(e, m);
         let cell = this.add.sprite(
@@ -145,28 +141,80 @@ export class MapScene extends Phaser.Scene {
   doPlayer() {
     let playerSize = this.centeringOffset - 2;
     let strokeSize = playerSize > 25 ? 3 : playerSize > 15 ? 2 : 1;
+    const screenCenterX = Math.ceil(this.width / 2);
+    const screenCenterY = Math.ceil(this.height / 2);
     this.player = this.add.ellipse(
-      Math.ceil(this.width / 2) * this.tileSize + this.centeringOffset,
-      Math.ceil(this.height / 2) * this.tileSize + this.centeringOffset,
+      screenCenterX * this.tileSize + this.centeringOffset,
+      screenCenterY * this.tileSize + this.centeringOffset,
       playerSize,
       playerSize,
       0xffff00
     );
     this.player.setData({
-      initialY:
-        Math.ceil(this.height / 2) * this.tileSize + this.centeringOffset,
-      initialX:
-        Math.ceil(this.width / 2) * this.tileSize + this.centeringOffset,
+      y: screenCenterY,
+      x: screenCenterX,
+      initialPosistionY: screenCenterY,
+      initialPosistionX: screenCenterX,
+      initialY: screenCenterY * this.tileSize + this.centeringOffset,
+      initialX: screenCenterX * this.tileSize + this.centeringOffset,
     });
     this.player.setStrokeStyle(strokeSize, 0x333333);
     this.player.setInteractive();
     this.playerLayer?.add(this.player);
   }
+  doPath(x: number, y: number) {
+    let steps = MapPathUtils.calculatePath(
+      this.player?.getData('x'),
+      this.player?.getData('y'),
+      x,
+      y,
+      this.height,
+      this.width
+    );
+    //exibir path
+    this.pathLayer?.getAll().forEach((element) => {
+      element.destroy();
+    });
+    this.pathLayerGraphics?.clear();
+    this.pathLayerGraphics?.destroy();
+    this.pathLayerGraphics = this.add.graphics();
+    this.pathLayerGraphics.lineStyle(2, 0xffffff, 1);
 
+    for (let i = 1; i < steps.length; i++) {
+      let lastStep = steps[i - 1];
+      let step = steps[i];
+      let key = step.x + ';' + step.y;
+
+      let direction = step.cell.direction;
+      let directionX = direction[0];
+      let directionY = direction[1];
+
+      this.pathLayerGraphics.lineBetween(
+        lastStep.x * this.tileSize + this.centeringOffset,
+        lastStep.y * this.tileSize + this.centeringOffset,
+        step.x * this.tileSize + this.centeringOffset,
+        step.y * this.tileSize + this.centeringOffset
+      );
+    }
+    this.pathLayer?.add(this.pathLayerGraphics);
+  }
   playerUpdate(x: number, y: number) {
     this.player?.setPosition(
       this.player.getData('initialX') + x * this.tileSize,
       this.player.getData('initialY') + y * this.tileSize
     );
+    const newX = this.player?.getData('initialPosistionX') + x;
+    const newY = this.player?.getData('initialPosistionY') + y;
+    this.player?.setData({
+      x: newX,
+      y: newY,
+    });
+  }
+  clearBullshit() {
+    this.pathLayer?.getAll().forEach((element) => {
+      element.destroy();
+    });
+    this.pathLayerGraphics?.clear();
+    this.pathLayerGraphics?.destroy();
   }
 }

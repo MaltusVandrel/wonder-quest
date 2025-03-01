@@ -1,63 +1,80 @@
+import { BIOME_DEFAULTS } from 'src/data/bank/biome';
 import { MapGeneratorUtils } from './map-generator.utils';
 
 export class MapPathUtils {
+  static directions: any = [
+    [-1, -1],
+    [+0, -1],
+    [+1, -1],
+    [-1, +0],
+    [+1, +0],
+    [-1, +1],
+    [+0, +1],
+    [+1, +1],
+  ];
+
   static calculatePath(
-    playerX: number,
-    playerY: number,
-    x: number,
-    y: number
-  ): void {
-    let targetCellCost = MapGeneratorUtils.generatedBiome[y][x]?.cost;
-    if (targetCellCost == null || targetCellCost >= this.invalidCellCost)
-      return;
-    let maximumTiles = mapData.length * mapData[0].length;
+    playerXOnMap: number,
+    playerYOnMap: number,
+    targetCellX: number,
+    targetCellY: number,
+    mapHeight: number,
+    mapWidth: number
+  ): any[] {
+    let targetCell = MapGeneratorUtils.generatedBiome[targetCellY][targetCellX];
+    let targetCellStaminaCost = targetCell.staminaCost;
+    let targetCellTileCost = targetCell.timeCost;
+    if (targetCellStaminaCost == null || targetCellTileCost == null) return [];
+    let maximumTiles = mapHeight * mapWidth;
     let cautionException = 100000 - 1;
-    let originalX = playerX;
-    let originalY = playerY;
-    let pX = playerX;
-    let pY = playerY;
+    let originalX = playerXOnMap;
+    let originalY = playerYOnMap;
+    let playerX = playerXOnMap;
+    let playerY = playerYOnMap;
 
     let steps = [];
     let uncoveredCells: any = [];
-    let directions: any = [];
-    directions.push([-1, -1]);
-    directions.push([+0, -1]);
-    directions.push([+1, -1]);
-    directions.push([-1, +0]);
-    directions.push([+1, +0]);
-    directions.push([-1, +1]);
-    directions.push([+0, +1]);
-    directions.push([+1, +1]);
 
     uncoveredCells[originalX + ';' + originalY] = {
-      cost: Math.abs(originalX - x) + Math.abs(originalY - y),
+      cost:
+        Math.abs(originalX - targetCellX) + Math.abs(originalY - targetCellY),
       stepped: true,
     };
     steps.push({ x: originalX, y: originalY });
     while (
-      (pX != x || pY != y) &&
+      (playerX != targetCellX || playerY != targetCellY) &&
       steps.length < maximumTiles &&
       steps.length < cautionException
     ) {
       //uncoverCells
-      for (let direction of directions) {
-        let dX = direction[0];
-        let dY = direction[1];
-        let sX = pX + dX;
-        let sY = pY + dY;
-        if (!(sX >= 0 && sX < mapData[0].length)) continue;
-        if (!(sY >= 0 && sY < mapData.length)) continue;
-        let cost = { ...mapDefinitions }[mapData[sY][sX]]?.cost;
-        if (!uncoveredCells[sX + ';' + sY]) {
-          let baseCost = Math.sqrt(Math.abs(dX) + Math.abs(dY)); //G
-          let cellCost = cost != undefined ? cost : 0; //peso
-          let pathCost = Math.abs(sX - x) + Math.abs(sY - y); //H
-          let totalCost = baseCost + pathCost + cellCost;
-          uncoveredCells[sX + ';' + sY] = {
-            cost: totalCost,
+      for (let direction of this.directions) {
+        let directionX = direction[0];
+        let directionY = direction[1];
+        let stepX = playerX + directionX;
+        let stepY = playerY + directionY;
+        if (!(stepX >= 0 && stepX < mapWidth)) continue;
+        if (!(stepY >= 0 && stepY < mapHeight)) continue;
+        let stepStaminaCost =
+          MapGeneratorUtils.generatedBiome[stepY][stepX].staminaCost;
+        let stepTimeCost =
+          MapGeneratorUtils.generatedBiome[stepY][stepX].timeCost;
+
+        if (!uncoveredCells[stepX + ';' + stepY]) {
+          let baseCost = Math.sqrt(Math.abs(directionX) + Math.abs(directionY));
+          let pathCost =
+            Math.abs(stepX - targetCellX) + Math.abs(stepY - targetCellY);
+          let referenceCost =
+            pathCost +
+            baseCost *
+              (stepStaminaCost / BIOME_DEFAULTS.staminaCost +
+                stepTimeCost / BIOME_DEFAULTS.timeCost);
+          uncoveredCells[stepX + ';' + stepY] = {
+            referenceCost: referenceCost,
+            staminaCost: stepStaminaCost,
+            timeCost: stepTimeCost,
             stepped: false,
-            x: sX,
-            y: sY,
+            x: stepX,
+            y: stepY,
             direction: direction,
           };
         }
@@ -65,25 +82,34 @@ export class MapPathUtils {
 
       //chooseLowerCost
       let keys = Object.keys(uncoveredCells);
-      let lowestPath = { cost: 9999, key: null, x: null, y: null };
+      let lowestPath = {
+        referenceCost: Number.MAX_SAFE_INTEGER,
+        key: playerXOnMap + ';' + playerYOnMap,
+        x: playerXOnMap,
+        y: playerYOnMap,
+      };
       for (let i = 0; i < keys.length; i++) {
         let key = keys[i];
         let cell = uncoveredCells[key];
         if (cell.stepped) continue;
-        if (cell.cost < lowestPath.cost) {
+        if (cell.referenceCost < lowestPath.referenceCost) {
           lowestPath = cell;
         }
       }
 
       //stepOnLowerCost
-      pX = lowestPath.x;
-      pY = lowestPath.y;
-      uncoveredCells[pX + ';' + pY].stepped = true;
-      steps.push({ x: pX, y: pY, cell: uncoveredCells[pX + ';' + pY] });
+      playerX = lowestPath.x;
+      playerY = lowestPath.y;
+      uncoveredCells[playerX + ';' + playerY].stepped = true;
+      steps.push({
+        x: playerX,
+        y: playerY,
+        cell: uncoveredCells[playerX + ';' + playerY],
+      });
     }
 
     //limpar adjacentes
-    for (let numDirections of directions) {
+    for (let numDirections of this.directions) {
       adjacentsFor: for (let i = steps.length - 1; i > 0; i--) {
         let targeStep = steps[i];
         let tX = targeStep.x;
@@ -92,7 +118,7 @@ export class MapPathUtils {
           let otherStep = steps[j];
           let oX = otherStep.x;
           let oY = otherStep.y;
-          directionsFor: for (let direction of directions) {
+          directionsFor: for (let direction of this.directions) {
             let dX = direction[0];
             let dY = direction[1];
             if (dX + oX == tX && dY + oY == tY) {
@@ -109,30 +135,7 @@ export class MapPathUtils {
         }
       }
     }
-    //exibir path
-    this.pathLayer?.getAll().forEach((element) => {
-      element.destroy();
-    });
-    var graphics = this.add.graphics();
-    graphics.lineStyle(2, 0xffffff, 1);
 
-    for (let i = 1; i < steps.length; i++) {
-      let lastStep = steps[i - 1];
-      let step = steps[i];
-      let key = step.x + ';' + step.y;
-
-      let d = step.cell.direction;
-      let dx = d[0];
-      let dy = d[1];
-
-      graphics.lineBetween(
-        lastStep.x * this.size + this.offset,
-        lastStep.y * this.size + this.offset,
-        step.x * this.size + this.offset,
-        step.y * this.size + this.offset
-      );
-    }
-    this.pathLayer?.add(graphics);
-    this.pathSteps = steps;
+    return steps;
   }
 }
