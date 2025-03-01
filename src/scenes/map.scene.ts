@@ -13,7 +13,7 @@ export class MapScene extends Phaser.Scene {
     color: '#000000',
   };
 
-  tileSize: number = 24;
+  tileSize: number = 8;
   centeringOffset: number = this.tileSize / 2;
   map: any = [];
   player: Phaser.GameObjects.Ellipse | undefined;
@@ -51,7 +51,7 @@ export class MapScene extends Phaser.Scene {
     this.width = Math.ceil(width / this.tileSize);
   }
   create() {
-    MapGeneratorUtils.initSeed('cool-cool');
+    MapGeneratorUtils.initSeed('alessandro-oliveira');
     this.updateToCanvasSize();
 
     this.tileLayer = this.add.layer();
@@ -66,7 +66,7 @@ export class MapScene extends Phaser.Scene {
         this.offsetX += action.x;
         this.offsetY += action.y;
         this.mapUpdate();
-        this.playerUpdate(-this.offsetX, -this.offsetY);
+        this.playerPositionUpdate(-this.offsetX, -this.offsetY);
         this.clearBullshit();
       });
     }
@@ -153,10 +153,10 @@ export class MapScene extends Phaser.Scene {
     this.player.setData({
       y: screenCenterY,
       x: screenCenterX,
-      initialPosistionY: screenCenterY,
-      initialPosistionX: screenCenterX,
-      initialY: screenCenterY * this.tileSize + this.centeringOffset,
-      initialX: screenCenterX * this.tileSize + this.centeringOffset,
+      currentPositionY: screenCenterY,
+      currentPositionX: screenCenterX,
+      currentY: screenCenterY * this.tileSize + this.centeringOffset,
+      currentX: screenCenterX * this.tileSize + this.centeringOffset,
     });
     this.player.setStrokeStyle(strokeSize, 0x333333);
     this.player.setInteractive();
@@ -185,9 +185,8 @@ export class MapScene extends Phaser.Scene {
       let step = steps[i];
       let key = step.x + ';' + step.y;
 
-      let direction = step.cell.direction;
-      let directionX = direction[0];
-      let directionY = direction[1];
+      let directionX = lastStep.x - step.x;
+      let directionY = lastStep.y - step.y;
 
       this.pathLayerGraphics.lineBetween(
         lastStep.x * this.tileSize + this.centeringOffset,
@@ -198,13 +197,13 @@ export class MapScene extends Phaser.Scene {
     }
     this.pathLayer?.add(this.pathLayerGraphics);
   }
-  playerUpdate(x: number, y: number) {
+  playerPositionUpdate(x: number, y: number) {
     this.player?.setPosition(
-      this.player.getData('initialX') + x * this.tileSize,
-      this.player.getData('initialY') + y * this.tileSize
+      this.player.getData('currentX') + x * this.tileSize,
+      this.player.getData('currentY') + y * this.tileSize
     );
-    const newX = this.player?.getData('initialPosistionX') + x;
-    const newY = this.player?.getData('initialPosistionY') + y;
+    const newX = this.player?.getData('currentPositionX') + x;
+    const newY = this.player?.getData('currentPositionY') + y;
     this.player?.setData({
       x: newX,
       y: newY,

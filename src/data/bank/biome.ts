@@ -19,8 +19,8 @@ export const BIOME_CONFIG = [
 
     biome: {
       type: 'Deep Waters',
-      color: 0x2c52a0,
-      staminaCost: 100,
+      color: 0x2c52a0, // #2c52a0
+      staminaCost: 200,
       timeCost: 60 * 16,
     },
   },
@@ -39,8 +39,8 @@ export const BIOME_CONFIG = [
       inRange(wonder, 0, 1),
     biome: {
       type: 'Shallow Waters',
-      color: 0x4596d8,
-      staminaCost: 30,
+      color: 0x4596d8, // #4596d8
+      staminaCost: 120,
       timeCost: 60,
     },
   },
@@ -59,7 +59,7 @@ export const BIOME_CONFIG = [
       inRange(wonder, 0, 1),
     biome: {
       type: 'Beach',
-      color: 0xdfd392,
+      color: 0xdfd392, // #eadf92
       staminaCost: 15,
       timeCost: 30,
     },
@@ -79,7 +79,7 @@ export const BIOME_CONFIG = [
       inRange(wonder, 0, 1),
     biome: {
       type: 'Dunes',
-      color: 0xc2a243,
+      color: 0xc2a243, // #c2a243
       staminaCost: 60,
       timeCost: 60,
     },
@@ -99,7 +99,7 @@ export const BIOME_CONFIG = [
       inRange(wonder, 0, 1),
     biome: {
       type: 'Desert',
-      color: 0xe0c060,
+      color: 0xe0c060, // #e0c060
       staminaCost: 40,
       timeCost: 40,
     },
@@ -119,7 +119,7 @@ export const BIOME_CONFIG = [
       inRange(wonder, 0, 1),
     biome: {
       type: 'Hills',
-      color: 0x8d9e2b,
+      color: 0x8d9e2b, // #8d9e2b
       staminaCost: 25,
       timeCost: 45,
     },
@@ -139,7 +139,7 @@ export const BIOME_CONFIG = [
       inRange(wonder, 0, 1),
     biome: {
       type: 'Plains',
-      color: 0x87bb35,
+      color: 0x87bb35, // #87bb35
       staminaCost: 15,
       timeCost: 30,
     },
@@ -159,7 +159,7 @@ export const BIOME_CONFIG = [
       inRange(wonder, 0, 1),
     biome: {
       type: 'Forest',
-      color: 0x5b8b28,
+      color: 0x5b8b28, // #5b8b28
       staminaCost: 30,
       timeCost: 60,
     },
@@ -179,7 +179,7 @@ export const BIOME_CONFIG = [
       inRange(wonder, 0, 1),
     biome: {
       type: 'Swamp',
-      color: 0x0d521e,
+      color: 0x0d521e, // #0d521e
       staminaCost: 60,
       timeCost: 60 * 2,
     },
@@ -199,8 +199,8 @@ export const BIOME_CONFIG = [
       inRange(wonder, 0, 1),
     biome: {
       type: 'Mountains',
-      color: 0x634e46,
-      staminaCost: 80,
+      color: 0x634e46, // #634e46
+      staminaCost: 190,
       timeCost: 60 * 4,
     },
   },
@@ -219,8 +219,8 @@ export const BIOME_CONFIG = [
       inRange(wonder, 0, 1),
     biome: {
       type: 'Snowy peaks',
-      color: 0xfaeaea,
-      staminaCost: 100,
+      color: 0xfaeaea, // #faeaea
+      staminaCost: 300,
       timeCost: 60 * 16,
     },
   },

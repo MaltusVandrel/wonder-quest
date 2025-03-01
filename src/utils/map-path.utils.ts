@@ -2,7 +2,7 @@ import { BIOME_DEFAULTS } from 'src/data/bank/biome';
 import { MapGeneratorUtils } from './map-generator.utils';
 
 export class MapPathUtils {
-  static directions: any = [
+  static DIRECTIONS: any = [
     [-1, -1],
     [+0, -1],
     [+1, -1],
@@ -21,7 +21,7 @@ export class MapPathUtils {
     mapHeight: number,
     mapWidth: number
   ): any[] {
-    let targetCell = MapGeneratorUtils.generatedBiome[targetCellY][targetCellX];
+    let targetCell = MapGeneratorUtils.getBiomeData(targetCellX, targetCellY);
     let targetCellStaminaCost = targetCell.staminaCost;
     let targetCellTileCost = targetCell.timeCost;
     if (targetCellStaminaCost == null || targetCellTileCost == null) return [];
@@ -47,27 +47,30 @@ export class MapPathUtils {
       steps.length < cautionException
     ) {
       //uncoverCells
-      for (let direction of this.directions) {
+      for (let direction of this.DIRECTIONS) {
         let directionX = direction[0];
         let directionY = direction[1];
         let stepX = playerX + directionX;
         let stepY = playerY + directionY;
         if (!(stepX >= 0 && stepX < mapWidth)) continue;
         if (!(stepY >= 0 && stepY < mapHeight)) continue;
-        let stepStaminaCost =
-          MapGeneratorUtils.generatedBiome[stepY][stepX].staminaCost;
-        let stepTimeCost =
-          MapGeneratorUtils.generatedBiome[stepY][stepX].timeCost;
+        let stepCell = MapGeneratorUtils.getBiomeData(stepX, stepY);
+        let stepStaminaCost = stepCell.staminaCost;
+        let stepTimeCost = stepCell.timeCost;
 
         if (!uncoveredCells[stepX + ';' + stepY]) {
-          let baseCost = Math.sqrt(Math.abs(directionX) + Math.abs(directionY));
+          let directionCostModifier = Math.sqrt(
+            Math.abs(directionX) + Math.abs(directionY)
+          );
           let pathCost =
             Math.abs(stepX - targetCellX) + Math.abs(stepY - targetCellY);
-          let referenceCost =
-            pathCost +
-            baseCost *
-              (stepStaminaCost / BIOME_DEFAULTS.staminaCost +
-                stepTimeCost / BIOME_DEFAULTS.timeCost);
+          let staminaCostWeight = stepStaminaCost / BIOME_DEFAULTS.staminaCost;
+          let timeCostWeight = (stepTimeCost / BIOME_DEFAULTS.timeCost) * 0.1;
+          let weightCost =
+            (staminaCostWeight + timeCostWeight) *
+            (directionCostModifier * 0.5);
+          weightCost = weightCost * 2;
+          let referenceCost = pathCost + weightCost;
           uncoveredCells[stepX + ';' + stepY] = {
             referenceCost: referenceCost,
             staminaCost: stepStaminaCost,
@@ -109,19 +112,42 @@ export class MapPathUtils {
     }
 
     //limpar adjacentes
-    for (let numDirections of this.directions) {
-      adjacentsFor: for (let i = steps.length - 1; i > 0; i--) {
+    //tambem util pra mostrar efeitos no calculo de peso
+    steps = this.cleanAdjacentSteps(steps);
+    return steps;
+  }
+
+  /*
+   * @title:Remove adjacent steps from the path;
+   * @description: It start from the last step, from it looks for the step two ;
+   */
+  private static cleanAdjacentSteps(originalSteps: any[]): any {
+    let steps: any[] = originalSteps.concat([]);
+    let thereIsAdjacent = false;
+    do {
+      thereIsAdjacent = false;
+      targetStepFor: for (let i = steps.length - 1; i > 0; i--) {
         let targeStep = steps[i];
-        let tX = targeStep.x;
-        let tY = targeStep.y;
-        for (let j = i - 2; j >= 0; j--) {
+        let targetStepX = targeStep.x;
+        let targetStepY = targeStep.y;
+        otherStepFor: for (let j = i - 2; j >= 0; j--) {
           let otherStep = steps[j];
-          let oX = otherStep.x;
-          let oY = otherStep.y;
-          directionsFor: for (let direction of this.directions) {
-            let dX = direction[0];
-            let dY = direction[1];
-            if (dX + oX == tX && dY + oY == tY) {
+          let otherStepX = otherStep.x;
+          let otherStepY = otherStep.y;
+          //pula iteracao se nao for adjacente
+          if (
+            Math.abs(otherStepX - targetStepX) > 1 ||
+            Math.abs(otherStepY - targetStepY) > 1
+          ) {
+            continue otherStepFor;
+          }
+          directionsFor: for (let direction of this.DIRECTIONS) {
+            let directionX = direction[0];
+            let directionY = direction[1];
+            if (
+              directionX + otherStepX == targetStepX &&
+              directionY + otherStepY == targetStepY
+            ) {
               let startSteps = steps.slice(0, j + 1);
               let endSteps = steps.slice(i, steps.length);
               let newLength = startSteps.length + endSteps.length;
@@ -129,13 +155,30 @@ export class MapPathUtils {
               steps = startSteps.concat(endSteps);
               i = i - diffLength;
               j = j - diffLength;
-              break directionsFor;
             }
           }
         }
       }
-    }
-
+      currentStepFor: for (let i = 0; i < steps.length - 1; i++) {
+        let currentStep = steps[i];
+        let currentStepX = currentStep.x;
+        let currentStepY = currentStep.y;
+        aheadStepFor: for (let j = i + 2; j < steps.length; j++) {
+          let aheadStep = steps[j];
+          let aheadStepX = aheadStep.x;
+          let aheadStepY = aheadStep.y;
+          //pula iteracao se nao for adjacente
+          if (
+            Math.abs(aheadStepX - currentStepX) > 1 ||
+            Math.abs(aheadStepY - currentStepY) > 1
+          ) {
+            continue aheadStepFor;
+          }
+          thereIsAdjacent = true;
+          break currentStepFor;
+        }
+      }
+    } while (thereIsAdjacent);
     return steps;
   }
 }

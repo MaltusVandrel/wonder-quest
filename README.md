@@ -26,3 +26,6 @@ I want a world completly new and unexplored, where I can create a simple charact
 - SPRITE REUSABILITY: https://www.youtube.com/watch?v=HsOKwUwL1bE
 - Gostei do thumbnail: https://youtu.be/KPoeNZZ6H4s?si=Ev7I6Lrh_Z6sjD0B
 - Movimento diagonal: https://youtube.com/shorts/0cYjreg7dpg?si=NinTDxK3e-H4r4Pl
+- Save file: https://medium.com/differential-blog/using-messagepack-with-typescript-17ae388ded2a
+- saving circular json: https://www.30secondsofcode.org/js/s/stringify-circular-json/
+- event emmiter: https://stackblitz.com/edit/typescript-es6-events-emitter-class?file=EventEmitter.ts
