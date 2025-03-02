@@ -68,7 +68,7 @@ export class MapPathUtils {
           let timeCostWeight = (stepTimeCost / BIOME_DEFAULTS.timeCost) * 0.1;
           let weightCost =
             (staminaCostWeight + timeCostWeight) *
-            (directionCostModifier * 0.5);
+            (directionCostModifier * 0.3);
           weightCost = weightCost * 2;
           let referenceCost = pathCost + weightCost;
           uncoveredCells[stepX + ';' + stepY] = {

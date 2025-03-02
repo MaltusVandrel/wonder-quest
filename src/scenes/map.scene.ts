@@ -13,7 +13,7 @@ export class MapScene extends Phaser.Scene {
     color: '#000000',
   };
 
-  tileSize: number = 8;
+  tileSize: number = 32;
   centeringOffset: number = this.tileSize / 2;
   map: any = [];
   player: Phaser.GameObjects.Ellipse | undefined;
@@ -139,7 +139,7 @@ export class MapScene extends Phaser.Scene {
   }
 
   doPlayer() {
-    let playerSize = this.centeringOffset - 2;
+    let playerSize = this.tileSize - 2;
     let strokeSize = playerSize > 25 ? 3 : playerSize > 15 ? 2 : 1;
     const screenCenterX = Math.ceil(this.width / 2);
     const screenCenterY = Math.ceil(this.height / 2);
