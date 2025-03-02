@@ -198,7 +198,9 @@ export class MapScene extends Phaser.Scene {
       x,
       y,
       this.tileCollumnAmount,
-      this.tileRowAmount
+      this.tileRowAmount,
+      this.tileCelloffsetX,
+      this.tileCelloffsetY
     );
     //exibir path
     this.pathLayer?.getAll().forEach((element) => {
