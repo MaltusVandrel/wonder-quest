@@ -56,22 +56,25 @@ export class MapScene extends Phaser.Scene {
 
     this.tileLayer = this.add.layer();
     const moveActions = [
-      { key: 'keydown-D', x: 1, y: 0 },
       { key: 'keydown-W', x: 0, y: -1 },
       { key: 'keydown-A', x: -1, y: 0 },
       { key: 'keydown-S', x: 0, y: 1 },
+      { key: 'keydown-D', x: 1, y: 0 },
     ];
     for (let action of moveActions) {
       this.input.keyboard?.on(action.key, () => {
-        this.tileCelloffsetX += action.x;
-        this.tileCelloffsetY += action.y;
-        this.mapUpdate();
-        this.playerPositionUpdate(-this.tileCelloffsetX, -this.tileCelloffsetY);
-        this.clearLineOnViewOffsetChange();
+        this.moveCamera(action.x, action.y);
       });
     }
     this.mapUpdate();
     this.doPlayer();
+  }
+  moveCamera(x: number, y: number) {
+    this.tileCelloffsetX += x;
+    this.tileCelloffsetY += y;
+    this.mapUpdate();
+    this.pathPositionUpdate(-x, -y);
+    //this.clearLineOnViewOffsetChange();
   }
   mapUpdate() {
     MapGeneratorUtils.generateChunk(
@@ -122,7 +125,6 @@ export class MapScene extends Phaser.Scene {
 
         cell.addListener('pointerup', () => {
           if (!this.lockPath) {
-            console.log('AAAA');
             this.doPath(x, y);
             this.movePlayerToCell(x, y);
           }
@@ -226,19 +228,17 @@ export class MapScene extends Phaser.Scene {
     this.pathSteps = steps;
   }
   movePlayerToCell(x: number, y: number): void {
-    let stepIndex = 0;
+    let stepIndex = 1;
     if (this.pathSteps == undefined || this.pathSteps.length <= 0) return;
     this.lockPath = true;
     let playerStep = () => {
-      let step = this.pathSteps[stepIndex];
+      const lastStep = this.pathSteps[stepIndex - 1];
+      let step = this.pathSteps[stepIndex++];
       let x = step.x;
       let y = step.y;
 
-      this.player?.setX(this.tileSize * x + this.centeringOffset);
-      this.player?.setY(this.tileSize * y + this.centeringOffset);
-      this.player?.setData('x', x);
-      this.player?.setData('y', y);
-      stepIndex++;
+      this.moveCamera(-(lastStep.x - step.x), -(lastStep.y - step.y));
+
       if (stepIndex < this.pathSteps.length) {
         setTimeout(playerStep, 90);
       } else {
@@ -259,6 +259,12 @@ export class MapScene extends Phaser.Scene {
       x: newX,
       y: newY,
     });
+  }
+  pathPositionUpdate(x: number, y: number) {
+    let pathX = this.pathLayerGraphics?.x || 0;
+    let pathY = this.pathLayerGraphics?.y || 0;
+    this.pathLayerGraphics?.setX(pathX + x * this.tileSize);
+    this.pathLayerGraphics?.setY(pathY + y * this.tileSize);
   }
 
   clearLineOnViewOffsetChange() {
