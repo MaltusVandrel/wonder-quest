@@ -20,7 +20,7 @@ export const BIOME_CONFIG = [
     biome: {
       type: 'Deep Waters',
       color: 0x2c52a0, // #2c52a0
-      staminaCost: 200,
+      staminaCost: 300,
       timeCost: 60 * 16,
     },
   },
@@ -40,8 +40,8 @@ export const BIOME_CONFIG = [
     biome: {
       type: 'Shallow Waters',
       color: 0x4596d8, // #4596d8
-      staminaCost: 120,
-      timeCost: 60,
+      staminaCost: 180,
+      timeCost: 120,
     },
   },
   {
