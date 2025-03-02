@@ -14,7 +14,7 @@ export class MainMenuScene extends Phaser.Scene {
     const startButton = this.add
       .text(400, 300, 'Start Game', { fontSize: '32px', color: '#fff' })
       .setInteractive()
-      .on('pointerdown', () => this.startGame());
+      .on('pointerup', () => this.startGame());
   }
 
   startGame() {

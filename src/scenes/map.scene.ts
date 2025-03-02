@@ -67,7 +67,7 @@ export class MapScene extends Phaser.Scene {
         this.tileCelloffsetY += action.y;
         this.mapUpdate();
         this.playerPositionUpdate(-this.tileCelloffsetX, -this.tileCelloffsetY);
-        this.clearBullshit();
+        this.clearLineOnViewOffsetChange();
       });
     }
     this.mapUpdate();
@@ -119,14 +119,15 @@ export class MapScene extends Phaser.Scene {
           cell.fillColor = cell.getData('color');
           cell.setStrokeStyle(0, 0xffffff);
         });
-        /*
+
         cell.addListener('pointerup', () => {
           if (!this.lockPath) {
-            this.calculatePath(x, y);
+            console.log('AAAA');
+            this.doPath(x, y);
             this.movePlayerToCell(x, y);
           }
         });
-*/
+
         /*
         const frame = this.getTileFrame(e, m);
         let cell = this.add.sprite(
@@ -222,6 +223,30 @@ export class MapScene extends Phaser.Scene {
       );
     }
     this.pathLayer?.add(this.pathLayerGraphics);
+    this.pathSteps = steps;
+  }
+  movePlayerToCell(x: number, y: number): void {
+    let stepIndex = 0;
+    if (this.pathSteps == undefined || this.pathSteps.length <= 0) return;
+    this.lockPath = true;
+    let playerStep = () => {
+      let step = this.pathSteps[stepIndex];
+      let x = step.x;
+      let y = step.y;
+
+      this.player?.setX(this.tileSize * x + this.centeringOffset);
+      this.player?.setY(this.tileSize * y + this.centeringOffset);
+      this.player?.setData('x', x);
+      this.player?.setData('y', y);
+      stepIndex++;
+      if (stepIndex < this.pathSteps.length) {
+        setTimeout(playerStep, 90);
+      } else {
+        this.lockPath = false;
+        this.clearLineOnViewOffsetChange();
+      }
+    };
+    playerStep();
   }
   playerPositionUpdate(x: number, y: number) {
     this.player?.setPosition(
@@ -235,7 +260,8 @@ export class MapScene extends Phaser.Scene {
       y: newY,
     });
   }
-  clearBullshit() {
+
+  clearLineOnViewOffsetChange() {
     this.pathLayer?.getAll().forEach((element) => {
       element.destroy();
     });
