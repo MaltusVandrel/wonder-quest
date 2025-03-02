@@ -8,3 +8,15 @@
   overflow-y: hidden;
   overflow-x: hidden;
 }
+
+@import "primeng/resources/themes/lara-dark-blue/theme.css";
+@import "primeng/resources/primeng.css";
+@import "primeflex/primeflex.css";
+@font-face {
+  font-family: "Monocraft Sans";
+  src: url(assets/Monocraft-nerd-fonts-patched.ttf);
+}
+
+* {
+  font-family: "Monocraft Sans", sans-serif;
+}

@@ -25,11 +25,12 @@ export class MapScene extends Phaser.Scene {
   pathLayerGraphics: Phaser.GameObjects.Graphics | undefined;
   lockPath: boolean = false;
   pathSteps: any[] = [];
+
   invalidCellCost = 9999999;
-  tileCollumnAmount = 0;
-  tileRowAmount = 0;
-  tileCelloffsetX: number = 0;
-  tileCelloffsetY: number = 0;
+  screenGridXSize = 0;
+  screenGridYSize = 0;
+  gridOffsetX: number = 0;
+  gridOffsetY: number = 0;
 
   constructor(config: string | Phaser.Types.Scenes.SettingsConfig) {
     super({ key: 'MapScene' });
@@ -47,41 +48,34 @@ export class MapScene extends Phaser.Scene {
   updateToCanvasSize() {
     const height = parseInt(this.game?.scale?.height + '');
     const width = parseInt(this.game?.scale?.width + '');
-    this.tileCollumnAmount = Math.ceil(height / this.tileSize);
-    this.tileRowAmount = Math.ceil(width / this.tileSize);
+    this.screenGridXSize = Math.ceil(height / this.tileSize);
+    this.screenGridYSize = Math.ceil(width / this.tileSize);
   }
   create() {
     MapGeneratorUtils.initSeed('alessandro-oliveira');
     this.updateToCanvasSize();
 
     this.tileLayer = this.add.layer();
-    const moveActions = [
-      { key: 'keydown-W', x: 0, y: -1 },
-      { key: 'keydown-A', x: -1, y: 0 },
-      { key: 'keydown-S', x: 0, y: 1 },
-      { key: 'keydown-D', x: 1, y: 0 },
-    ];
-    for (let action of moveActions) {
-      this.input.keyboard?.on(action.key, () => {
-        this.moveCamera(action.x, action.y);
-      });
-    }
+    /*
+    this.input.keyboard?.on('keydown-W', () => {
+      //dosomshit
+    });
+    */
     this.mapUpdate();
     this.doPlayer();
   }
-  moveCamera(x: number, y: number) {
-    this.tileCelloffsetX += x;
-    this.tileCelloffsetY += y;
+  moveCamera(incrementOnOffsetX: number, incrementOnOffsetY: number) {
+    this.gridOffsetX += incrementOnOffsetX;
+    this.gridOffsetY += incrementOnOffsetY;
     this.mapUpdate();
-    this.pathPositionUpdate(-x, -y);
-    //this.clearLineOnViewOffsetChange();
+    this.pathPositionUpdate(incrementOnOffsetX, incrementOnOffsetY);
   }
   mapUpdate() {
     MapGeneratorUtils.generateChunk(
-      this.tileCollumnAmount,
-      this.tileRowAmount,
-      this.tileCelloffsetX,
-      this.tileCelloffsetY
+      this.screenGridXSize,
+      this.screenGridYSize,
+      this.gridOffsetX,
+      this.gridOffsetY
     );
     this.drawMap();
   }
@@ -90,11 +84,11 @@ export class MapScene extends Phaser.Scene {
     this.tileLayer?.getAll().forEach((element) => {
       element.destroy();
     });
-    for (let y = 0; y < this.tileCollumnAmount; y++) {
-      for (let x = 0; x < this.tileRowAmount; x++) {
+    for (let y = 0; y < this.screenGridXSize; y++) {
+      for (let x = 0; x < this.screenGridYSize; x++) {
         const biome = MapGeneratorUtils.getBiomeData(
-          x + this.tileCelloffsetX,
-          y + this.tileCelloffsetY
+          x + this.gridOffsetX,
+          y + this.gridOffsetY
         );
         let cell = this.add.rectangle(
           x * this.tileSize + this.centeringOffset,
@@ -105,8 +99,8 @@ export class MapScene extends Phaser.Scene {
         );
         cell.setData({
           ...biome,
-          x: x + this.tileCelloffsetX,
-          y: y + this.tileCelloffsetY,
+          x: x + this.gridOffsetX,
+          y: y + this.gridOffsetY,
         });
         cell.setInteractive();
 
@@ -148,8 +142,8 @@ export class MapScene extends Phaser.Scene {
   doPlayer() {
     let playerSize = this.tileSize - 2;
     let strokeSize = playerSize > 25 ? 3 : playerSize > 15 ? 2 : 1;
-    const screenCenterX = Math.ceil(this.tileRowAmount / 2);
-    const screenCenterY = Math.ceil(this.tileCollumnAmount / 2);
+    const screenCenterX = Math.ceil(this.screenGridYSize / 2);
+    const screenCenterY = Math.ceil(this.screenGridXSize / 2);
     this.player = this.add.ellipse(
       screenCenterX * this.tileSize + this.centeringOffset,
       screenCenterY * this.tileSize + this.centeringOffset,
@@ -176,18 +170,10 @@ export class MapScene extends Phaser.Scene {
     // se um dos sets de coordenadas X Y do player ou do parametro estiverem fora do mapa,
     // não faz nada
     if (
-      playerX == undefined ||
-      playerY == undefined ||
-      x == undefined ||
-      y == undefined
-    ) {
-      return;
-    }
-    if (
       playerX < 0 ||
-      playerX > this.tileRowAmount ||
+      playerX > this.screenGridYSize ||
       playerY < 0 ||
-      playerY > this.tileCollumnAmount
+      playerY > this.screenGridXSize
     ) {
       return;
     }
@@ -197,10 +183,10 @@ export class MapScene extends Phaser.Scene {
       playerY,
       x,
       y,
-      this.tileCollumnAmount,
-      this.tileRowAmount,
-      this.tileCelloffsetX,
-      this.tileCelloffsetY
+      this.screenGridXSize,
+      this.screenGridYSize,
+      this.gridOffsetX,
+      this.gridOffsetY
     );
     //exibir path
     this.pathLayer?.getAll().forEach((element) => {
@@ -214,11 +200,6 @@ export class MapScene extends Phaser.Scene {
     for (let i = 1; i < steps.length; i++) {
       let lastStep = steps[i - 1];
       let step = steps[i];
-      let key = step.x + ';' + step.y;
-
-      let directionX = lastStep.x - step.x;
-      let directionY = lastStep.y - step.y;
-
       this.pathLayerGraphics.lineBetween(
         lastStep.x * this.tileSize + this.centeringOffset,
         lastStep.y * this.tileSize + this.centeringOffset,
@@ -250,23 +231,11 @@ export class MapScene extends Phaser.Scene {
     };
     playerStep();
   }
-  playerPositionUpdate(x: number, y: number) {
-    this.player?.setPosition(
-      this.player.getData('currentX') + x * this.tileSize,
-      this.player.getData('currentY') + y * this.tileSize
-    );
-    const newX = this.player?.getData('currentPositionX') + x;
-    const newY = this.player?.getData('currentPositionY') + y;
-    this.player?.setData({
-      x: newX,
-      y: newY,
-    });
-  }
-  pathPositionUpdate(x: number, y: number) {
+  pathPositionUpdate(incrementOnOffsetX: number, incrementOnOffsetY: number) {
     let pathX = this.pathLayerGraphics?.x || 0;
     let pathY = this.pathLayerGraphics?.y || 0;
-    this.pathLayerGraphics?.setX(pathX + x * this.tileSize);
-    this.pathLayerGraphics?.setY(pathY + y * this.tileSize);
+    this.pathLayerGraphics?.setX(pathX + -incrementOnOffsetX * this.tileSize);
+    this.pathLayerGraphics?.setY(pathY + -incrementOnOffsetY * this.tileSize);
   }
 
   clearLineOnViewOffsetChange() {

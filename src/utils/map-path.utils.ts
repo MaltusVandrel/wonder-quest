@@ -14,47 +14,42 @@ export class MapPathUtils {
   ];
 
   static calculatePath(
-    playerXOnRelativeGridMap: number,
-    playerYOnRelativeGridMap: number,
-    targetCellXOnRelativeGridMap: number,
-    targetCellYOnRelativeGridMap: number,
-    relativeGridMapHeight: number,
-    relativeGridMapWidth: number,
-    relativeGridMapOffsetX: number,
-    relativeGridMapOffsetY: number
+    playerXOnScreenGridMap: number,
+    playerYOnScreenGridMap: number,
+    targetCellXOnScreenGridMap: number,
+    targetCellYOnScreenGridMap: number,
+    screenGridMapHeight: number,
+    screenGridMapWidth: number,
+    gridMapOffsetX: number,
+    gridMapOffsetY: number
   ): any[] {
     let targetCell = MapGeneratorUtils.getBiomeData(
-      targetCellXOnRelativeGridMap,
-      targetCellYOnRelativeGridMap
+      targetCellXOnScreenGridMap,
+      targetCellYOnScreenGridMap
     );
     let targetCellStaminaCost = targetCell.staminaCost;
     let targetCellTileCost = targetCell.timeCost;
     if (targetCellStaminaCost == null || targetCellTileCost == null) return [];
-    let maximumTiles = relativeGridMapHeight * relativeGridMapWidth;
+    let maximumTiles = screenGridMapHeight * screenGridMapWidth;
     let cautionException = 100000 - 1;
-    let originalX = playerXOnRelativeGridMap;
-    let originalY = playerYOnRelativeGridMap;
-    let playerX = playerXOnRelativeGridMap;
-    let playerY = playerYOnRelativeGridMap;
-    console.log('player', playerX, playerY);
-    console.log(
-      'target',
-      targetCellXOnRelativeGridMap,
-      targetCellYOnRelativeGridMap
-    );
+    let originalX = playerXOnScreenGridMap;
+    let originalY = playerYOnScreenGridMap;
+    let playerX = playerXOnScreenGridMap;
+    let playerY = playerYOnScreenGridMap;
+
     let steps = [];
     let uncoveredCells: any = [];
 
     uncoveredCells[originalX + ';' + originalY] = {
       cost:
-        Math.abs(originalX - targetCellXOnRelativeGridMap) +
-        Math.abs(originalY - targetCellYOnRelativeGridMap),
+        Math.abs(originalX - targetCellXOnScreenGridMap) +
+        Math.abs(originalY - targetCellYOnScreenGridMap),
       stepped: true,
     };
     steps.push({ x: originalX, y: originalY });
     while (
-      (playerX != targetCellXOnRelativeGridMap ||
-        playerY != targetCellYOnRelativeGridMap) &&
+      (playerX != targetCellXOnScreenGridMap ||
+        playerY != targetCellYOnScreenGridMap) &&
       steps.length < maximumTiles &&
       steps.length < cautionException
     ) {
@@ -64,11 +59,11 @@ export class MapPathUtils {
         let directionY = direction[1];
         let stepX = playerX + directionX;
         let stepY = playerY + directionY;
-        if (!(stepX >= 0 && stepX < relativeGridMapWidth)) continue;
-        if (!(stepY >= 0 && stepY < relativeGridMapHeight)) continue;
+        if (!(stepX >= 0 && stepX < screenGridMapWidth)) continue;
+        if (!(stepY >= 0 && stepY < screenGridMapHeight)) continue;
         let stepCell = MapGeneratorUtils.getBiomeData(
-          stepX + relativeGridMapOffsetX,
-          stepY + relativeGridMapOffsetY
+          stepX + gridMapOffsetX,
+          stepY + gridMapOffsetY
         );
         let stepStaminaCost = stepCell.staminaCost;
         let stepTimeCost = stepCell.timeCost;
@@ -78,8 +73,8 @@ export class MapPathUtils {
             Math.abs(directionX) + Math.abs(directionY)
           );
           let pathCost =
-            Math.abs(stepX - targetCellXOnRelativeGridMap) +
-            Math.abs(stepY - targetCellYOnRelativeGridMap);
+            Math.abs(stepX - targetCellXOnScreenGridMap) +
+            Math.abs(stepY - targetCellYOnScreenGridMap);
           let staminaCostWeight = stepStaminaCost / BIOME_DEFAULTS.staminaCost;
           let timeCostWeight = (stepTimeCost / BIOME_DEFAULTS.timeCost) * 0.1;
           let weightCost =
@@ -103,9 +98,9 @@ export class MapPathUtils {
       let keys = Object.keys(uncoveredCells);
       let lowestPath = {
         referenceCost: Number.MAX_SAFE_INTEGER,
-        key: playerXOnRelativeGridMap + ';' + playerYOnRelativeGridMap,
-        x: playerXOnRelativeGridMap,
-        y: playerYOnRelativeGridMap,
+        key: playerXOnScreenGridMap + ';' + playerYOnScreenGridMap,
+        x: playerXOnScreenGridMap,
+        y: playerYOnScreenGridMap,
       };
       for (let i = 0; i < keys.length; i++) {
         let key = keys[i];
