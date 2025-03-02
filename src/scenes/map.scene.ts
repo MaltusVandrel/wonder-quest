@@ -26,10 +26,10 @@ export class MapScene extends Phaser.Scene {
   lockPath: boolean = false;
   pathSteps: any[] = [];
   invalidCellCost = 9999999;
-  height = 0;
-  width = 0;
-  offsetX: number = 0;
-  offsetY: number = 0;
+  tileCollumnAmount = 0;
+  tileRowAmount = 0;
+  tileCelloffsetX: number = 0;
+  tileCelloffsetY: number = 0;
 
   constructor(config: string | Phaser.Types.Scenes.SettingsConfig) {
     super({ key: 'MapScene' });
@@ -47,8 +47,8 @@ export class MapScene extends Phaser.Scene {
   updateToCanvasSize() {
     const height = parseInt(this.game?.scale?.height + '');
     const width = parseInt(this.game?.scale?.width + '');
-    this.height = Math.ceil(height / this.tileSize);
-    this.width = Math.ceil(width / this.tileSize);
+    this.tileCollumnAmount = Math.ceil(height / this.tileSize);
+    this.tileRowAmount = Math.ceil(width / this.tileSize);
   }
   create() {
     MapGeneratorUtils.initSeed('alessandro-oliveira');
@@ -63,10 +63,10 @@ export class MapScene extends Phaser.Scene {
     ];
     for (let action of moveActions) {
       this.input.keyboard?.on(action.key, () => {
-        this.offsetX += action.x;
-        this.offsetY += action.y;
+        this.tileCelloffsetX += action.x;
+        this.tileCelloffsetY += action.y;
         this.mapUpdate();
-        this.playerPositionUpdate(-this.offsetX, -this.offsetY);
+        this.playerPositionUpdate(-this.tileCelloffsetX, -this.tileCelloffsetY);
         this.clearBullshit();
       });
     }
@@ -75,10 +75,10 @@ export class MapScene extends Phaser.Scene {
   }
   mapUpdate() {
     MapGeneratorUtils.generateChunk(
-      this.height,
-      this.width,
-      this.offsetX,
-      this.offsetY
+      this.tileCollumnAmount,
+      this.tileRowAmount,
+      this.tileCelloffsetX,
+      this.tileCelloffsetY
     );
     this.drawMap();
   }
@@ -87,11 +87,11 @@ export class MapScene extends Phaser.Scene {
     this.tileLayer?.getAll().forEach((element) => {
       element.destroy();
     });
-    for (let y = 0; y < this.height; y++) {
-      for (let x = 0; x < this.width; x++) {
+    for (let y = 0; y < this.tileCollumnAmount; y++) {
+      for (let x = 0; x < this.tileRowAmount; x++) {
         const biome = MapGeneratorUtils.getBiomeData(
-          x + this.offsetX,
-          y + this.offsetY
+          x + this.tileCelloffsetX,
+          y + this.tileCelloffsetY
         );
         let cell = this.add.rectangle(
           x * this.tileSize + this.centeringOffset,
@@ -100,7 +100,11 @@ export class MapScene extends Phaser.Scene {
           this.tileSize,
           biome.color
         );
-        cell.setData(biome);
+        cell.setData({
+          ...biome,
+          x: x + this.tileCelloffsetX,
+          y: y + this.tileCelloffsetY,
+        });
         cell.setInteractive();
 
         cell.addListener('pointerover', () => {
@@ -141,8 +145,8 @@ export class MapScene extends Phaser.Scene {
   doPlayer() {
     let playerSize = this.tileSize - 2;
     let strokeSize = playerSize > 25 ? 3 : playerSize > 15 ? 2 : 1;
-    const screenCenterX = Math.ceil(this.width / 2);
-    const screenCenterY = Math.ceil(this.height / 2);
+    const screenCenterX = Math.ceil(this.tileRowAmount / 2);
+    const screenCenterY = Math.ceil(this.tileCollumnAmount / 2);
     this.player = this.add.ellipse(
       screenCenterX * this.tileSize + this.centeringOffset,
       screenCenterY * this.tileSize + this.centeringOffset,
@@ -162,14 +166,36 @@ export class MapScene extends Phaser.Scene {
     this.player.setInteractive();
     this.playerLayer?.add(this.player);
   }
+
   doPath(x: number, y: number) {
+    let playerX = this.player?.getData('x');
+    let playerY = this.player?.getData('y');
+    // se um dos sets de coordenadas X Y do player ou do parametro estiverem fora do mapa,
+    // não faz nada
+    if (
+      playerX == undefined ||
+      playerY == undefined ||
+      x == undefined ||
+      y == undefined
+    ) {
+      return;
+    }
+    if (
+      playerX < 0 ||
+      playerX > this.tileRowAmount ||
+      playerY < 0 ||
+      playerY > this.tileCollumnAmount
+    ) {
+      return;
+    }
+
     let steps = MapPathUtils.calculatePath(
-      this.player?.getData('x'),
-      this.player?.getData('y'),
+      playerX,
+      playerY,
       x,
       y,
-      this.height,
-      this.width
+      this.tileCollumnAmount,
+      this.tileRowAmount
     );
     //exibir path
     this.pathLayer?.getAll().forEach((element) => {

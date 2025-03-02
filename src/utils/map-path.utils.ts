@@ -69,7 +69,7 @@ export class MapPathUtils {
           let weightCost =
             (staminaCostWeight + timeCostWeight) *
             (directionCostModifier * 0.3);
-          weightCost = weightCost * 2;
+          weightCost = weightCost * 3;
           let referenceCost = pathCost + weightCost;
           uncoveredCells[stepX + ';' + stepY] = {
             referenceCost: referenceCost,
