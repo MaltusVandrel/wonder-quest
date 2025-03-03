@@ -12,19 +12,39 @@ export class MainMenuScene extends Phaser.Scene {
   }
 
   preload() {
-    // Load assets for the main menu
+    this.load.image('particle', 'assets/particula.png'); // Ensure you have this image in your assets directory
   }
 
   create() {
     const height = parseInt(this.game?.scale?.height + '');
     const width = parseInt(this.game?.scale?.width + '');
 
+    // Create particle emitter
+    const emitter = this.add.particles(0, 0, 'particle', {
+      scale: { start: 1, end: 0 },
+      lifespan: 10000,
+      gravityY: -50,
+      frequency: 20,
+      maxVelocityX: 200,
+      maxVelocityY: 200,
+      blendMode: 'ADD',
+    });
+    const shape = new Phaser.Geom.Rectangle(0, 600, width, height);
+
+    emitter.addEmitZone({ type: 'random', source: shape, quantity: 100 });
+
     // Create main menu elements
     const startButton = this.add
       .text(width / 2, height / 2, 'Start Game', this.textStyle)
       .setOrigin(0.5, 0.5)
       .setInteractive()
-      .on('pointerup', () => this.startGame());
+      .on('pointerup', () => this.startGame())
+      .on('pointerover', () => {
+        startButton.setShadow(0, 0, '#ffffff', 10, true, true);
+      })
+      .on('pointerout', () => {
+        startButton.setShadow(0, 0, '#ffffff', 0, false, false);
+      });
   }
 
   startGame() {
