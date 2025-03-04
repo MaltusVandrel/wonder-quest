@@ -56,6 +56,7 @@ export class MapScene extends Phaser.Scene {
     // Start the Player and Path scenes
     this.scene.launch('map-player-scene');
     this.scene.launch('map-path-scene');
+    this.scene.launch('map-ui-scene');
     this.mapPathScene = this.scene.get('map-path-scene');
     this.mapPlayerScene = this.scene.get('map-player-scene');
   }

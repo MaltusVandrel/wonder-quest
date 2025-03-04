@@ -21,7 +21,6 @@ export class MapPathScene extends Phaser.Scene {
   doPath(x: number, y: number) {
     let playerX = this.mapPlayerScene.player?.getData('x');
     let playerY = this.mapPlayerScene.player?.getData('y');
-    console.log('player', playerX, playerY);
     if (
       playerX < 0 ||
       playerX > this.mapScene.screenGridYSize ||
