@@ -3,7 +3,11 @@ import Alea from 'alea';
 import { createNoise2D } from 'simplex-noise';
 
 import { MainMenuScene } from 'src/scenes/main-menu.scene';
+import { MapPathScene } from 'src/scenes/map.path.scene';
+import { MapPlayerScene } from 'src/scenes/map.player.scene';
 import { MapScene } from 'src/scenes/map.scene';
+import { MapUIScene } from 'src/scenes/map.ui.scene';
+import { MapPathUtils } from 'src/utils/map-path.utils';
 
 @Component({
   selector: 'app-root',
@@ -20,7 +24,13 @@ export class AppComponent implements OnInit {
       parent: 'wonder-quest',
       width: window.innerWidth,
       height: window.innerHeight,
-      scene: [MainMenuScene, MapScene],
+      scene: [
+        MainMenuScene,
+        MapScene,
+        MapPlayerScene,
+        MapPathScene,
+        MapUIScene,
+      ],
     };
   }
   ngOnInit(): void {

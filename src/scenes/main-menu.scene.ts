@@ -8,10 +8,15 @@ export class MainMenuScene extends Phaser.Scene {
   };
 
   constructor() {
-    super({ key: 'MainMenuScene' });
+    super({ key: 'main-menu-scene' });
   }
 
   preload() {
+    this.load.font(
+      'Monocraft Sans',
+      'assets/Monocraft-nerd-fonts-patched.ttf',
+      'truetype'
+    );
     this.load.image('particle', 'assets/particula.png'); // Ensure you have this image in your assets directory
   }
 
@@ -45,9 +50,15 @@ export class MainMenuScene extends Phaser.Scene {
       .on('pointerout', () => {
         startButton.setShadow(0, 0, '#ffffff', 0, false, false);
       });
+    window.addEventListener('resize', () => {
+      const height = parseInt(this.game?.scale?.height + '');
+      const width = parseInt(this.game?.scale?.width + '');
+      startButton.setPosition(width / 2, height / 2);
+      shape.setSize(width, height);
+    });
   }
 
   startGame() {
-    this.scene.start('MapScene');
+    this.scene.start('map-scene');
   }
 }
