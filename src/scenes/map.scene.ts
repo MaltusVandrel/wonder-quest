@@ -9,7 +9,7 @@ export class MapScene extends Phaser.Scene {
   };
   mapPathScene: any;
   mapPlayerScene: any;
-  tileSize: number = 32;
+  tileSize: number = 16;
   centeringOffset: number = this.tileSize / 2;
   map: any = [];
 
@@ -30,8 +30,8 @@ export class MapScene extends Phaser.Scene {
 
   preload() {
     this.load.spritesheet('tiles', '../assets/tiles.png', {
-      frameWidth: 32,
-      frameHeight: 32,
+      frameWidth: this.tileSize,
+      frameHeight: this.tileSize,
     });
     window.addEventListener('resize', () => {
       this.updateToCanvasSize();
@@ -81,6 +81,7 @@ export class MapScene extends Phaser.Scene {
     this.tileLayer?.getAll().forEach((element) => {
       element.destroy();
     });
+
     for (let y = 0; y < this.screenGridXSize; y++) {
       for (let x = 0; x < this.screenGridYSize; x++) {
         const biome = MapGeneratorUtils.getBiomeData(

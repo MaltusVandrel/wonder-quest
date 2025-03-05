@@ -59,8 +59,8 @@ export class MapPathUtils {
         let directionY = direction[1];
         let stepX = playerX + directionX;
         let stepY = playerY + directionY;
-        if (!(stepX >= 0 && stepX < screenGridMapWidth)) continue;
-        if (!(stepY >= 0 && stepY < screenGridMapHeight)) continue;
+        //if (!(stepX >= 0 && stepX < screenGridMapWidth)) continue;
+        //if (!(stepY >= 0 && stepY < screenGridMapHeight)) continue;
         let stepCell = MapGeneratorUtils.getBiomeData(
           stepX + gridMapOffsetX,
           stepY + gridMapOffsetY

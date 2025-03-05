@@ -75,22 +75,7 @@ export class MapGeneratorUtils {
           this.generatedTilesData[layer.key][y + offsetY] = [];
         }
         for (let x = 0; x < width; x++) {
-          if (this.generatedTilesData[layer.key][y + offsetY][x + offsetX])
-            continue;
-          // Gera a elevação com 6 octaves; ajuste o scale para controlar o zoom
-          let tileDataValue = this.fractalNoise(
-            x + offsetX,
-            y + offsetY,
-            this.noises[layer.key],
-            layer.octaves,
-            layer.persistence,
-            layer.lacunarity,
-            layer.scale
-          );
-          // Os valores iniciais estão aproximadamente em [-1, 1]; remapeia para [0, 1]
-          tileDataValue = (tileDataValue + 1) / 2;
-          this.generatedTilesData[layer.key][y + offsetY][x + offsetX] =
-            tileDataValue;
+          this.generateTilesData(layer, x + offsetX, y + offsetY);
         }
       }
     }
@@ -102,22 +87,52 @@ export class MapGeneratorUtils {
         this.generatedBiome[y + offsetY] = [];
       }
       for (let x = 0; x < width; x++) {
-        if (this.generatedBiome[y + offsetY][x + offsetX]) continue;
-        this.generatedBiome[y + offsetY][x + offsetX] = BiomeUtils.getBiomeData(
-          x + offsetX,
-          y + offsetY,
-          this.generatedTilesData.elevation[y + offsetY][x + offsetX],
-          this.generatedTilesData.moisture[y + offsetY][x + offsetX],
-          this.generatedTilesData.temperature[y + offsetY][x + offsetX],
-          this.generatedTilesData.localVariation[y + offsetY][x + offsetX],
-          this.generatedTilesData.wonder[y + offsetY][x + offsetX]
-        );
+        this.seBiomeDataFromGeneratedTilesData(x + offsetX, y + offsetY);
       }
     }
   }
 
   static getBiomeData(x: number, y: number): any {
+    if (!this.generatedBiome[y]) this.generatedBiome[y] = [];
+    if (!this.generatedBiome[y][x]) {
+      for (let layer of this.layers) {
+        this.generateTilesData(layer, x, y);
+      }
+      this.seBiomeDataFromGeneratedTilesData(x, y);
+    }
     return this.generatedBiome[y][x];
+  }
+
+  static seBiomeDataFromGeneratedTilesData(x: number, y: number) {
+    if (this.generatedBiome[y][x]) return;
+    this.generatedBiome[y][x] = BiomeUtils.getBiomeData(
+      x,
+      y,
+      this.generatedTilesData.elevation[y][x],
+      this.generatedTilesData.moisture[y][x],
+      this.generatedTilesData.temperature[y][x],
+      this.generatedTilesData.localVariation[y][x],
+      this.generatedTilesData.wonder[y][x]
+    );
+  }
+
+  static generateTilesData(layer: any, x: number, y: number) {
+    if (!this.generatedTilesData[layer.key][y])
+      this.generatedTilesData[layer.key][y] = [];
+    if (this.generatedTilesData[layer.key][y][x]) return;
+    // Gera a elevação com 6 octaves; ajuste o scale para controlar o zoom
+    let tileDataValue = this.fractalNoise(
+      x,
+      y,
+      this.noises[layer.key],
+      layer.octaves,
+      layer.persistence,
+      layer.lacunarity,
+      layer.scale
+    );
+    // Os valores iniciais estão aproximadamente em [-1, 1]; remapeia para [0, 1]
+    tileDataValue = (tileDataValue + 1) / 2;
+    this.generatedTilesData[layer.key][y][x] = tileDataValue;
   }
 
   // Função que gera ruído fractal (fBm) – soma de vários octaves de ruído
