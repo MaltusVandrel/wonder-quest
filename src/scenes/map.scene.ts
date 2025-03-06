@@ -3,20 +3,14 @@ import { ColorUtils } from 'src/utils/color.utils';
 import { MapGeneratorUtils } from 'src/utils/map-generator.utils';
 
 export class MapScene extends Phaser.Scene {
-  textStyle: Phaser.Types.GameObjects.Text.TextStyle = {
-    font: '10px Courier',
-    color: '#000000',
-  };
   mapPathScene: any;
   mapPlayerScene: any;
+  mapUIScene: any;
   tileSize: number = 16;
   centeringOffset: number = this.tileSize / 2;
   map: any = [];
 
   tileLayer: Phaser.GameObjects.Layer | undefined;
-  pathLayer: Phaser.GameObjects.Layer | undefined;
-  playerLayer: Phaser.GameObjects.Layer | undefined;
-  textLayer: Phaser.GameObjects.Layer | undefined;
 
   invalidCellCost = 9999999;
   screenGridXSize = 0;
@@ -59,6 +53,7 @@ export class MapScene extends Phaser.Scene {
     this.scene.launch('map-ui-scene');
     this.mapPathScene = this.scene.get('map-path-scene');
     this.mapPlayerScene = this.scene.get('map-player-scene');
+    this.mapUIScene = this.scene.get('map-ui-scene');
   }
 
   moveCamera(incrementOnOffsetX: number, incrementOnOffsetY: number) {
@@ -108,7 +103,10 @@ export class MapScene extends Phaser.Scene {
           color.saturate(25);
           cell.fillColor = ColorUtils.colorToInteger(color);
           cell.setStrokeStyle(2, 0xffffff);
-          if (!this.mapPathScene.lockPath) this.mapPathScene.doPath(x, y);
+          if (!this.mapPathScene.lockPath) {
+            this.mapPathScene.doPath(x, y);
+            this.mapUIScene.showTileInfo(x, y);
+          }
         });
         cell.addListener('pointerout', () => {
           cell.fillColor = cell.getData('color');

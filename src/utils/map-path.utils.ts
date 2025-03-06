@@ -24,9 +24,10 @@ export class MapPathUtils {
     gridMapOffsetY: number
   ): any[] {
     let targetCell = MapGeneratorUtils.getBiomeData(
-      targetCellXOnScreenGridMap,
-      targetCellYOnScreenGridMap
+      targetCellXOnScreenGridMap + gridMapOffsetX,
+      targetCellYOnScreenGridMap + gridMapOffsetY
     );
+
     let targetCellStaminaCost = targetCell.staminaCost;
     let targetCellTileCost = targetCell.timeCost;
     if (targetCellStaminaCost == null || targetCellTileCost == null) return [];
