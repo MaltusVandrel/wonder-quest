@@ -1,18 +1,13 @@
 export class UITextElement {
-  static ALIGNMENT_HORIZONTAL = {
-    LEFT: 'LEFT',
-    RIGHT: 'RIGHT',
-    CENTER: 'CENTER',
-  };
-  static ALIGNMENT_VERTICAL = {
-    TOP: 'TOP',
-    BOTTOM: 'BOTTOM',
+  static ALIGNMENT = {
+    START: 'START',
+    END: 'END',
     CENTER: 'CENTER',
   };
 
   key: string;
-  alignmentHorizontal: string = UITextElement.ALIGNMENT_HORIZONTAL.LEFT;
-  alignmentVertical: string = UITextElement.ALIGNMENT_VERTICAL.TOP;
+  alignmentHorizontal: string = UITextElement.ALIGNMENT.START;
+  alignmentVertical: string = UITextElement.ALIGNMENT.START;
   marginX: number = 0;
   marginY: number = 0;
   text: string[] = [];

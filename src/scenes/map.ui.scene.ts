@@ -57,8 +57,8 @@ export class MapUIScene extends Phaser.Scene {
         ...this.textStyle,
         fontSize: '20px',
       })
-      .horizontalPosition(UITextElement.ALIGNMENT_HORIZONTAL.LEFT, 8)
-      .verticalPosition(UITextElement.ALIGNMENT_VERTICAL.TOP, 8);
+      .horizontalPosition(UITextElement.ALIGNMENT.START, 8)
+      .verticalPosition(UITextElement.ALIGNMENT.START, 8);
 
     this.uiElements[key] = element;
     this.updateUI();
@@ -77,13 +77,11 @@ export class MapUIScene extends Phaser.Scene {
       let originX = 0;
       let originY = 0;
 
-      if (
-        element.alignmentHorizontal == UITextElement.ALIGNMENT_HORIZONTAL.RIGHT
-      ) {
+      if (element.alignmentHorizontal == UITextElement.ALIGNMENT.END) {
         x = width - element.marginX;
         originX = 1;
       } else if (
-        element.alignmentHorizontal == UITextElement.ALIGNMENT_HORIZONTAL.CENTER
+        element.alignmentHorizontal == UITextElement.ALIGNMENT.CENTER
       ) {
         x = Math.ceil(width / 2) + element.marginX;
         originX = 0.5;
@@ -91,14 +89,10 @@ export class MapUIScene extends Phaser.Scene {
         x = 0 + element.marginX;
         originX = 0;
       }
-      if (
-        element.alignmentVertical == UITextElement.ALIGNMENT_VERTICAL.BOTTOM
-      ) {
+      if (element.alignmentVertical == UITextElement.ALIGNMENT.END) {
         y = height - element.marginY;
         originY = 1;
-      } else if (
-        element.alignmentVertical == UITextElement.ALIGNMENT_VERTICAL.CENTER
-      ) {
+      } else if (element.alignmentVertical == UITextElement.ALIGNMENT.CENTER) {
         y = Math.ceil(height / 2) + element.marginY;
         originY = 0.5;
       } else {
