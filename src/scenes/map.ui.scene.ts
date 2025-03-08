@@ -1,4 +1,5 @@
 import * as Phaser from 'phaser';
+import * as moment from 'moment';
 import { UITextElement } from 'src/core/ui-text-element';
 import { MapGeneratorUtils } from 'src/utils/map-generator.utils';
 
@@ -18,6 +19,7 @@ export class MapUIScene extends Phaser.Scene {
     },
   };
   mapScene: any;
+  mapPathScene: any;
   textLayer: Phaser.GameObjects.Layer | undefined;
   uiElements: any = [];
   constructor() {
@@ -28,6 +30,7 @@ export class MapUIScene extends Phaser.Scene {
     const height = parseInt(this.game?.scale?.height + '');
     const width = parseInt(this.game?.scale?.width + '');
     this.mapScene = this.scene.get('map-scene');
+    this.mapPathScene = this.scene.get('map-path-scene');
     this.textLayer = this.add.layer();
     // Create UI elements
   }
@@ -39,10 +42,21 @@ export class MapUIScene extends Phaser.Scene {
     );
 
     let key: string = 'tile-info';
+    let totalStaminaCost = 0;
+    let totalTimeCost = 0;
+    for (let step of this.mapPathScene.pathSteps) {
+      if (!step.cell) continue;
+      totalTimeCost += step.cell.timeCost;
+      totalStaminaCost += step.cell.staminaCost;
+    }
+    let formattedTimeCost = moment
+      .utc(totalTimeCost * 60 * 1000)
+      .format('HH"h" mm"m" ss"s"');
+
     let element = UITextElement.build(key)
       .addText(tile.type.toUpperCase())
-      .addText(tile.staminaCost + ' Stamina Cost')
-      .addText(tile.timeCost + 'm Time Cost')
+      .addText(totalStaminaCost + ' Stamina Cost')
+      .addText(formattedTimeCost + 'm Time Cost')
       .setStyle({
         ...this.textStyle,
         fontSize: '20px',
@@ -53,6 +67,7 @@ export class MapUIScene extends Phaser.Scene {
     this.uiElements[key] = element;
     this.updateUI();
   }
+
   updateUI() {
     const height = parseInt(this.game?.scale?.height + '');
     const width = parseInt(this.game?.scale?.width + '');
