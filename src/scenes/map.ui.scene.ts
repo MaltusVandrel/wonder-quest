@@ -7,7 +7,15 @@ export class MapUIScene extends Phaser.Scene {
     fontFamily: 'Monocraft Sans',
     color: '#ffffff',
     stroke: '#000000',
-    strokeThickness: 2,
+    strokeThickness: 4,
+    shadow: {
+      offsetX: 0,
+      offsetY: 0,
+      color: '#000000',
+      blur: 10,
+      stroke: true,
+      fill: true,
+    },
   };
   mapScene: any;
   textLayer: Phaser.GameObjects.Layer | undefined;
@@ -22,24 +30,6 @@ export class MapUIScene extends Phaser.Scene {
     this.mapScene = this.scene.get('map-scene');
     this.textLayer = this.add.layer();
     // Create UI elements
-    const uiText = this.add.text(width - 150, 20, 'UI Overlay', {
-      ...this.textStyle,
-      fontSize: '20px',
-    });
-
-    // Example of a button
-    const button = this.add
-      .text(width - 150, 60, 'Button', {
-        fontFamily: 'Monocraft Sans',
-        color: '#ffffff',
-        fontSize: '20px',
-        backgroundColor: '#000000',
-      })
-      .setInteractive();
-
-    button.on('pointerup', () => {
-      console.log('Button clicked');
-    });
   }
 
   showTileInfo(x: number, y: number) {
@@ -57,8 +47,8 @@ export class MapUIScene extends Phaser.Scene {
         ...this.textStyle,
         fontSize: '20px',
       })
-      .horizontalPosition(UITextElement.ALIGNMENT.START, 8)
-      .verticalPosition(UITextElement.ALIGNMENT.START, 8);
+      .horizontalPosition(UITextElement.ALIGNMENT.START, 12)
+      .verticalPosition(UITextElement.ALIGNMENT.END, 12);
 
     this.uiElements[key] = element;
     this.updateUI();
