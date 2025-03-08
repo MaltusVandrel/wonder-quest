@@ -49,14 +49,13 @@ export class MapUIScene extends Phaser.Scene {
       totalTimeCost += step.cell.timeCost;
       totalStaminaCost += step.cell.staminaCost;
     }
-    let formattedTimeCost = moment
-      .utc(totalTimeCost * 60 * 1000)
-      .format('HH"h" mm"m" ss"s"');
+    let duration = moment.duration(totalTimeCost, 'minutes');
+    let formattedTimeCost = `${duration.hours()}h ${duration.minutes()}m ${duration.seconds()}s`;
 
     let element = UITextElement.build(key)
       .addText(tile.type.toUpperCase())
       .addText(totalStaminaCost + ' Stamina Cost')
-      .addText(formattedTimeCost + 'm Time Cost')
+      .addText(formattedTimeCost)
       .setStyle({
         ...this.textStyle,
         fontSize: '20px',

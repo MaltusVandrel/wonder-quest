@@ -22,12 +22,10 @@
           "builder": "@angular-devkit/build-angular:application",
 
           "options": {
-            "browserTarget": "wonder-quest:build",
             "outputPath": "dist/wonder-quest",
             "index": "src/index.html",
-            "main": "src/main.ts",
             "browser": "src/main.ts",
-            "polyfills": "src/polyfills.ts",
+            "polyfills": ["src/polyfills.ts"],
             "tsConfig": "tsconfig.app.json",
             "inlineStyleLanguage": "scss",
             "assets": ["src/favicon.ico", "src/assets"],
@@ -57,9 +55,7 @@
               "outputHashing": "all"
             },
             "development": {
-              "buildOptimizer": false,
               "optimization": false,
-              "vendorChunk": true,
               "extractLicenses": false,
               "sourceMap": true,
               "namedChunks": true
@@ -71,10 +67,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "browserTarget": "wonder-quest:build:production"
+              "buildTarget": "wonder-quest:build:production"
             },
             "development": {
-              "browserTarget": "wonder-quest:build:development"
+              "buildTarget": "wonder-quest:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -82,14 +78,14 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "wonder-quest:build"
+            "buildTarget": "wonder-quest:build"
           }
         },
         "test": {
           "builder": "@angular-devkit/build-angular:karma",
           "options": {
             "main": "src/test.ts",
-            "polyfills": "src/polyfills.ts",
+            "polyfills": ["src/polyfills.ts"],
             "tsConfig": "tsconfig.spec.json",
             "karmaConfig": "karma.conf.js",
             "inlineStyleLanguage": "scss",
