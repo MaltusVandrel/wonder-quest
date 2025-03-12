@@ -1,10 +1,12 @@
 import * as Phaser from 'phaser';
 import { MapPathUtils } from 'src/utils/map-path.utils';
 import { MapScene } from './map.scene';
+import { GameDataService } from 'src/services/game-data.service';
 
 export class MapPathScene extends Phaser.Scene {
   mapScene: any;
   mapPlayerScene: any;
+  mapUIScene: any;
   pathGraphics: Phaser.GameObjects.Graphics | undefined;
   pathSteps: any[] = [];
   lockPath: boolean = false;
@@ -17,6 +19,7 @@ export class MapPathScene extends Phaser.Scene {
     this.pathGraphics = this.add.graphics();
     this.mapPlayerScene = this.scene.get('map-player-scene');
     this.mapScene = this.scene.get('map-scene');
+    this.mapUIScene = this.scene.get('map-ui-scene');
   }
   doPath(x: number, y: number) {
     let playerX = this.mapPlayerScene.player?.getData('x');
@@ -72,6 +75,10 @@ export class MapPathScene extends Phaser.Scene {
 
       this.mapScene.moveCamera(-incrementOnOffsetX, -incrementOnOffsetY);
       this.pathPositionUpdate(-incrementOnOffsetX, -incrementOnOffsetY);
+
+      GameDataService.GAME_DATA.time += step.cell.timeCost;
+      this.mapUIScene.showCurrentTime();
+      this.mapScene.doColorFilter();
       if (stepIndex < this.pathSteps.length) {
         setTimeout(playerStep, 90);
       } else {

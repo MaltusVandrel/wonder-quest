@@ -1,4 +1,6 @@
+import { Injectable } from '@angular/core';
 import * as Phaser from 'phaser';
+import { GameDataService } from 'src/services/game-data.service';
 import { ColorUtils } from 'src/utils/color.utils';
 import { MapGeneratorUtils } from 'src/utils/map-generator.utils';
 
@@ -11,6 +13,7 @@ export class MapScene extends Phaser.Scene {
   map: any = [];
 
   tileLayer: Phaser.GameObjects.Layer | undefined;
+  colorFilter: Phaser.GameObjects.Graphics | undefined;
 
   invalidCellCost = 9999999;
   screenGridXSize = 0;
@@ -54,6 +57,8 @@ export class MapScene extends Phaser.Scene {
     this.mapPathScene = this.scene.get('map-path-scene');
     this.mapPlayerScene = this.scene.get('map-player-scene');
     this.mapUIScene = this.scene.get('map-ui-scene');
+
+    this.doColorFilter();
   }
 
   moveCamera(incrementOnOffsetX: number, incrementOnOffsetY: number) {
@@ -120,5 +125,27 @@ export class MapScene extends Phaser.Scene {
         this.tileLayer?.add(cell);
       }
     }
+  }
+  doColorFilter() {
+    const width = this.screenGridYSize * this.tileSize;
+    const height = this.screenGridXSize * this.tileSize;
+    const time = GameDataService.getTimeData();
+    if (this.colorFilter) {
+      this.colorFilter.destroy();
+    }
+    this.colorFilter = this.add.graphics();
+    if (time.hour >= 20 || time.hour < 5) {
+      this.colorFilter.fillStyle(0x0000ff, 0.5); // Change the color and alpha as needed
+    }
+
+    if (
+      (time.hour >= 5 && time.hour < 8) ||
+      (time.hour >= 17 && time.hour < 20)
+    ) {
+      this.colorFilter.fillStyle(0xff5500, 0.5); // Change the color and alpha as needed
+    }
+
+    this.colorFilter.fillRect(0, 0, width, height);
+    this.colorFilter.setBlendMode(Phaser.BlendModes.MULTIPLY);
   }
 }

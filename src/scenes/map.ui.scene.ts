@@ -2,6 +2,8 @@ import * as Phaser from 'phaser';
 import * as moment from 'moment';
 import { UITextElement } from 'src/core/ui-text-element';
 import { MapGeneratorUtils } from 'src/utils/map-generator.utils';
+import { AppComponent } from 'src/app/app.component';
+import { GameDataService } from 'src/services/game-data.service';
 
 export class MapUIScene extends Phaser.Scene {
   textStyle: Phaser.Types.GameObjects.Text.TextStyle = {
@@ -32,9 +34,27 @@ export class MapUIScene extends Phaser.Scene {
     this.mapScene = this.scene.get('map-scene');
     this.mapPathScene = this.scene.get('map-path-scene');
     this.textLayer = this.add.layer();
+    this.showCurrentTime();
     // Create UI elements
   }
 
+  showCurrentTime() {
+    let key: string = 'now-time';
+
+    const f = GameDataService.getFormattedTime();
+    const formattedCurrentTime = `${f.hour}h ${f.minutes}, ${f.day} of ${f.month} of ${f.year}`;
+    let element = UITextElement.build(key)
+      .addText(formattedCurrentTime)
+      .setStyle({
+        ...this.textStyle,
+        fontSize: '20px',
+      })
+      .horizontalPosition(UITextElement.ALIGNMENT.CENTER, 0)
+      .verticalPosition(UITextElement.ALIGNMENT.END, 12);
+    this.uiElements[key] = element;
+
+    this.updateUI();
+  }
   showTileInfo(x: number, y: number) {
     let tile = MapGeneratorUtils.getBiomeData(
       x + this.mapScene.gridOffsetX,
@@ -51,7 +71,9 @@ export class MapUIScene extends Phaser.Scene {
     }
     let duration = moment.duration(totalTimeCost, 'minutes');
     let formattedTimeCost = `${duration.hours()}h ${duration.minutes()}m ${duration.seconds()}s`;
-
+    if (duration.days() > 0) {
+      formattedTimeCost = `${duration.days()} days ` + formattedTimeCost;
+    }
     let element = UITextElement.build(key)
       .addText(tile.type.toUpperCase())
       .addText(totalStaminaCost + ' Stamina Cost')

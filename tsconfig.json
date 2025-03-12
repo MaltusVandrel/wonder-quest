@@ -15,15 +15,11 @@
     "experimentalDecorators": true,
     "moduleResolution": "node",
     "importHelpers": true,
-    "target": "es2017",
-    "module": "es2020",
+    "target": "es2022",
+    "module": "es2022",
     "resolveJsonModule": true,
     "esModuleInterop": true,
-    "lib": [
-      "es2020",
-      "dom",
-      "scripthost"
-    ]
+    "lib": ["es2022", "dom", "scripthost"]
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,
@@ -31,10 +27,6 @@
     "strictInputAccessModifiers": true,
     "strictTemplates": true
   },
-  "typeRoots": [
-    "./node_modules/phaser/types"
-  ],
-  "types": [
-      "Phaser"
-  ]
+  "typeRoots": ["./node_modules/phaser/types"],
+  "types": ["Phaser"]
 }
