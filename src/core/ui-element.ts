@@ -1,15 +1,22 @@
-export class UITextElement {
+import { GameObjects } from 'phaser';
+
+export class UIElement {
   static ALIGNMENT = {
     START: 'START',
     END: 'END',
     CENTER: 'CENTER',
   };
-
+  static TYPE = {
+    TEXT: 'TEXT',
+    ELEMENT: 'ELEMENT',
+  };
   key: string;
-  alignmentHorizontal: string = UITextElement.ALIGNMENT.START;
-  alignmentVertical: string = UITextElement.ALIGNMENT.START;
+  alignmentHorizontal: string = UIElement.ALIGNMENT.START;
+  alignmentVertical: string = UIElement.ALIGNMENT.START;
   marginX: number = 0;
   marginY: number = 0;
+  type: string = UIElement.TYPE.TEXT;
+  element: Phaser.GameObjects.GameObject | undefined;
   text: string[] = [];
   style: Phaser.Types.GameObjects.Text.TextStyle = {};
   constructor(key: string, text?: string[] | string) {
@@ -23,7 +30,7 @@ export class UITextElement {
     }
   }
   static build(key: string) {
-    return new UITextElement(key);
+    return new UIElement(key);
   }
   setText(text: string[] | string) {
     if (Array.isArray(text)) {

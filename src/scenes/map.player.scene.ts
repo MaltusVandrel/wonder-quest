@@ -34,7 +34,7 @@ export class MapPlayerScene extends Phaser.Scene {
       screenCenterY * this.mapScene.tileSize + this.centeringOffset,
       playerSize,
       playerSize,
-      0xffff00
+      0x2222aa
     );
     this.player.setData({
       y: screenCenterY,

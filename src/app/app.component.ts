@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import Alea from 'alea';
 import { createNoise2D } from 'simplex-noise';
 import { GameData } from 'src/core/game-data';
+import { IntroductionScene } from 'src/scenes/introduction.scene';
 
 import { MainMenuScene } from 'src/scenes/main-menu.scene';
 import { MapPathScene } from 'src/scenes/map.path.scene';
@@ -31,9 +32,10 @@ export class AppComponent implements OnInit {
       scene: [
         MainMenuScene,
         MapScene,
-        MapPlayerScene,
         MapPathScene,
+        MapPlayerScene,
         MapUIScene,
+        IntroductionScene,
       ],
     };
   }

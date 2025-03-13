@@ -8,6 +8,7 @@ export class MapScene extends Phaser.Scene {
   mapPathScene: any;
   mapPlayerScene: any;
   mapUIScene: any;
+  introductionScene: any;
   tileSize: number = 16;
   centeringOffset: number = this.tileSize / 2;
   map: any = [];
@@ -54,9 +55,11 @@ export class MapScene extends Phaser.Scene {
     this.scene.launch('map-player-scene');
     this.scene.launch('map-path-scene');
     this.scene.launch('map-ui-scene');
+    this.scene.launch('introduction-scene');
     this.mapPathScene = this.scene.get('map-path-scene');
     this.mapPlayerScene = this.scene.get('map-player-scene');
     this.mapUIScene = this.scene.get('map-ui-scene');
+    this.introductionScene = this.scene.get('introduction-scene');
 
     this.doColorFilter();
   }

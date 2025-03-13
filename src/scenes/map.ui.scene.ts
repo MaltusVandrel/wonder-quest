@@ -1,6 +1,6 @@
 import * as Phaser from 'phaser';
 import * as moment from 'moment';
-import { UITextElement } from 'src/core/ui-text-element';
+import { UIElement } from 'src/core/ui-element';
 import { MapGeneratorUtils } from 'src/utils/map-generator.utils';
 import { AppComponent } from 'src/app/app.component';
 import { GameDataService } from 'src/services/game-data.service';
@@ -43,14 +43,14 @@ export class MapUIScene extends Phaser.Scene {
 
     const f = GameDataService.getFormattedTime();
     const formattedCurrentTime = `${f.hour}h ${f.minutes}, ${f.day} of ${f.month} of ${f.year}`;
-    let element = UITextElement.build(key)
+    let element = UIElement.build(key)
       .addText(formattedCurrentTime)
       .setStyle({
         ...this.textStyle,
         fontSize: '20px',
       })
-      .horizontalPosition(UITextElement.ALIGNMENT.CENTER, 0)
-      .verticalPosition(UITextElement.ALIGNMENT.END, 12);
+      .horizontalPosition(UIElement.ALIGNMENT.CENTER, 0)
+      .verticalPosition(UIElement.ALIGNMENT.END, 12);
     this.uiElements[key] = element;
 
     this.updateUI();
@@ -74,7 +74,7 @@ export class MapUIScene extends Phaser.Scene {
     if (duration.days() > 0) {
       formattedTimeCost = `${duration.days()} days ` + formattedTimeCost;
     }
-    let element = UITextElement.build(key)
+    let element = UIElement.build(key)
       .addText(tile.type.toUpperCase())
       .addText(totalStaminaCost + ' Stamina Cost')
       .addText(formattedTimeCost)
@@ -82,8 +82,8 @@ export class MapUIScene extends Phaser.Scene {
         ...this.textStyle,
         fontSize: '20px',
       })
-      .horizontalPosition(UITextElement.ALIGNMENT.START, 12)
-      .verticalPosition(UITextElement.ALIGNMENT.END, 12);
+      .horizontalPosition(UIElement.ALIGNMENT.START, 12)
+      .verticalPosition(UIElement.ALIGNMENT.END, 12);
 
     this.uiElements[key] = element;
     this.updateUI();
@@ -103,22 +103,20 @@ export class MapUIScene extends Phaser.Scene {
       let originX = 0;
       let originY = 0;
 
-      if (element.alignmentHorizontal == UITextElement.ALIGNMENT.END) {
+      if (element.alignmentHorizontal == UIElement.ALIGNMENT.END) {
         x = width - element.marginX;
         originX = 1;
-      } else if (
-        element.alignmentHorizontal == UITextElement.ALIGNMENT.CENTER
-      ) {
+      } else if (element.alignmentHorizontal == UIElement.ALIGNMENT.CENTER) {
         x = Math.ceil(width / 2) + element.marginX;
         originX = 0.5;
       } else {
         x = 0 + element.marginX;
         originX = 0;
       }
-      if (element.alignmentVertical == UITextElement.ALIGNMENT.END) {
+      if (element.alignmentVertical == UIElement.ALIGNMENT.END) {
         y = height - element.marginY;
         originY = 1;
-      } else if (element.alignmentVertical == UITextElement.ALIGNMENT.CENTER) {
+      } else if (element.alignmentVertical == UIElement.ALIGNMENT.CENTER) {
         y = Math.ceil(height / 2) + element.marginY;
         originY = 0.5;
       } else {
