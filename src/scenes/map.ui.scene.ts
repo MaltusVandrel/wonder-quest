@@ -23,8 +23,8 @@ export class MapUIScene extends Phaser.Scene {
   };
   mapScene: any;
   mapPathScene: any;
-  textLayer: Phaser.GameObjects.Layer | undefined;
-  uiElements: any = [];
+  uiLayer: Phaser.GameObjects.Layer | undefined;
+  uiElements: { [key: string]: any } = {};
   constructor() {
     super({ key: 'map-ui-scene' });
   }
@@ -34,7 +34,7 @@ export class MapUIScene extends Phaser.Scene {
     const width = parseInt(this.game?.scale?.width + '');
     this.mapScene = this.scene.get('map-scene');
     this.mapPathScene = this.scene.get('map-path-scene');
-    this.textLayer = this.add.layer();
+    this.uiLayer = this.add.layer();
     this.showCurrentTime();
     this.showStaminaGauge();
     this.showRestButton();
@@ -42,15 +42,22 @@ export class MapUIScene extends Phaser.Scene {
   }
   showRestButton() {
     let key: string = 'rest-button';
+    if (this.uiElements[key]) {
+      this.uiElements[key].destroy();
+    }
 
-    let element = UIElement.build(key)
-      .addText(`rest`)
-      .setStyle({
-        ...this.textStyle,
-        fontSize: '20px',
-      })
-      .horizontalPosition(UIElement.ALIGNMENT.END, 0)
-      .verticalPosition(UIElement.ALIGNMENT.END, 12)
+    let element = this.add
+      .text(
+        this.getPosX(UIElement.ALIGNMENT.END, 0),
+        this.getPosY(UIElement.ALIGNMENT.END, 12),
+        `rest`,
+        {
+          ...this.textStyle,
+          fontSize: '20px',
+        }
+      )
+      .setOrigin(UIElement.ALIGNMENT.END, UIElement.ALIGNMENT.END)
+      .setInteractive()
       .on('pointerup', () => {
         let stamina = GameDataService.PLAYER_DATA.getGauge(GAUGE_KEYS.STAMINA);
         stamina.consumed = 0;
@@ -58,53 +65,61 @@ export class MapUIScene extends Phaser.Scene {
         this.mapScene.doColorFilter();
         this.showStaminaGauge();
         this.showCurrentTime();
-      });
-    /*.on('pointerover', () => {
+      })
+      .on('pointerover', () => {
         element.setShadow(0, 0, '#ffffff', 10, true, true);
       })
       .on('pointerout', () => {
-        startButton.setShadow(0, 0, '#ffffff', 0, false, false);
-      });*/
-    this.uiElements[key] = element;
+        element.setShadow(0, 0, '#ffffff', 0, false, false);
+      });
 
-    this.updateUI();
+    this.uiElements[key] = element;
   }
 
   showStaminaGauge() {
     let key: string = 'status-info';
+    if (this.uiElements[key]) {
+      this.uiElements[key].destroy();
+    }
+
     const stamina = GameDataService.PLAYER_DATA.getGauge(GAUGE_KEYS.STAMINA);
     const percentualStatus = (
       (stamina.getCurrentValue() / stamina.modValue) *
       100
     ).toFixed(2);
-    let element = UIElement.build(key)
-      .addText(`stamina: ${percentualStatus}%`)
-      .setStyle({
-        ...this.textStyle,
-        fontSize: '20px',
-      })
-      .horizontalPosition(UIElement.ALIGNMENT.END, 0)
-      .verticalPosition(UIElement.ALIGNMENT.START, 12);
+    let element = this.add
+      .text(
+        this.getPosX(UIElement.ALIGNMENT.END, 0),
+        this.getPosY(UIElement.ALIGNMENT.START, 12),
+        `stamina: ${percentualStatus}%`,
+        {
+          ...this.textStyle,
+          fontSize: '20px',
+        }
+      )
+      .setOrigin(UIElement.ALIGNMENT.END, UIElement.ALIGNMENT.START);
     this.uiElements[key] = element;
-
-    this.updateUI();
   }
   showCurrentTime() {
     let key: string = 'now-time';
+    if (this.uiElements[key]) {
+      this.uiElements[key].destroy();
+    }
 
     const f = GameDataService.getFormattedTime();
     const formattedCurrentTime = `${f.hour}h ${f.minutes}, ${f.day} of ${f.month} of ${f.year}`;
-    let element = UIElement.build(key)
-      .addText(formattedCurrentTime)
-      .setStyle({
-        ...this.textStyle,
-        fontSize: '20px',
-      })
-      .horizontalPosition(UIElement.ALIGNMENT.CENTER, 0)
-      .verticalPosition(UIElement.ALIGNMENT.END, 12);
+    let element = this.add
+      .text(
+        this.getPosX(UIElement.ALIGNMENT.CENTER, 12),
+        this.getPosY(UIElement.ALIGNMENT.END, 12),
+        formattedCurrentTime,
+        {
+          ...this.textStyle,
+          fontSize: '20px',
+        }
+      )
+      .setOrigin(UIElement.ALIGNMENT.CENTER, UIElement.ALIGNMENT.END);
     this.uiElements[key] = element;
-
-    this.updateUI();
   }
   showTileInfo(x: number, y: number) {
     let tile = MapGeneratorUtils.getBiomeData(
@@ -113,6 +128,11 @@ export class MapUIScene extends Phaser.Scene {
     );
 
     let key: string = 'tile-info';
+
+    if (this.uiElements[key]) {
+      this.uiElements[key].destroy();
+    }
+
     let totalStaminaCost = 0;
     let totalTimeCost = 0;
     for (let step of this.mapPathScene.pathSteps) {
@@ -125,65 +145,48 @@ export class MapUIScene extends Phaser.Scene {
     if (duration.days() > 0) {
       formattedTimeCost = `${duration.days()} days ` + formattedTimeCost;
     }
-    let element = UIElement.build(key)
-      .addText(tile.type.toUpperCase())
-      .addText(totalStaminaCost + ' Stamina Cost')
-      .addText(formattedTimeCost)
-      .setStyle({
-        ...this.textStyle,
-        fontSize: '20px',
-      })
-      .horizontalPosition(UIElement.ALIGNMENT.START, 12)
-      .verticalPosition(UIElement.ALIGNMENT.END, 12);
-
+    let element = this.add
+      .text(
+        this.getPosX(UIElement.ALIGNMENT.START, 12),
+        this.getPosY(UIElement.ALIGNMENT.END, 12),
+        [
+          tile.type.toUpperCase(),
+          totalStaminaCost + ' Stamina Cost',
+          formattedTimeCost,
+        ],
+        {
+          ...this.textStyle,
+          fontSize: '20px',
+        }
+      )
+      .setOrigin(UIElement.ALIGNMENT.START, UIElement.ALIGNMENT.END);
     this.uiElements[key] = element;
-    this.updateUI();
   }
 
-  updateUI() {
-    const height = parseInt(this.game?.scale?.height + '');
+  getPosX(alignment: number, margin: number) {
     const width = parseInt(this.game?.scale?.width + '');
-
-    this.textLayer?.getAll().forEach((element) => {
-      element.destroy();
-    });
+    if (alignment == UIElement.ALIGNMENT.END) {
+      return width - margin;
+    } else if (alignment == UIElement.ALIGNMENT.CENTER) {
+      return Math.ceil(width / 2) + margin;
+    } else {
+      return 0 + margin;
+    }
+  }
+  getPosY(alignment: number, margin: number) {
+    const height = parseInt(this.game?.scale?.height + '');
+    if (alignment == UIElement.ALIGNMENT.END) {
+      return height - margin;
+    } else if (alignment == UIElement.ALIGNMENT.CENTER) {
+      return Math.ceil(height / 2) + margin;
+    } else {
+      return 0 + margin;
+    }
+  }
+  updateUI(key: string, element: any) {
     for (let key of Object.keys(this.uiElements)) {
-      let element = this.uiElements[key];
-      let x = 0;
-      let y = 0;
-      let originX = 0;
-      let originY = 0;
-
-      if (element.alignmentHorizontal == UIElement.ALIGNMENT.END) {
-        x = width - element.marginX;
-        originX = 1;
-      } else if (element.alignmentHorizontal == UIElement.ALIGNMENT.CENTER) {
-        x = Math.ceil(width / 2) + element.marginX;
-        originX = 0.5;
-      } else {
-        x = 0 + element.marginX;
-        originX = 0;
-      }
-      if (element.alignmentVertical == UIElement.ALIGNMENT.END) {
-        y = height - element.marginY;
-        originY = 1;
-      } else if (element.alignmentVertical == UIElement.ALIGNMENT.CENTER) {
-        y = Math.ceil(height / 2) + element.marginY;
-        originY = 0.5;
-      } else {
-        y = 0 + element.marginY;
-        originY = 0;
-      }
-      let textElement = this.add
-        .text(x, y, element.text, element.style)
-        .setOrigin(originX, originY);
-      if (element.events.length > 0) {
-        textElement.setInteractive();
-        element.events.forEach((e: any) => {
-          textElement.on(e.event, e.fn);
-        });
-      }
-      this.textLayer?.add(textElement);
+      let uiElement = this.uiElements[key];
+      this.uiLayer?.add(uiElement);
     }
   }
 }

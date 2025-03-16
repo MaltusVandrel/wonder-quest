@@ -3,11 +3,12 @@ import * as Phaser from 'phaser';
 import { GameDataService } from 'src/services/game-data.service';
 import { ColorUtils } from 'src/utils/color.utils';
 import { MapGeneratorUtils } from 'src/utils/map-generator.utils';
+import { MapUIScene } from './map.ui.scene';
 
 export class MapScene extends Phaser.Scene {
   mapPathScene: any;
   mapPlayerScene: any;
-  mapUIScene: any;
+  mapUIScene: any | MapUIScene;
   introductionScene: any;
   tileSize: number = 16;
   centeringOffset: number = this.tileSize / 2;
