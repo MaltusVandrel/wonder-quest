@@ -37,8 +37,39 @@ export class MapUIScene extends Phaser.Scene {
     this.textLayer = this.add.layer();
     this.showCurrentTime();
     this.showStaminaGauge();
+    this.showRestButton();
     // Create UI elements
   }
+  showRestButton() {
+    let key: string = 'rest-button';
+
+    let element = UIElement.build(key)
+      .addText(`rest`)
+      .setStyle({
+        ...this.textStyle,
+        fontSize: '20px',
+      })
+      .horizontalPosition(UIElement.ALIGNMENT.END, 0)
+      .verticalPosition(UIElement.ALIGNMENT.END, 12)
+      .on('pointerup', () => {
+        let stamina = GameDataService.PLAYER_DATA.getGauge(GAUGE_KEYS.STAMINA);
+        stamina.consumed = 0;
+        GameDataService.GAME_DATA.time += 8 * 60;
+        this.mapScene.doColorFilter();
+        this.showStaminaGauge();
+        this.showCurrentTime();
+      });
+    /*.on('pointerover', () => {
+        element.setShadow(0, 0, '#ffffff', 10, true, true);
+      })
+      .on('pointerout', () => {
+        startButton.setShadow(0, 0, '#ffffff', 0, false, false);
+      });*/
+    this.uiElements[key] = element;
+
+    this.updateUI();
+  }
+
   showStaminaGauge() {
     let key: string = 'status-info';
     const stamina = GameDataService.PLAYER_DATA.getGauge(GAUGE_KEYS.STAMINA);
@@ -146,6 +177,12 @@ export class MapUIScene extends Phaser.Scene {
       let textElement = this.add
         .text(x, y, element.text, element.style)
         .setOrigin(originX, originY);
+      if (element.events.length > 0) {
+        textElement.setInteractive();
+        element.events.forEach((e: any) => {
+          textElement.on(e.event, e.fn);
+        });
+      }
       this.textLayer?.add(textElement);
     }
   }

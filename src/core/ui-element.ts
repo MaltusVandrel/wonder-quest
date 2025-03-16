@@ -19,6 +19,7 @@ export class UIElement {
   element: Phaser.GameObjects.GameObject | undefined;
   text: string[] = [];
   style: Phaser.Types.GameObjects.Text.TextStyle = {};
+  events: { event: string | symbol; fn: Function; context?: any }[] = [];
   constructor(key: string, text?: string[] | string) {
     this.key = key;
     if (text) {
@@ -64,6 +65,10 @@ export class UIElement {
   }
   setStyle(style: Phaser.Types.GameObjects.Text.TextStyle) {
     this.style = style;
+    return this;
+  }
+  on(event: string | symbol, fn: Function, context?: any): this {
+    this.events.push({ event: event, fn: fn, context: context });
     return this;
   }
 }
