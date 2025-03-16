@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
 import moment from 'moment';
 import { GameData } from 'src/core/game-data';
+import { HERO_BUILDER } from 'src/data/builder/hero-builder';
+import { Figure } from 'src/models/figure';
 
 export class GameDataService {
   static STORAGE_KEY = 'wonder-quest-game-data';
@@ -10,6 +12,8 @@ export class GameDataService {
   static GAME_DATA: GameData = {
     time: this.INITIAL_TIME - this.LEFTOVERS + 0.1,
   };
+  static PLAYER_DATA: Figure = HERO_BUILDER.getAHero(1);
+
   constructor() {}
   static getTimeData() {
     const minutesInAHour = 60;

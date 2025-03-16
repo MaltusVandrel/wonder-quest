@@ -4,6 +4,7 @@ import { UIElement } from 'src/core/ui-element';
 import { MapGeneratorUtils } from 'src/utils/map-generator.utils';
 import { AppComponent } from 'src/app/app.component';
 import { GameDataService } from 'src/services/game-data.service';
+import { GAUGE_KEYS } from 'src/data/bank/gauge';
 
 export class MapUIScene extends Phaser.Scene {
   textStyle: Phaser.Types.GameObjects.Text.TextStyle = {
@@ -35,9 +36,28 @@ export class MapUIScene extends Phaser.Scene {
     this.mapPathScene = this.scene.get('map-path-scene');
     this.textLayer = this.add.layer();
     this.showCurrentTime();
+    this.showStaminaGauge();
     // Create UI elements
   }
+  showStaminaGauge() {
+    let key: string = 'status-info';
+    const stamina = GameDataService.PLAYER_DATA.getGauge(GAUGE_KEYS.STAMINA);
+    const percentualStatus = (
+      (stamina.getCurrentValue() / stamina.modValue) *
+      100
+    ).toFixed(2);
+    let element = UIElement.build(key)
+      .addText(`stamina: ${percentualStatus}%`)
+      .setStyle({
+        ...this.textStyle,
+        fontSize: '20px',
+      })
+      .horizontalPosition(UIElement.ALIGNMENT.END, 0)
+      .verticalPosition(UIElement.ALIGNMENT.START, 12);
+    this.uiElements[key] = element;
 
+    this.updateUI();
+  }
   showCurrentTime() {
     let key: string = 'now-time';
 

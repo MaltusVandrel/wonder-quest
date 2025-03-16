@@ -1,11 +1,11 @@
 import { Figure } from '../models/figure';
-import { CalcUtil } from '../util/calc-util';
 import { Context } from './context';
 import { MessageHandler } from './message-handler';
 import { first } from 'rxjs';
-import { ATTRIBUTE_KEYS } from '../data/bank/stats';
 import { GAUGE_KEYS } from '../data/bank/gauge';
 import { Injectable } from '@angular/core';
+import { CalcUtil } from 'src/utils/calc.utils';
+import { STAT_KEYS } from 'src/data/bank/stats';
 
 @Injectable()
 export class BattleContext extends Context {
@@ -40,8 +40,8 @@ export class BattleContext extends Context {
       b = this.player;
     } else {
       if (
-        CalcUtil.getRandom(this.player.getStat(ATTRIBUTE_KEYS.LUCK).value) >=
-        CalcUtil.getRandom(this.foe.getStat(ATTRIBUTE_KEYS.LUCK).value)
+        CalcUtil.getRandom(this.player.getStat(STAT_KEYS.LUCK).value) >=
+        CalcUtil.getRandom(this.foe.getStat(STAT_KEYS.LUCK).value)
       ) {
         a = this.player;
         b = this.foe;
@@ -89,20 +89,20 @@ export class BattleContext extends Context {
       'A battle between <span class="bold">' +
         this.player.name +
         '(' +
-        this.player.getGauge(GAUGE_KEYS.VITALITY).getCurrent() +
+        this.player.getGauge(GAUGE_KEYS.VITALITY).getCurrentValue() +
         'hp)' +
         '</span> and <span class="bold">' +
         this.foe.name +
         '(' +
-        this.foe.getGauge(GAUGE_KEYS.VITALITY).getCurrent() +
+        this.foe.getGauge(GAUGE_KEYS.VITALITY).getCurrentValue() +
         'hp) </span> ' +
         ' has begun!'
     );
 
     while (
       this.actionList.length > 0 &&
-      this.foe.getGauge(GAUGE_KEYS.VITALITY).getCurrent() > 0 &&
-      this.player.getGauge(GAUGE_KEYS.VITALITY).getCurrent() > 0
+      this.foe.getGauge(GAUGE_KEYS.VITALITY).getCurrentValue() > 0 &&
+      this.player.getGauge(GAUGE_KEYS.VITALITY).getCurrentValue() > 0
     ) {
       let actionTurn = this.actionList.shift();
       if (actionTurn) {
@@ -121,7 +121,7 @@ export class BattleContext extends Context {
       }
     }
     let being = this.player;
-    if (this.foe.getGauge(GAUGE_KEYS.VITALITY).getCurrent() > 0)
+    if (this.foe.getGauge(GAUGE_KEYS.VITALITY).getCurrentValue() > 0)
       being = this.foe;
     this.messageHandler.add(
       '<span class="bold">' + being.name + '</span> won the battle!'
@@ -129,7 +129,7 @@ export class BattleContext extends Context {
   }
   private getAttack(a: Figure, b: Figure): string {
     let attackPower = 3;
-    let strengthInfluence = 1 + a.getStat(ATTRIBUTE_KEYS.STRENGTH).value / 10;
+    let strengthInfluence = 1 + a.getStat(STAT_KEYS.STRENGTH).value / 10;
     let levelDiffInfluence = 1 + (a.level - b.level / 10) / 100;
     let damage =
       attackPower *

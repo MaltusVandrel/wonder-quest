@@ -2,6 +2,7 @@ import * as Phaser from 'phaser';
 import { MapPathUtils } from 'src/utils/map-path.utils';
 import { MapScene } from './map.scene';
 import { GameDataService } from 'src/services/game-data.service';
+import { GAUGE_KEYS } from 'src/data/bank/gauge';
 
 export class MapPathScene extends Phaser.Scene {
   mapScene: any;
@@ -70,12 +71,20 @@ export class MapPathScene extends Phaser.Scene {
     let playerStep = () => {
       const lastStep = this.pathSteps[stepIndex - 1];
       let step = this.pathSteps[stepIndex++];
+      const stamina = GameDataService.PLAYER_DATA.getGauge(GAUGE_KEYS.STAMINA);
+      if (!stamina.canHandleValue(step.cell.staminaCost)) {
+        this.lockPath = false;
+        this.clearPath();
+        return;
+      }
+
       let incrementOnOffsetX = lastStep.x - step.x;
       let incrementOnOffsetY = lastStep.y - step.y;
 
       this.mapScene.moveCamera(-incrementOnOffsetX, -incrementOnOffsetY);
       this.pathPositionUpdate(-incrementOnOffsetX, -incrementOnOffsetY);
-
+      stamina.consumed += step.cell.staminaCost;
+      this.mapUIScene.showStaminaGauge();
       GameDataService.GAME_DATA.time += step.cell.timeCost;
       this.mapUIScene.showCurrentTime();
       this.mapScene.doColorFilter();
