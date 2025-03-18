@@ -12,6 +12,7 @@ export class IntroductionScene extends Phaser.Scene {
   emitter: Phaser.GameObjects.Particles.ParticleEmitter | undefined;
   width: number = 0;
   height: number = 0;
+  abortedIntroduction: boolean = false;
 
   texts: Array<Array<string>> = [
     [
@@ -62,6 +63,9 @@ export class IntroductionScene extends Phaser.Scene {
       //welcomeText.setPosition(width / 2, height / 2);
       shape.setSize(this.width, this.height);
     });
+    window.addEventListener('keydown', () => {
+      this.fadeOutAndDestroy();
+    });
   }
   presentTexts() {
     let index = 0;
@@ -70,6 +74,8 @@ export class IntroductionScene extends Phaser.Scene {
     const easeOutTweenDuration = 1250;
 
     let showTexts = () => {
+      if (this.abortedIntroduction) return;
+
       const texts = this.texts[index];
       let timeoutFunction;
       let welcomeText = this.add
@@ -125,5 +131,17 @@ export class IntroductionScene extends Phaser.Scene {
 
     this.blackBackground.fillStyle(0x000000, 1);
     this.blackBackground.fillRect(0, 0, width, height);
+  }
+  fadeOutAndDestroy() {
+    this.abortedIntroduction = true;
+    this.tweens.add({
+      targets: [this.blackBackground, this.textLayer, this.emitter],
+      alpha: 0, // Target alpha value
+      duration: 1000, // Duration of the fade-out effect in milliseconds
+      ease: 'Power2', // Easing function
+      onComplete: () => {
+        this.scene.stop('introduction-scene');
+      },
+    });
   }
 }
