@@ -57,7 +57,9 @@ export class MapUIScene extends Phaser.Scene {
       .setOrigin(UIElement.ALIGNMENT.END, UIElement.ALIGNMENT.END)
       .setInteractive()
       .on('pointerup', () => {
-        let stamina = GameDataService.PLAYER_DATA.getGauge(GAUGE_KEYS.STAMINA);
+        let stamina = GameDataService.GAME_DATA.playerData.getGauge(
+          GAUGE_KEYS.STAMINA
+        );
         stamina.consumed = 0;
         GameDataService.GAME_DATA.time += 8 * 60;
         this.mapScene.doColorFilter();
@@ -80,7 +82,9 @@ export class MapUIScene extends Phaser.Scene {
       this.uiElements[key].destroy();
     }
 
-    const stamina = GameDataService.PLAYER_DATA.getGauge(GAUGE_KEYS.STAMINA);
+    const stamina = GameDataService.GAME_DATA.playerData.getGauge(
+      GAUGE_KEYS.STAMINA
+    );
     const percentualStatus = (
       (stamina.getCurrentValue() / stamina.modValue) *
       100

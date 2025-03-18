@@ -12,6 +12,18 @@ export class Gauge extends ChildComponent {
   constructor() {
     super();
   }
+  static instantiate(data: any): Gauge {
+    let obj = new Gauge();
+
+    obj.key = data.key;
+    obj.parent = data.parent;
+    obj.title = data.title;
+    obj.value = data.value;
+    obj.modValue = data.modValue;
+    obj.consumed = data.consumed;
+
+    return obj;
+  }
   getCurrentValue() {
     return this.modValue - this.consumed;
   }

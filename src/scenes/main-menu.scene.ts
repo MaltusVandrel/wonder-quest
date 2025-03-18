@@ -1,4 +1,5 @@
 import * as Phaser from 'phaser';
+import { GameDataService } from 'src/services/game-data.service';
 
 export class MainMenuScene extends Phaser.Scene {
   textStyle: Phaser.Types.GameObjects.Text.TextStyle = {
@@ -34,13 +35,33 @@ export class MainMenuScene extends Phaser.Scene {
       maxVelocityY: 200,
       blendMode: 'ADD',
     });
+
     const shape = new Phaser.Geom.Rectangle(0, 600, width, height);
 
     emitter.addEmitZone({ type: 'random', source: shape, quantity: 100 });
+    const dataExists = GameDataService.existsData();
+    if (dataExists) {
+      const continueButton = this.add
+        .text(width / 2, height / 2 - 20, 'Continue Game', this.textStyle)
+        .setOrigin(0.5, 0.5)
+        .setInteractive()
+        .on('pointerup', () => this.loadGame())
+        .on('pointerover', () => {
+          continueButton.setShadow(0, 0, '#ffffff', 10, true, true);
+        })
+        .on('pointerout', () => {
+          continueButton.setShadow(0, 0, '#ffffff', 0, false, false);
+        });
+    }
 
     // Create main menu elements
     const startButton = this.add
-      .text(width / 2, height / 2, 'Start Game', this.textStyle)
+      .text(
+        width / 2,
+        height / 2 + (dataExists ? 40 : 0),
+        dataExists ? 'New Game' : 'Start Game',
+        this.textStyle
+      )
       .setOrigin(0.5, 0.5)
       .setInteractive()
       .on('pointerup', () => this.startGame())
@@ -50,6 +71,7 @@ export class MainMenuScene extends Phaser.Scene {
       .on('pointerout', () => {
         startButton.setShadow(0, 0, '#ffffff', 0, false, false);
       });
+
     window.addEventListener('resize', () => {
       const height = parseInt(this.game?.scale?.height + '');
       const width = parseInt(this.game?.scale?.width + '');
@@ -60,5 +82,9 @@ export class MainMenuScene extends Phaser.Scene {
 
   startGame() {
     this.scene.start('map-scene');
+  }
+  loadGame() {
+    GameDataService.loadData();
+    this.startGame();
   }
 }

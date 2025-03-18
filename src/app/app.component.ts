@@ -44,6 +44,9 @@ export class AppComponent implements OnInit {
     window.addEventListener('resize', () => {
       this.resizeGame();
     });
+    window.addEventListener('beforeunload', (event) => {
+      GameDataService.saveData();
+    });
   }
   resizeGame(): void {
     if (this.game) {

@@ -23,7 +23,35 @@ export class Figure {
   xp: number = 0;
 
   constructor() {}
+  static untieCircularReference(figure: Figure): any {
+    let data = { ...figure };
+    for (let gauge of data.gauges) {
+      gauge.parent = undefined;
+    }
+    for (let stat of data.stats) {
+      stat.parent = undefined;
+    }
+    return data;
+  }
+  static instantiate(data: any): Figure {
+    let obj = new Figure();
 
+    obj.name = data.key;
+    obj.level = data.parent;
+
+    obj.xpForNextLevel = data.modValue;
+    obj.xp = data.consumed;
+    obj.gauges = [];
+    obj.stats = [];
+    for (let gauge of data.gauges) {
+      obj.gauges.push(Gauge.instantiate({ ...gauge, parent: obj }));
+    }
+    for (let stat of data.stats) {
+      obj.stats.push(Stat.instantiate({ ...stat, parent: obj }));
+    }
+
+    return obj;
+  }
   getStat(key: string): Stat {
     let att = this.stats.find((a) => a.key == key);
     if (!att) throw 'Stat not present.';

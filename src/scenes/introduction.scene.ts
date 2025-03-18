@@ -14,14 +14,7 @@ export class IntroductionScene extends Phaser.Scene {
   height: number = 0;
   abortedIntroduction: boolean = false;
 
-  texts: Array<Array<string>> = [
-    [
-      'A realm welcomes you from beyond the misty veil',
-      'It draws breath for ' + GameDataService.getTimeData().year + ' years',
-    ],
-    ['You awake across the sepia mist...'],
-  ];
-
+  texts: Array<Array<string>> = [];
   constructor() {
     super({ key: 'introduction-scene' });
   }
@@ -38,6 +31,14 @@ export class IntroductionScene extends Phaser.Scene {
   }
 
   create() {
+    this.texts = [
+      [
+        'A realm welcomes you from beyond the misty veil',
+        'It draws breath for ' + GameDataService.getTimeData().year + ' years',
+      ],
+      ['You awake across the sepia mist...'],
+    ];
+
     this.height = parseInt(this.game?.scale?.height + '');
     this.width = parseInt(this.game?.scale?.width + '');
 

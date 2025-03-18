@@ -71,7 +71,9 @@ export class MapPathScene extends Phaser.Scene {
     let playerStep = () => {
       const lastStep = this.pathSteps[stepIndex - 1];
       let step = this.pathSteps[stepIndex++];
-      const stamina = GameDataService.PLAYER_DATA.getGauge(GAUGE_KEYS.STAMINA);
+      const stamina = GameDataService.GAME_DATA.playerData.getGauge(
+        GAUGE_KEYS.STAMINA
+      );
       if (!stamina.canHandleValue(step.cell.staminaCost)) {
         this.lockPath = false;
         this.clearPath();
@@ -80,6 +82,9 @@ export class MapPathScene extends Phaser.Scene {
 
       let incrementOnOffsetX = lastStep.x - step.x;
       let incrementOnOffsetY = lastStep.y - step.y;
+
+      GameDataService.GAME_DATA.mapPos.x -= incrementOnOffsetX;
+      GameDataService.GAME_DATA.mapPos.y -= incrementOnOffsetY;
 
       this.mapScene.moveCamera(-incrementOnOffsetX, -incrementOnOffsetY);
       this.pathPositionUpdate(-incrementOnOffsetX, -incrementOnOffsetY);

@@ -36,6 +36,7 @@ export class MapScene extends Phaser.Scene {
       this.updateToCanvasSize();
       this.mapUpdate();
     });
+    MapGeneratorUtils.initSeed(GameDataService.GAME_DATA.mapSeed);
   }
 
   updateToCanvasSize() {
@@ -46,8 +47,9 @@ export class MapScene extends Phaser.Scene {
   }
 
   create() {
-    MapGeneratorUtils.initSeed('alessandro-oliveira');
     this.updateToCanvasSize();
+    this.gridOffsetX += GameDataService.GAME_DATA.mapPos.x;
+    this.gridOffsetY += GameDataService.GAME_DATA.mapPos.y;
 
     this.tileLayer = this.add.layer();
     this.mapUpdate();

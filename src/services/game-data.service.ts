@@ -11,8 +11,10 @@ export class GameDataService {
   static LEFTOVERS = this.INITIAL_TIME % 60;
   static GAME_DATA: GameData = {
     time: this.INITIAL_TIME - this.LEFTOVERS + 0.1,
+    playerData: HERO_BUILDER.getAHero(1),
+    mapSeed: Math.random() + '',
+    mapPos: { x: 0, y: 0 },
   };
-  static PLAYER_DATA: Figure = HERO_BUILDER.getAHero(1);
 
   constructor() {}
   static getTimeData() {
@@ -56,14 +58,25 @@ export class GameDataService {
     return timeDataFormatted;
   }
   // Save data to localStorage
-  static saveData(data: any): void {
-    localStorage.setItem(GameDataService.STORAGE_KEY, JSON.stringify(data));
+  static saveData(): void {
+    this.GAME_DATA.playerData = Figure.untieCircularReference(
+      this.GAME_DATA.playerData
+    );
+    localStorage.setItem(
+      GameDataService.STORAGE_KEY,
+      JSON.stringify(this.GAME_DATA)
+    );
   }
 
   // Load data from localStorage
   static loadData(): any {
     const data = localStorage.getItem(GameDataService.STORAGE_KEY);
-    return data ? JSON.parse(data) : null;
+    this.GAME_DATA = { ...this.GAME_DATA, ...JSON.parse(data ?? '') };
+    this.GAME_DATA.playerData = Figure.instantiate(this.GAME_DATA.playerData);
+  }
+  static existsData(): any {
+    const data = localStorage.getItem(GameDataService.STORAGE_KEY);
+    return !(data == null);
   }
 
   // Clear data from localStorage
