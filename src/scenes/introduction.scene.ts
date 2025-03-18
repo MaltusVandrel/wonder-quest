@@ -66,6 +66,9 @@ export class IntroductionScene extends Phaser.Scene {
     window.addEventListener('keydown', () => {
       this.fadeOutAndDestroy();
     });
+    window.addEventListener('pointerup', () => {
+      this.fadeOutAndDestroy();
+    });
   }
   presentTexts() {
     let index = 0;
