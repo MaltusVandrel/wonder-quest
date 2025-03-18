@@ -40,6 +40,7 @@ export class AppComponent implements OnInit {
     };
   }
   ngOnInit(): void {
+    console.log('yay!');
     this.game = new Phaser.Game(this.config);
     window.addEventListener('resize', () => {
       this.resizeGame();
