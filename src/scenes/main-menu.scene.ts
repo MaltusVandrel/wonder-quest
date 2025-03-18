@@ -40,8 +40,9 @@ export class MainMenuScene extends Phaser.Scene {
 
     emitter.addEmitZone({ type: 'random', source: shape, quantity: 100 });
     const dataExists = GameDataService.existsData();
+    let continueButton: any;
     if (dataExists) {
-      const continueButton = this.add
+      continueButton = this.add
         .text(width / 2, height / 2 - 20, 'Continue Game', this.textStyle)
         .setOrigin(0.5, 0.5)
         .setInteractive()
@@ -75,7 +76,12 @@ export class MainMenuScene extends Phaser.Scene {
     window.addEventListener('resize', () => {
       const height = parseInt(this.game?.scale?.height + '');
       const width = parseInt(this.game?.scale?.width + '');
-      startButton.setPosition(width / 2, height / 2);
+      if (continueButton) {
+        continueButton.setPosition(width / 2, height / 2 - 20);
+        startButton.setPosition(width / 2, height / 2 + (dataExists ? 40 : 0));
+      } else {
+        startButton.setPosition(width / 2, height / 2);
+      }
       shape.setSize(width, height);
     });
   }
