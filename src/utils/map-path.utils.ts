@@ -1,6 +1,22 @@
 import { BIOME_DEFAULTS } from 'src/data/bank/biome';
 import { MapGeneratorUtils } from './map-generator.utils';
 
+interface Step {
+  x: number;
+  y: number;
+  cell?: UncoveredCell;
+}
+interface UncoveredCell {
+  stepped?: boolean;
+
+  referenceCost: number;
+  staminaCost?: number;
+  timeCost?: number;
+  x?: number;
+  y?: number;
+  direction?: number[];
+}
+
 export class MapPathUtils {
   static DIRECTIONS: any = [
     [-1, -1],
@@ -38,11 +54,11 @@ export class MapPathUtils {
     let playerX = playerXOnScreenGridMap;
     let playerY = playerYOnScreenGridMap;
 
-    let steps = [];
-    let uncoveredCells: any = [];
+    let steps: Step[] = [];
+    let uncoveredCells: { [key: string]: UncoveredCell } = {};
 
     uncoveredCells[originalX + ';' + originalY] = {
-      cost:
+      referenceCost:
         Math.abs(originalX - targetCellXOnScreenGridMap) +
         Math.abs(originalY - targetCellYOnScreenGridMap),
       stepped: true,
@@ -81,7 +97,8 @@ export class MapPathUtils {
           let weightCost =
             (staminaCostWeight + timeCostWeight) *
             (directionCostModifier * 0.3);
-          weightCost = weightCost * 3;
+          weightCost = weightCost * 30;
+
           let referenceCost = pathCost + weightCost;
           uncoveredCells[stepX + ';' + stepY] = {
             referenceCost: referenceCost,
@@ -97,9 +114,8 @@ export class MapPathUtils {
 
       //chooseLowerCost
       let keys = Object.keys(uncoveredCells);
-      let lowestPath = {
+      let lowestPath: UncoveredCell = {
         referenceCost: Number.MAX_SAFE_INTEGER,
-        key: playerXOnScreenGridMap + ';' + playerYOnScreenGridMap,
         x: playerXOnScreenGridMap,
         y: playerYOnScreenGridMap,
       };
@@ -113,8 +129,8 @@ export class MapPathUtils {
       }
 
       //stepOnLowerCost
-      playerX = lowestPath.x;
-      playerY = lowestPath.y;
+      playerX = lowestPath.x ?? 0;
+      playerY = lowestPath.y ?? 0;
       uncoveredCells[playerX + ';' + playerY].stepped = true;
       steps.push({
         x: playerX,
@@ -134,7 +150,7 @@ export class MapPathUtils {
    * @description: It start from the last step, from it looks for the step two ;
    */
   private static cleanAdjacentSteps(originalSteps: any[]): any {
-    let steps: any[] = originalSteps.concat([]);
+    let steps: Step[] = originalSteps.concat([]);
     let thereIsAdjacent = false;
     do {
       thereIsAdjacent = false;

@@ -12,6 +12,7 @@ export class MapUIScene extends Phaser.Scene {
     color: '#ffffff',
     stroke: '#000000',
     strokeThickness: 4,
+    fontSize: '20px',
     shadow: {
       offsetX: 0,
       offsetY: 0,
@@ -50,11 +51,8 @@ export class MapUIScene extends Phaser.Scene {
       .text(
         this.getPosX(UIElement.ALIGNMENT.END, 0),
         this.getPosY(UIElement.ALIGNMENT.END, 12),
-        `rest`,
-        {
-          ...this.textStyle,
-          fontSize: '20px',
-        }
+        `REST`,
+        this.textStyle
       )
       .setOrigin(UIElement.ALIGNMENT.END, UIElement.ALIGNMENT.END)
       .setInteractive()
@@ -67,10 +65,10 @@ export class MapUIScene extends Phaser.Scene {
         this.showCurrentTime();
       })
       .on('pointerover', () => {
-        element.setShadow(0, 0, '#ffffff', 10, true, true);
+        element.setShadow(0, 0, '#000000', 15, true, true);
       })
       .on('pointerout', () => {
-        element.setShadow(0, 0, '#ffffff', 0, false, false);
+        element.setShadow(0, 0, '#000000', 10, false, false);
       });
 
     this.uiElements[key] = element;
@@ -92,10 +90,7 @@ export class MapUIScene extends Phaser.Scene {
         this.getPosX(UIElement.ALIGNMENT.END, 0),
         this.getPosY(UIElement.ALIGNMENT.START, 12),
         `stamina: ${percentualStatus}%`,
-        {
-          ...this.textStyle,
-          fontSize: '20px',
-        }
+        this.textStyle
       )
       .setOrigin(UIElement.ALIGNMENT.END, UIElement.ALIGNMENT.START);
     this.uiElements[key] = element;
@@ -113,10 +108,7 @@ export class MapUIScene extends Phaser.Scene {
         this.getPosX(UIElement.ALIGNMENT.CENTER, 12),
         this.getPosY(UIElement.ALIGNMENT.END, 12),
         formattedCurrentTime,
-        {
-          ...this.textStyle,
-          fontSize: '20px',
-        }
+        this.textStyle
       )
       .setOrigin(UIElement.ALIGNMENT.CENTER, UIElement.ALIGNMENT.END);
     this.uiElements[key] = element;
@@ -154,10 +146,7 @@ export class MapUIScene extends Phaser.Scene {
           totalStaminaCost + ' Stamina Cost',
           formattedTimeCost,
         ],
-        {
-          ...this.textStyle,
-          fontSize: '20px',
-        }
+        this.textStyle
       )
       .setOrigin(UIElement.ALIGNMENT.START, UIElement.ALIGNMENT.END);
     this.uiElements[key] = element;

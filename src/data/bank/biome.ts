@@ -1,7 +1,9 @@
 export function inRange(value: number, min: number, max: number): boolean {
   return value >= min && value < max;
 }
-export const BIOME_DEFAULTS = { staminaCost: 15, timeCost: 30 };
+const DIFICULTY_STAMINA = 0.1;
+const DIFICULTY_TIME = 0.25;
+export const BIOME_DEFAULTS = { staminaCost: 15, timeCost: 15 };
 export const BIOME_CONFIG = [
   {
     condition: (
@@ -20,8 +22,8 @@ export const BIOME_CONFIG = [
     biome: {
       type: 'Deep Waters',
       color: 0x2c52a0, // #2c52a0
-      staminaCost: 300,
-      timeCost: 60 * 16,
+      staminaCost: 90 * DIFICULTY_STAMINA,
+      timeCost: 60 * DIFICULTY_TIME,
     },
   },
   {
@@ -40,8 +42,8 @@ export const BIOME_CONFIG = [
     biome: {
       type: 'Shallow Waters',
       color: 0x4596d8, // #4596d8
-      staminaCost: 180,
-      timeCost: 120,
+      staminaCost: 40 * DIFICULTY_STAMINA,
+      timeCost: 40 * DIFICULTY_TIME,
     },
   },
   {
@@ -60,8 +62,8 @@ export const BIOME_CONFIG = [
     biome: {
       type: 'Beach',
       color: 0xdfd392, // #eadf92
-      staminaCost: 15,
-      timeCost: 30,
+      staminaCost: 15 * DIFICULTY_STAMINA,
+      timeCost: 15 * DIFICULTY_TIME,
     },
   },
   {
@@ -80,8 +82,8 @@ export const BIOME_CONFIG = [
     biome: {
       type: 'Dunes',
       color: 0xc2a243, // #c2a243
-      staminaCost: 60,
-      timeCost: 60,
+      staminaCost: 40 * DIFICULTY_STAMINA,
+      timeCost: 40 * DIFICULTY_TIME,
     },
   },
   {
@@ -100,8 +102,8 @@ export const BIOME_CONFIG = [
     biome: {
       type: 'Desert',
       color: 0xe0c060, // #e0c060
-      staminaCost: 40,
-      timeCost: 40,
+      staminaCost: 30 * DIFICULTY_STAMINA,
+      timeCost: 30 * DIFICULTY_TIME,
     },
   },
   {
@@ -120,8 +122,8 @@ export const BIOME_CONFIG = [
     biome: {
       type: 'Hills',
       color: 0x8d9e2b, // #8d9e2b
-      staminaCost: 25,
-      timeCost: 45,
+      staminaCost: 25 * DIFICULTY_STAMINA,
+      timeCost: 25 * DIFICULTY_TIME,
     },
   },
   {
@@ -140,8 +142,8 @@ export const BIOME_CONFIG = [
     biome: {
       type: 'Plains',
       color: 0x87bb35, // #87bb35
-      staminaCost: 15,
-      timeCost: 30,
+      staminaCost: 15 * DIFICULTY_STAMINA,
+      timeCost: 15 * DIFICULTY_TIME,
     },
   },
   {
@@ -160,8 +162,8 @@ export const BIOME_CONFIG = [
     biome: {
       type: 'Forest',
       color: 0x5b8b28, // #5b8b28
-      staminaCost: 30,
-      timeCost: 60,
+      staminaCost: 30 * DIFICULTY_STAMINA,
+      timeCost: 30 * DIFICULTY_TIME,
     },
   },
   {
@@ -180,8 +182,8 @@ export const BIOME_CONFIG = [
     biome: {
       type: 'Swamp',
       color: 0x0d521e, // #0d521e
-      staminaCost: 60,
-      timeCost: 60 * 2,
+      staminaCost: 60 * DIFICULTY_STAMINA,
+      timeCost: 30 * DIFICULTY_TIME,
     },
   },
   {
@@ -200,8 +202,8 @@ export const BIOME_CONFIG = [
     biome: {
       type: 'Mountains',
       color: 0x634e46, // #634e46
-      staminaCost: 190,
-      timeCost: 60 * 4,
+      staminaCost: 85 * DIFICULTY_STAMINA,
+      timeCost: 50 * DIFICULTY_TIME,
     },
   },
   {
@@ -220,8 +222,8 @@ export const BIOME_CONFIG = [
     biome: {
       type: 'Snowy peaks',
       color: 0xfaeaea, // #faeaea
-      staminaCost: 300,
-      timeCost: 60 * 16,
+      staminaCost: 90 * DIFICULTY_STAMINA,
+      timeCost: 60 * DIFICULTY_TIME,
     },
   },
 ];

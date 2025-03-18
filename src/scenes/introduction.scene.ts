@@ -9,6 +9,9 @@ export class IntroductionScene extends Phaser.Scene {
   };
   blackBackground: Phaser.GameObjects.Graphics | undefined;
   textLayer: Phaser.GameObjects.Layer | undefined;
+  emitter: Phaser.GameObjects.Particles.ParticleEmitter | undefined;
+  width: number = 0;
+  height: number = 0;
 
   texts: Array<Array<string>> = [
     [
@@ -34,12 +37,12 @@ export class IntroductionScene extends Phaser.Scene {
   }
 
   create() {
-    const height = parseInt(this.game?.scale?.height + '');
-    const width = parseInt(this.game?.scale?.width + '');
+    this.height = parseInt(this.game?.scale?.height + '');
+    this.width = parseInt(this.game?.scale?.width + '');
 
     this.textLayer = this.add.layer();
     // Create particle emitter
-    const emitter = this.add.particles(0, 0, 'particle', {
+    this.emitter = this.add.particles(0, 0, 'particle', {
       scale: { start: 1, end: 0 },
       lifespan: 10000,
       gravityY: -50,
@@ -48,75 +51,70 @@ export class IntroductionScene extends Phaser.Scene {
       maxVelocityY: 200,
       blendMode: 'ADD',
     });
-    const shape = new Phaser.Geom.Rectangle(0, 600, width, height);
+    const shape = new Phaser.Geom.Rectangle(0, 600, this.width, this.height);
 
-    emitter.addEmitZone({ type: 'random', source: shape, quantity: 100 });
+    this.emitter.addEmitZone({ type: 'random', source: shape, quantity: 100 });
+
+    this.presentTexts();
+    window.addEventListener('resize', () => {
+      this.height = parseInt(this.game?.scale?.height + '');
+      this.width = parseInt(this.game?.scale?.width + '');
+      //welcomeText.setPosition(width / 2, height / 2);
+      shape.setSize(this.width, this.height);
+    });
+  }
+  presentTexts() {
+    let index = 0;
     const readingTime = 5000;
-    for (let i = 0; i < this.texts.length; i++) {
-      setTimeout(() => {
-        let welcomeText = this.add
-          .text(width / 2, height / 2, this.texts[i], this.textStyle)
-          .setOrigin(0.5, 0.5)
-          .setAlpha(0);
-        this.textLayer?.add(welcomeText);
+    const easeInTweenDuration = 1500;
+    const easeOutTweenDuration = 1250;
+
+    let showTexts = () => {
+      const texts = this.texts[index];
+      let timeoutFunction;
+      let welcomeText = this.add
+        .text(this.width / 2, this.height / 2, texts, this.textStyle)
+        .setOrigin(0.5, 0.5)
+        .setAlpha(0);
+      this.textLayer?.add(welcomeText);
+
+      this.tweens.chain({
+        targets: welcomeText,
+        tweens: [
+          {
+            alpha: 1, // Target alpha value
+            duration: easeInTweenDuration, // Duration of the fade-in effect in milliseconds
+            ease: 'Power2', // Easing function}
+          },
+          {
+            alpha: 0, // Target alpha value
+            duration: easeOutTweenDuration, // Duration of the fade-in effect in milliseconds
+            ease: 'Power2', // Easing function
+            delay: readingTime - easeInTweenDuration,
+          },
+        ],
+      });
+
+      /*  this.tweens.add();
+       */
+      if (index < this.texts.length) {
+        index++;
+        timeoutFunction = setTimeout(
+          showTexts,
+          readingTime + easeOutTweenDuration
+        );
+      } else {
         this.tweens.add({
-          targets: welcomeText,
-          alpha: 1, // Target alpha value
-          duration: 2000, // Duration of the fade-in effect in milliseconds
+          targets: [this.blackBackground, this.emitter],
+          alpha: 0, // Target alpha value
+          duration: easeOutTweenDuration, // Duration of the fade-out effect in milliseconds
           ease: 'Power2', // Easing function
         });
-        setTimeout(() => {
-          this.tweens.add({
-            targets: welcomeText,
-            alpha: 0, // Target alpha value
-            duration: 1250, // Duration of the fade-in effect in milliseconds
-            ease: 'Power2', // Easing function
-          });
-        }, readingTime);
-      }, i * readingTime);
-    }
-    setTimeout(() => {
-      this.tweens.add({
-        targets: [this.blackBackground, emitter],
-        alpha: 0, // Target alpha value
-        duration: 1250, // Duration of the fade-in effect in milliseconds
-        ease: 'Power2', // Easing function
-      });
-      setTimeout(() => this.scene.remove(), 1250 + 1);
-    }, this.texts.length * readingTime);
-    // Create main menu elements
-
-    // let welcomeText = this.add
-    //   .text(width / 2, height / 2, 'WELCOME', this.textStyle)
-    //   .setOrigin(0.5, 0.5)
-    //   .setAlpha(0);
-
-    // this.textLayer?.add(welcomeText);
-
-    // this.tweens.add({
-    //   targets: welcomeText,
-    //   alpha: 1, // Target alpha value
-    //   duration: 2000, // Duration of the fade-in effect in milliseconds
-    //   ease: 'Power2', // Easing function
-    // });
-    // setTimeout(() => this.startGame(welcomeText), 10 * 1000);
-
-    window.addEventListener('resize', () => {
-      const height = parseInt(this.game?.scale?.height + '');
-      const width = parseInt(this.game?.scale?.width + '');
-      //welcomeText.setPosition(width / 2, height / 2);
-      shape.setSize(width, height);
-    });
+      }
+    };
+    showTexts();
   }
 
-  startGame(welcomeText: any) {
-    this.tweens.add({
-      targets: welcomeText,
-      alpha: 0, // Target alpha value
-      duration: 1500, // Duration of the fade-in effect in milliseconds
-      ease: 'Power2', // Easing function
-    });
-  }
   setBlackBackGround() {
     const height = parseInt(this.game?.scale?.height + '');
     const width = parseInt(this.game?.scale?.width + '');
