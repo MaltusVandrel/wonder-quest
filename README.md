@@ -19,6 +19,15 @@ I want a world completly new and unexplored, where I can create a simple charact
 - - Sometimes you will be able to 'remember' something from the past, to allow characters to develop not only foward but build a background.
 - - Once you put name into faces, you can find them again. Same for some monsters.
 - World moves, sometimes a pack of wolfs can become stronger, sometimes you hurt them enough so they move away or just become fearful.
+- Agents where npcs, instead of delivering quests passively are doing actvities.
+- - Mainly thinking on bad guys that have their own agenda
+- - a merchant travler could be it
+- - a crafter may work like that for specfic, more meagninful equipment
+- add a gauntlet as mouse icon
+- gauges take attributes as information for its constitution
+- make the player a little square
+- make the player a Party not a Player
+- add on the introduction that explains you are a force not the being
 
 ## Possible inspirations for the future
 
