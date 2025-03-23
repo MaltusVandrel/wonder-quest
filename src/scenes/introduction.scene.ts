@@ -34,7 +34,7 @@ export class IntroductionScene extends Phaser.Scene {
     this.texts = [
       [
         'A realm welcomes you from beyond the misty veil',
-        'It draws breath for ' + GameDataService.getTimeData().year + ' years',
+        'It draws breath for ' + GameDataService.getTimeData().years + ' years',
       ],
       ['You awake across the sepia mist...'],
     ];

@@ -140,13 +140,13 @@ export class MapScene extends Phaser.Scene {
       this.colorFilter.destroy();
     }
     this.colorFilter = this.add.graphics();
-    if (time.hour >= 20 || time.hour < 5) {
+    if (time.hours >= 20 || time.hours < 5) {
       this.colorFilter.fillStyle(0x0000ff, 0.5); // Change the color and alpha as needed
     }
 
     if (
-      (time.hour >= 5 && time.hour < 8) ||
-      (time.hour >= 17 && time.hour < 20)
+      (time.hours >= 5 && time.hours < 8) ||
+      (time.hours >= 17 && time.hours < 20)
     ) {
       this.colorFilter.fillStyle(0xff5500, 0.5); // Change the color and alpha as needed
     }

@@ -1,9 +1,15 @@
 import { Injectable } from '@angular/core';
-import moment from 'moment';
 import { GameData } from 'src/core/game-data';
 import { HERO_BUILDER } from 'src/data/builder/hero-builder';
 import { Figure } from 'src/models/figure';
-
+export interface TimeData {
+  years: number;
+  months: number;
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+}
 export class GameDataService {
   static STORAGE_KEY = 'wonder-quest-game-data';
   private number = 0;
@@ -17,7 +23,10 @@ export class GameDataService {
   };
 
   constructor() {}
-  static getTimeData() {
+  static getTimeData(
+    totalMinutes: number = GameDataService.GAME_DATA.time
+  ): TimeData {
+    const secondsInAMinute = 60;
     const minutesInAHour = 60;
     const hoursInADay = 24;
     const daysInAMonth = 28;
@@ -27,30 +36,33 @@ export class GameDataService {
     const minutesInAMonth = daysInAMonth * minutesInADay;
     const minutesInAYear = daysInAYear * minutesInADay;
 
-    const totalMinutes = GameDataService.GAME_DATA.time;
-
     let year = totalMinutes / minutesInAYear;
     let month = (year % 1) * monthsInAYear;
     let day = (month % 1) * daysInAMonth;
     let hour = (day % 1) * hoursInADay;
     let minutes = (hour % 1) * minutesInAHour;
+    let seconds = (minutes % 1) * secondsInAMinute;
 
     let f = (n: number): number => {
       return Math.floor(n);
     };
     return {
-      year: f(year),
-      month: f(month),
-      day: f(day),
-      hour: f(hour),
+      years: f(year),
+      months: f(month),
+      days: f(day),
+      hours: f(hour),
       minutes: f(minutes),
+      seconds: f(seconds),
     };
   }
-  static getFormattedTime() {
+
+  static getFormattedTime(
+    totalMinutes: number = GameDataService.GAME_DATA.time
+  ) {
     const formatNumber = (num: number) => num.toString().padStart(2, '0');
-    const timeData: any = this.getTimeData();
-    timeData.month++;
-    timeData.day++;
+    const timeData: any = this.getTimeData(totalMinutes);
+    timeData.months++;
+    timeData.days++;
     const timeDataFormatted: any = {};
     for (const key of Object.keys(timeData)) {
       timeDataFormatted[key] = formatNumber(timeData[key]);

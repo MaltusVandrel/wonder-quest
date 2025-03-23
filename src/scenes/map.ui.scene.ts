@@ -1,5 +1,4 @@
 import * as Phaser from 'phaser';
-import * as moment from 'moment';
 import { UIElement } from 'src/core/ui-element';
 import { MapGeneratorUtils } from 'src/utils/map-generator.utils';
 import { AppComponent } from 'src/app/app.component';
@@ -106,7 +105,7 @@ export class MapUIScene extends Phaser.Scene {
     }
 
     const f = GameDataService.getFormattedTime();
-    const formattedCurrentTime = `${f.hour}h ${f.minutes}, ${f.day} of ${f.month} of ${f.year}`;
+    const formattedCurrentTime = `${f.hours}h ${f.minutes}m, day ${f.days} of ${f.months}º month of year ${f.years}`;
     let element = this.add
       .text(
         this.getPosX(UIElement.ALIGNMENT.CENTER, 12),
@@ -136,10 +135,12 @@ export class MapUIScene extends Phaser.Scene {
       totalTimeCost += step.cell.timeCost;
       totalStaminaCost += step.cell.staminaCost;
     }
-    let duration = moment.duration(totalTimeCost, 'minutes');
-    let formattedTimeCost = `${duration.hours()}h ${duration.minutes()}m ${duration.seconds()}s`;
-    if (duration.days() > 0) {
-      formattedTimeCost = `${duration.days()} days ` + formattedTimeCost;
+    let timeData = GameDataService.getTimeData(totalTimeCost);
+
+    GameDataService.getFormattedTime();
+    let formattedTimeCost = `${timeData.hours}h ${timeData.minutes}m ${timeData.seconds}s`;
+    if (timeData.days > 0) {
+      formattedTimeCost = `${timeData.days} days ` + formattedTimeCost;
     }
     let element = this.add
       .text(
