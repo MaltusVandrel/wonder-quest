@@ -3,5 +3,11 @@ export interface Biome {
   color: number;
   staminaCost: number;
   timeCost: number;
-  influenceValues: any;
+  influenceValues?: {
+    elevation: number;
+    moisture: number;
+    temperature: number;
+    localVariation: number;
+    wonder: number;
+  };
 }

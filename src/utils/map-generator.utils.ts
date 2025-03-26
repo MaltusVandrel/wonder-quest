@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import Alea from 'alea';
 import { createNoise2D, NoiseFunction2D } from 'simplex-noise';
 import { BiomeUtils } from './biome.utils';
+import { chooseBiome } from 'src/data/bank/biome';
 
 export class MapGeneratorUtils {
   static seed: String = Math.random().toString();
@@ -105,9 +106,7 @@ export class MapGeneratorUtils {
 
   static seBiomeDataFromGeneratedTilesData(x: number, y: number) {
     if (this.generatedBiome[y][x]) return;
-    this.generatedBiome[y][x] = BiomeUtils.getBiomeData(
-      x,
-      y,
+    this.generatedBiome[y][x] = chooseBiome(
       this.generatedTilesData.elevation[y][x],
       this.generatedTilesData.moisture[y][x],
       this.generatedTilesData.temperature[y][x],
