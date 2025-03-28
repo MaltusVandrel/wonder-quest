@@ -10,14 +10,13 @@ export class MapScene extends Phaser.Scene {
   mapPlayerScene: any;
   mapUIScene: any | MapUIScene;
   introductionScene: any;
-  tileSize: number = 16;
+  tileSize: number = 12;
   centeringOffset: number = this.tileSize / 2;
   map: any = [];
 
-  tileLayer: Phaser.GameObjects.Layer | undefined;
+  tileLayer: Array<Array<Phaser.GameObjects.Rectangle>> = [];
   colorFilter: Phaser.GameObjects.Graphics | undefined;
 
-  invalidCellCost = 9999999;
   screenGridXSize = 0;
   screenGridYSize = 0;
   gridOffsetX: number = 0;
@@ -51,8 +50,8 @@ export class MapScene extends Phaser.Scene {
     this.gridOffsetX += GameDataService.GAME_DATA.mapPos.x;
     this.gridOffsetY += GameDataService.GAME_DATA.mapPos.y;
 
-    this.tileLayer = this.add.layer();
-    this.mapUpdate();
+    this.tileLayer = [];
+    this.mapUpdate(true);
 
     // Start the Player and Path scenes
     this.scene.launch('map-player-scene');
@@ -73,62 +72,81 @@ export class MapScene extends Phaser.Scene {
     this.mapUpdate();
   }
 
-  mapUpdate() {
+  mapUpdate(isFirstTime: boolean = false) {
+    if (isFirstTime) this.setGrid();
     MapGeneratorUtils.generateChunk(
       this.screenGridXSize,
       this.screenGridYSize,
       this.gridOffsetX,
       this.gridOffsetY
     );
+
     this.drawMap();
   }
-
-  drawMap() {
-    this.tileLayer?.getAll().forEach((element) => {
-      element.destroy();
-    });
-
+  setGrid() {
+    const defaultColor = 0x000000;
     for (let y = 0; y < this.screenGridXSize; y++) {
+      if (!this.tileLayer[y]) this.tileLayer[y] = [];
+
       for (let x = 0; x < this.screenGridYSize; x++) {
-        const biome = MapGeneratorUtils.getBiomeData(
-          x + this.gridOffsetX,
-          y + this.gridOffsetY
-        );
         let cell = this.add.rectangle(
           x * this.tileSize + this.centeringOffset,
           y * this.tileSize + this.centeringOffset,
           this.tileSize,
           this.tileSize,
-          biome.color
+          defaultColor
         );
+        this.tileLayer[y][x] = cell;
         cell.setData({
-          ...biome,
-          x: x + this.gridOffsetX,
-          y: y + this.gridOffsetY,
+          x: x,
+          y: y,
+          color: defaultColor,
         });
         cell.setInteractive();
-
         cell.addListener('pointerover', () => {
-          let color = Phaser.Display.Color.ValueToColor(cell.getData('color'));
+          let color = Phaser.Display.Color.ValueToColor(
+            cell.getData('biome').color
+          );
           color.brighten(20);
           color.saturate(25);
           cell.fillColor = ColorUtils.colorToInteger(color);
           cell.setStrokeStyle(2, 0xffffff);
-          if (!this.mapPathScene.lockPath) {
+          if (!this.mapPathScene.lockPath && !this.isGridCenter(x, y)) {
             this.mapPathScene.doPath(x, y);
             this.mapUIScene.showTileInfo(x, y);
           }
         });
         cell.addListener('pointerout', () => {
-          cell.fillColor = cell.getData('color');
+          cell.fillColor = cell.getData('biome').color;
           cell.setStrokeStyle(0, 0xffffff);
         });
 
         cell.addListener('pointerup', () => {
-          if (!this.mapPathScene.lockPath) this.mapPathScene.followPath(x, y);
+          if (!this.mapPathScene.lockPath && !this.isGridCenter(x, y)) {
+            this.mapPathScene.followPath(x, y);
+          }
         });
+      }
+    }
+  }
+  drawMap() {
+    /* RIP easy life, here laied a destruct and redraw, easy, hot and loyal.*/
 
-        this.tileLayer?.add(cell);
+    for (let y = 0; y < this.screenGridXSize; y++) {
+      const newY = y + this.gridOffsetY;
+      for (let x = 0; x < this.screenGridYSize; x++) {
+        const newX = x + this.gridOffsetX;
+        const biome = MapGeneratorUtils.getBiomeData(newX, newY);
+
+        let cell = this.tileLayer[y][x];
+        if (cell.getData('biome')?.color != biome.color) {
+          cell.fillColor = biome.color;
+        }
+        cell.setData({
+          biome: biome,
+          x: newX,
+          y: newY,
+        });
       }
     }
   }
@@ -153,5 +171,14 @@ export class MapScene extends Phaser.Scene {
 
     this.colorFilter.fillRect(0, 0, width, height);
     this.colorFilter.setBlendMode(Phaser.BlendModes.MULTIPLY);
+  }
+  gridCenter(): { x: number; y: number } {
+    const x = Math.ceil(this.game.scale.width / this.tileSize / 2);
+    const y = Math.ceil(this.game.scale.height / this.tileSize / 2);
+    return { x: x, y: y };
+  }
+  isGridCenter(x: number, y: number): boolean {
+    const centerPos = this.gridCenter();
+    return centerPos.x == x && centerPos.y == y;
   }
 }

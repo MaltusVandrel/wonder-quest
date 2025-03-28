@@ -1,9 +1,11 @@
 import * as Phaser from 'phaser';
+import { MapScene } from './map.scene';
+import { MapPathScene } from './map.path.scene';
 
 export class MapPlayerScene extends Phaser.Scene {
-  player: Phaser.GameObjects.Ellipse | undefined;
-  mapScene: any;
-  mapPathScene: any;
+  player: Phaser.GameObjects.Rectangle | undefined;
+  mapScene: any | MapScene;
+  mapPathScene: any | MapPathScene;
   centeringOffset: number = 0;
   lockPath: boolean = false;
   pathSteps: any[] = [];
@@ -21,15 +23,12 @@ export class MapPlayerScene extends Phaser.Scene {
   }
 
   createPlayer() {
-    let playerSize = this.mapScene.tileSize - 2;
-    let strokeSize = playerSize > 25 ? 3 : playerSize > 15 ? 2 : 1;
-    const screenCenterX = Math.ceil(
-      this.game.scale.width / this.mapScene.tileSize / 2
-    );
-    const screenCenterY = Math.ceil(
-      this.game.scale.height / this.mapScene.tileSize / 2
-    );
-    this.player = this.add.ellipse(
+    let playerSize = this.mapScene.tileSize;
+    let strokeSize = 1;
+    let centerPos = this.mapScene.gridCenter();
+    const screenCenterX = centerPos.x;
+    const screenCenterY = centerPos.y;
+    this.player = this.add.rectangle(
       screenCenterX * this.mapScene.tileSize + this.centeringOffset,
       screenCenterY * this.mapScene.tileSize + this.centeringOffset,
       playerSize,
@@ -44,7 +43,7 @@ export class MapPlayerScene extends Phaser.Scene {
       currentY: screenCenterY * this.mapScene.tileSize + this.centeringOffset,
       currentX: screenCenterX * this.mapScene.tileSize + this.centeringOffset,
     });
-    this.player.setStrokeStyle(strokeSize, 0x333333);
+    this.player.setStrokeStyle(strokeSize, 0xffffff);
     this.player.setInteractive();
   }
 }

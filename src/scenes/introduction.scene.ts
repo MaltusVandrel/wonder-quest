@@ -1,6 +1,9 @@
 import * as Phaser from 'phaser';
 import { GameDataService } from 'src/services/game-data.service';
 
+const READING_TIME = 5000;
+const EASE_IN_TWEEN_DURATION = 1500;
+const EASE_OUT_TWEEN_DURATION = 1250;
 export class IntroductionScene extends Phaser.Scene {
   textStyle: Phaser.Types.GameObjects.Text.TextStyle = {
     fontFamily: 'Monocraft Sans',
@@ -73,9 +76,6 @@ export class IntroductionScene extends Phaser.Scene {
   }
   presentTexts() {
     let index = 0;
-    const readingTime = 5000;
-    const easeInTweenDuration = 1500;
-    const easeOutTweenDuration = 1250;
 
     let showTexts = () => {
       if (this.abortedIntroduction) return;
@@ -93,14 +93,14 @@ export class IntroductionScene extends Phaser.Scene {
         tweens: [
           {
             alpha: 1, // Target alpha value
-            duration: easeInTweenDuration, // Duration of the fade-in effect in milliseconds
+            duration: EASE_IN_TWEEN_DURATION, // Duration of the fade-in effect in milliseconds
             ease: 'Power2', // Easing function}
           },
           {
             alpha: 0, // Target alpha value
-            duration: easeOutTweenDuration, // Duration of the fade-in effect in milliseconds
+            duration: EASE_OUT_TWEEN_DURATION, // Duration of the fade-in effect in milliseconds
             ease: 'Power2', // Easing function
-            delay: readingTime - easeInTweenDuration,
+            delay: READING_TIME - EASE_IN_TWEEN_DURATION,
           },
         ],
       });
@@ -111,15 +111,10 @@ export class IntroductionScene extends Phaser.Scene {
         index++;
         timeoutFunction = setTimeout(
           showTexts,
-          readingTime + easeOutTweenDuration
+          READING_TIME + EASE_OUT_TWEEN_DURATION
         );
       } else {
-        this.tweens.add({
-          targets: [this.blackBackground, this.emitter],
-          alpha: 0, // Target alpha value
-          duration: easeOutTweenDuration, // Duration of the fade-out effect in milliseconds
-          ease: 'Power2', // Easing function
-        });
+        this.fadeOutAndDestroy();
       }
     };
     showTexts();
@@ -141,7 +136,7 @@ export class IntroductionScene extends Phaser.Scene {
     this.tweens.add({
       targets: [this.blackBackground, this.textLayer, this.emitter],
       alpha: 0, // Target alpha value
-      duration: 1000, // Duration of the fade-out effect in milliseconds
+      duration: EASE_OUT_TWEEN_DURATION, // Duration of the fade-out effect in milliseconds
       ease: 'Power2', // Easing function
       onComplete: () => {
         this.scene.stop('introduction-scene');

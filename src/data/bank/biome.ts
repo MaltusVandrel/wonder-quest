@@ -18,16 +18,23 @@ enum BIOME_TYPES {
   HILLS = 'Hills',
   PLAINS = 'Plains',
   HIGH_GRASS = 'High Grass',
+  GROVE = 'Grove',
   WOODS = 'Woods',
-  FOREST = 'Forest',
-  ENCHANTED_FOREST = 'Enchanted Forest',
+  ENCHANTED_WOODS = 'Enchanted Woods',
   SWAMP = 'Swamp',
   MOUNTAINS = 'Mountains',
   HIGH_MOUNTAINS = 'High Mountains',
   SNOWY_PEAKS = 'Snowy peaks',
+  VOID = 'Void',
 }
 
 export const BIOMES: { [key in BIOME_TYPES]: Biome } = {
+  [BIOME_TYPES.VOID]: {
+    type: BIOME_TYPES.VOID,
+    color: 0xff00ff,
+    staminaCost: 190 * DIFICULTY_STAMINA,
+    timeCost: 160 * DIFICULTY_TIME,
+  },
   [BIOME_TYPES.DEEP_WATERS]: {
     type: BIOME_TYPES.DEEP_WATERS,
     color: 0x2c52a0,
@@ -76,8 +83,8 @@ export const BIOMES: { [key in BIOME_TYPES]: Biome } = {
     staminaCost: 15 * DIFICULTY_STAMINA,
     timeCost: 15 * DIFICULTY_TIME,
   },
-  [BIOME_TYPES.FOREST]: {
-    type: BIOME_TYPES.FOREST,
+  [BIOME_TYPES.WOODS]: {
+    type: BIOME_TYPES.WOODS,
     color: 0x5b8b28,
     staminaCost: 30 * DIFICULTY_STAMINA,
     timeCost: 30 * DIFICULTY_TIME,
@@ -124,14 +131,14 @@ export const BIOMES: { [key in BIOME_TYPES]: Biome } = {
     staminaCost: 15 * DIFICULTY_STAMINA,
     timeCost: 15 * DIFICULTY_TIME,
   },
-  [BIOME_TYPES.WOODS]: {
-    type: BIOME_TYPES.WOODS,
+  [BIOME_TYPES.GROVE]: {
+    type: BIOME_TYPES.GROVE,
     color: 0x5b8b28,
     staminaCost: 30 * DIFICULTY_STAMINA,
     timeCost: 30 * DIFICULTY_TIME,
   },
-  [BIOME_TYPES.ENCHANTED_FOREST]: {
-    type: BIOME_TYPES.ENCHANTED_FOREST,
+  [BIOME_TYPES.ENCHANTED_WOODS]: {
+    type: BIOME_TYPES.ENCHANTED_WOODS,
     color: 0x5bab58,
     staminaCost: 30 * DIFICULTY_STAMINA,
     timeCost: 30 * DIFICULTY_TIME,
@@ -145,7 +152,7 @@ export function chooseBiome(
   localVariation: number,
   wonder: number
 ): Biome {
-  let biome = BIOMES[BIOME_TYPES.SNOWY_PEAKS];
+  let biome = BIOMES[BIOME_TYPES.VOID];
 
   if (inRange(elevation, 0, 0.25)) {
     biome = BIOMES[BIOME_TYPES.DEEP_WATERS];
@@ -177,9 +184,9 @@ export function chooseBiome(
         biome = BIOMES[BIOME_TYPES.HILLS];
       }
     } else if (inRange(moisture, 0.6, 0.8)) {
-      biome = BIOMES[BIOME_TYPES.FOREST];
+      biome = BIOMES[BIOME_TYPES.WOODS];
       if (inRange(wonder, 0.85, 1)) {
-        biome = BIOMES[BIOME_TYPES.ENCHANTED_FOREST];
+        biome = BIOMES[BIOME_TYPES.ENCHANTED_WOODS];
       }
     } else if (inRange(moisture, 0.8, 1)) {
       biome = BIOMES[BIOME_TYPES.SWAMP];
@@ -188,6 +195,8 @@ export function chooseBiome(
     biome = BIOMES[BIOME_TYPES.MOUNTAINS];
   } else if (inRange(elevation, 0.78, 0.85)) {
     biome = BIOMES[BIOME_TYPES.HIGH_MOUNTAINS];
+  } else if (inRange(elevation, 0.85, 1)) {
+    biome = BIOMES[BIOME_TYPES.SNOWY_PEAKS];
   }
   return {
     ...biome,

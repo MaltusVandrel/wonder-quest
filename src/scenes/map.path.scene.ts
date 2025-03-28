@@ -94,7 +94,7 @@ export class MapPathScene extends Phaser.Scene {
       this.mapUIScene.showCurrentTime();
       this.mapScene.doColorFilter();
       if (stepIndex < this.pathSteps.length) {
-        setTimeout(playerStep, 90);
+        setTimeout(playerStep, 1000 / 144); //60 fps
       } else {
         this.lockPath = false;
         this.clearPath();

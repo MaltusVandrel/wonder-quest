@@ -28,11 +28,11 @@ export class AppComponent implements OnInit {
       height: window.innerHeight,
       scene: [
         MainMenuScene,
+        IntroductionScene,
         MapScene,
         MapPathScene,
         MapPlayerScene,
         MapUIScene,
-        IntroductionScene,
       ],
     };
   }

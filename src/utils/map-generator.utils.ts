@@ -66,11 +66,11 @@ export class MapGeneratorUtils {
   ) {
     // Parâmetros para ruído e seed
 
-    // Dois geradores de ruído: um para elevação e outro para umidade (pode-se usar o mesmo PRNG com offset)
     for (let layer of this.layers) {
       if (!this.generatedTilesData[layer.key]) {
         this.generatedTilesData[layer.key] = [];
       }
+
       for (let y = 0; y < height; y++) {
         if (!this.generatedTilesData[layer.key][y + offsetY]) {
           this.generatedTilesData[layer.key][y + offsetY] = [];
@@ -114,11 +114,13 @@ export class MapGeneratorUtils {
       this.generatedTilesData.wonder[y][x]
     );
   }
-
   static generateTilesData(layer: any, x: number, y: number) {
     if (!this.generatedTilesData[layer.key][y])
       this.generatedTilesData[layer.key][y] = [];
-    if (this.generatedTilesData[layer.key][y][x]) return;
+    if (this.generatedTilesData[layer.key][y][x]) {
+      return;
+    }
+
     // Gera a elevação com 6 octaves; ajuste o scale para controlar o zoom
     let tileDataValue = this.fractalNoise(
       x,
