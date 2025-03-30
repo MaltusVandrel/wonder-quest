@@ -133,7 +133,7 @@ export const BIOMES: { [key in BIOME_TYPES]: Biome } = {
   },
   [BIOME_TYPES.GROVE]: {
     type: BIOME_TYPES.GROVE,
-    color: 0x5b8b28,
+    color: 0x6b9b38,
     staminaCost: 30 * DIFICULTY_STAMINA,
     timeCost: 30 * DIFICULTY_TIME,
   },
@@ -183,8 +183,11 @@ export function chooseBiome(
       if (inRange(localVariation, 0.6, 1)) {
         biome = BIOMES[BIOME_TYPES.HILLS];
       }
-    } else if (inRange(moisture, 0.6, 0.8)) {
+    } else if (inRange(moisture, 0.6, 0.62)) {
+      biome = BIOMES[BIOME_TYPES.GROVE];
+    } else if (inRange(moisture, 0.62, 0.8)) {
       biome = BIOMES[BIOME_TYPES.WOODS];
+
       if (inRange(wonder, 0.85, 1)) {
         biome = BIOMES[BIOME_TYPES.ENCHANTED_WOODS];
       }
