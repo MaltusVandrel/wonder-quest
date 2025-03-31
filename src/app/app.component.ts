@@ -44,7 +44,10 @@ export class AppComponent implements OnInit {
       this.resizeGame();
     });
     window.addEventListener('beforeunload', (event) => {
-      GameDataService.saveData();
+      let mainMenuScene = this.game?.scene
+        .getScenes(true)
+        .find((scene) => scene.scene.key == 'main-menu-scene');
+      if (!mainMenuScene) GameDataService.saveData();
     });
   }
   resizeGame(): void {

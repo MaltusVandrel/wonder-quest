@@ -3,6 +3,7 @@ import Alea from 'alea';
 import { createNoise2D, NoiseFunction2D } from 'simplex-noise';
 import { BiomeUtils } from './biome.utils';
 import { chooseBiome } from 'src/data/bank/biome';
+import { Biome } from 'src/models/biome';
 
 export class MapGeneratorUtils {
   static seed: String = Math.random().toString();
@@ -48,7 +49,7 @@ export class MapGeneratorUtils {
   static prngList: any = [];
   static noises: any = [];
   static generatedTilesData: any = [];
-  static generatedBiome: any = [];
+  static generatedBiome: Array<Array<Biome>> = [];
 
   static initSeed(seed: String) {
     this.seed = seed;
@@ -93,7 +94,7 @@ export class MapGeneratorUtils {
     }
   }
 
-  static getBiomeData(x: number, y: number): any {
+  static getBiomeData(x: number, y: number): Biome {
     if (!this.generatedBiome[y]) this.generatedBiome[y] = [];
     if (!this.generatedBiome[y][x]) {
       for (let layer of this.layers) {

@@ -6,7 +6,7 @@ export function inRange(value: number, min: number, max: number): boolean {
 const DIFICULTY_STAMINA = 0.1;
 const DIFICULTY_TIME = 0.25;
 export const BIOME_DEFAULTS = { staminaCost: 15, timeCost: 15 };
-enum BIOME_TYPES {
+export enum BIOME_TYPES {
   DEEP_WATERS = 'Deep Waters',
   SHALLOW_WATERS = 'Shallow Waters',
   REEFS = 'Reefs',

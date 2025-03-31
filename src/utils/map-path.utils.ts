@@ -18,7 +18,7 @@ interface UncoveredCell {
 }
 
 export class MapPathUtils {
-  static DIRECTIONS: any = [
+  static DIRECTIONS: Array<Array<number>> = [
     [-1, -1],
     [+0, -1],
     [+1, -1],

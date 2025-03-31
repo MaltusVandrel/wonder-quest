@@ -38,3 +38,7 @@ I want a world completly new and unexplored, where I can create a simple charact
 - Save file: https://medium.com/differential-blog/using-messagepack-with-typescript-17ae388ded2a
 - saving circular json: https://www.30secondsofcode.org/js/s/stringify-circular-json/
 - event emmiter: https://stackblitz.com/edit/typescript-es6-events-emitter-class?file=EventEmitter.ts
+
+## WoW such CICD
+
+- https://wonder-quest.netlify.app/

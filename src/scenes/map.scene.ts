@@ -4,13 +4,14 @@ import { GameDataService } from 'src/services/game-data.service';
 import { ColorUtils } from 'src/utils/color.utils';
 import { MapGeneratorUtils } from 'src/utils/map-generator.utils';
 import { MapUIScene } from './map.ui.scene';
+import { findUnregistredRegionInVisibleMap } from 'src/data/bank/map-region';
 
 export class MapScene extends Phaser.Scene {
   mapPathScene: any;
   mapPlayerScene: any;
   mapUIScene: any | MapUIScene;
   introductionScene: any;
-  tileSize: number = 12;
+  tileSize: number = 8;
   centeringOffset: number = this.tileSize / 2;
   map: any = [];
 
@@ -64,6 +65,7 @@ export class MapScene extends Phaser.Scene {
     this.introductionScene = this.scene.get('introduction-scene');
 
     this.doColorFilter();
+    findUnregistredRegionInVisibleMap(this);
   }
 
   moveCamera(incrementOnOffsetX: number, incrementOnOffsetY: number) {
@@ -83,6 +85,9 @@ export class MapScene extends Phaser.Scene {
 
     this.drawMap();
   }
+  getCell(x: number, y: number): Phaser.GameObjects.Rectangle {
+    return this.tileLayer[y][x];
+  }
   setGrid() {
     const defaultColor = 0x000000;
     for (let y = 0; y < this.screenGridXSize; y++) {
@@ -96,7 +101,7 @@ export class MapScene extends Phaser.Scene {
           this.tileSize,
           defaultColor
         );
-        this.tileLayer[y][x] = cell;
+
         cell.setData({
           x: x,
           y: y,
@@ -126,6 +131,8 @@ export class MapScene extends Phaser.Scene {
             this.mapPathScene.followPath(x, y);
           }
         });
+
+        this.tileLayer[y][x] = cell;
       }
     }
   }

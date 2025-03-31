@@ -117,7 +117,8 @@ export class MapUIScene extends Phaser.Scene {
     this.uiElements[key] = element;
   }
   showTileInfo(x: number, y: number) {
-    let tile = MapGeneratorUtils.getBiomeData(
+    let tile = this.mapScene.getCell(x, y);
+    let tileBiome = MapGeneratorUtils.getBiomeData(
       x + this.mapScene.gridOffsetX,
       y + this.mapScene.gridOffsetY
     );
@@ -147,7 +148,7 @@ export class MapUIScene extends Phaser.Scene {
         this.getPosX(UIElement.ALIGNMENT.START, 12),
         this.getPosY(UIElement.ALIGNMENT.END, 12),
         [
-          tile.type.toUpperCase(),
+          tileBiome.type.toUpperCase() + ' (' + tile.getData('region') + ')',
           totalStaminaCost + ' Stamina Cost',
           formattedTimeCost,
         ],

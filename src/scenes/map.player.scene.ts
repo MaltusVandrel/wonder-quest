@@ -21,7 +21,7 @@ export class MapPlayerScene extends Phaser.Scene {
 
     this.createPlayer();
   }
-
+  //posição do player muda com resize, deveria manter
   createPlayer() {
     let playerSize = this.mapScene.tileSize;
     let strokeSize = 1;

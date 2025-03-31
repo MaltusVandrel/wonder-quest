@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { GameData } from 'src/core/game-data';
+import { MapRegion } from 'src/data/bank/map-region';
 import { HERO_BUILDER } from 'src/data/builder/hero-builder';
 import { Figure } from 'src/models/figure';
 export interface TimeData {
@@ -10,6 +10,20 @@ export interface TimeData {
   minutes: number;
   seconds: number;
 }
+export interface GameData {
+  /**
+   * @description it's in minutes
+   *   */
+  time: number;
+  /**
+   * @description it's the player, duh
+   *   */
+  playerData: Figure;
+  mapSeed: string;
+  mapPos: any;
+  registeredRegions: Array<MapRegion>;
+}
+
 export class GameDataService {
   static STORAGE_KEY = 'wonder-quest-game-data';
   private number = 0;
@@ -20,6 +34,7 @@ export class GameDataService {
     playerData: HERO_BUILDER.getAHero(1),
     mapSeed: Math.random() + '',
     mapPos: { x: 0, y: 0 },
+    registeredRegions: [],
   };
 
   constructor() {}
