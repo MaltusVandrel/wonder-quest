@@ -28,6 +28,8 @@ I want a world completly new and unexplored, where I can create a simple charact
 - make the player a little square
 - make the player a Party not a Player
 - add on the introduction that explains you are a force not the being
+- Monsters
+- - Wolves, Caterpie but Big!, Goblin, Centauro, Shark, Mermaids, Big Lizards, Bandits, Dragons, Wyvens, Slime, Bear, Cotton bunny but its like a plant? (fluffball)
 
 ## Possible inspirations for the future
 

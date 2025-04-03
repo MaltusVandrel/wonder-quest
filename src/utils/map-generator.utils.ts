@@ -115,6 +115,12 @@ export class MapGeneratorUtils {
       this.generatedTilesData.wonder[y][x]
     );
   }
+  static hasBiomeData(x: number, y: number) {
+    try {
+      if (this.generatedBiome[y][x]) return true;
+    } catch (e) {}
+    return false;
+  }
   static generateTilesData(layer: any, x: number, y: number) {
     if (!this.generatedTilesData[layer.key][y])
       this.generatedTilesData[layer.key][y] = [];
@@ -160,22 +166,5 @@ export class MapGeneratorUtils {
       frequency *= lacunarity;
     }
     return noiseValue / maxAmplitude;
-  }
-
-  getTileFrame(e: number, m: number): number {
-    // Define the logic to select the appropriate frame based on elevation and moisture
-    // For example, you can map different ranges of e and m to different frames
-    if (e < 0.3) return 0; // Ocean
-    if (e < 0.35) return 1; // Beach
-    if (e < 0.6) {
-      if (m < 0.3) return 2; // Semi-arid
-      if (m < 0.6) return 3; // Grassland
-      return 4; // Forest
-    }
-    if (e < 0.8) {
-      if (m < 0.4) return 5; // Hills
-      return 6; // Mountains
-    }
-    return 7; // Snowy peaks
   }
 }

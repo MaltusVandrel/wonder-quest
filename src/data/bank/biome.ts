@@ -1,4 +1,6 @@
 import { Biome } from 'src/models/biome';
+import { MapGeneratorUtils } from 'src/utils/map-generator.utils';
+import { MapPathUtils } from 'src/utils/map-path.utils';
 
 export function inRange(value: number, min: number, max: number): boolean {
   return value >= min && value < max;
@@ -150,7 +152,9 @@ export function chooseBiome(
   moisture: number,
   temperature: number,
   localVariation: number,
-  wonder: number
+  wonder: number,
+  x?: number,
+  y?: number
 ): Biome {
   let biome = BIOMES[BIOME_TYPES.VOID];
 
@@ -201,7 +205,8 @@ export function chooseBiome(
   } else if (inRange(elevation, 0.85, 1)) {
     biome = BIOMES[BIOME_TYPES.SNOWY_PEAKS];
   }
-  return {
+
+  const genBiome = {
     ...biome,
     influenceValues: {
       elevation,
@@ -211,4 +216,6 @@ export function chooseBiome(
       wonder,
     },
   };
+
+  return genBiome;
 }

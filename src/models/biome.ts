@@ -3,6 +3,7 @@ export interface Biome {
   color: number;
   staminaCost: number;
   timeCost: number;
+  regionId?: string;
   influenceValues?: {
     elevation: number;
     moisture: number;

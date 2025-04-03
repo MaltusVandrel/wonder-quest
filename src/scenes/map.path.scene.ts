@@ -1,9 +1,7 @@
 import * as Phaser from 'phaser';
 import { MapPathUtils } from 'src/utils/map-path.utils';
-import { MapScene } from './map.scene';
 import { GameDataService } from 'src/services/game-data.service';
 import { GAUGE_KEYS } from 'src/data/bank/gauge';
-import { findUnregistredRegionInVisibleMap } from 'src/data/bank/map-region';
 
 export class MapPathScene extends Phaser.Scene {
   mapScene: any;

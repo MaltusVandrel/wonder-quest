@@ -4,14 +4,13 @@ import { GameDataService } from 'src/services/game-data.service';
 import { ColorUtils } from 'src/utils/color.utils';
 import { MapGeneratorUtils } from 'src/utils/map-generator.utils';
 import { MapUIScene } from './map.ui.scene';
-import { findUnregistredRegionInVisibleMap } from 'src/data/bank/map-region';
 
 export class MapScene extends Phaser.Scene {
   mapPathScene: any;
   mapPlayerScene: any;
   mapUIScene: any | MapUIScene;
   introductionScene: any;
-  tileSize: number = 8;
+  tileSize: number = 12;
   centeringOffset: number = this.tileSize / 2;
   map: any = [];
 
@@ -65,13 +64,14 @@ export class MapScene extends Phaser.Scene {
     this.introductionScene = this.scene.get('introduction-scene');
 
     this.doColorFilter();
-    findUnregistredRegionInVisibleMap(this);
+    // findUnregistredRegionInVisibleMap(this);
   }
 
   moveCamera(incrementOnOffsetX: number, incrementOnOffsetY: number) {
     this.gridOffsetX += incrementOnOffsetX;
     this.gridOffsetY += incrementOnOffsetY;
     this.mapUpdate();
+    // findUnregistredRegionInVisibleMap(this);
   }
 
   mapUpdate(isFirstTime: boolean = false) {
@@ -138,7 +138,6 @@ export class MapScene extends Phaser.Scene {
   }
   drawMap() {
     /* RIP easy life, here laied a destruct and redraw, easy, hot and loyal.*/
-
     for (let y = 0; y < this.screenGridXSize; y++) {
       const newY = y + this.gridOffsetY;
       for (let x = 0; x < this.screenGridYSize; x++) {

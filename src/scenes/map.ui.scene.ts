@@ -4,6 +4,7 @@ import { MapGeneratorUtils } from 'src/utils/map-generator.utils';
 import { AppComponent } from 'src/app/app.component';
 import { GameDataService } from 'src/services/game-data.service';
 import { GAUGE_KEYS } from 'src/data/bank/gauge';
+import { getRegionName } from 'src/data/bank/map-region';
 
 export class MapUIScene extends Phaser.Scene {
   textStyle: Phaser.Types.GameObjects.Text.TextStyle = {
@@ -117,11 +118,10 @@ export class MapUIScene extends Phaser.Scene {
     this.uiElements[key] = element;
   }
   showTileInfo(x: number, y: number) {
-    let tile = this.mapScene.getCell(x, y);
-    let tileBiome = MapGeneratorUtils.getBiomeData(
-      x + this.mapScene.gridOffsetX,
-      y + this.mapScene.gridOffsetY
-    );
+    //let tile = this.mapScene.getCell(x, y);
+    const tileInfoX = x + this.mapScene.gridOffsetX;
+    const tileInfoY = y + this.mapScene.gridOffsetY;
+    let tileBiome = MapGeneratorUtils.getBiomeData(tileInfoX, tileInfoY);
 
     let key: string = 'tile-info';
 
@@ -148,7 +148,12 @@ export class MapUIScene extends Phaser.Scene {
         this.getPosX(UIElement.ALIGNMENT.START, 12),
         this.getPosY(UIElement.ALIGNMENT.END, 12),
         [
-          tileBiome.type.toUpperCase() + ' (' + tile.getData('region') + ')',
+          getRegionName(tileInfoX, tileInfoY, tileBiome) +
+            ' (' +
+            tileInfoX +
+            '/' +
+            tileInfoY +
+            ')',
           totalStaminaCost + ' Stamina Cost',
           formattedTimeCost,
         ],
