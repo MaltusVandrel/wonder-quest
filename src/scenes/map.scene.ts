@@ -21,7 +21,7 @@ export class MapScene extends Phaser.Scene {
   screenGridYSize = 0;
   gridOffsetX: number = 0;
   gridOffsetY: number = 0;
-
+  actualGridCenter: { x: number; y: number } = { x: 0, y: 0 };
   constructor(config: string | Phaser.Types.Scenes.SettingsConfig) {
     super({ key: 'map-scene' });
   }
@@ -33,7 +33,22 @@ export class MapScene extends Phaser.Scene {
     });
     window.addEventListener('resize', () => {
       this.updateToCanvasSize();
-      this.mapUpdate();
+      this.gridCenter();
+
+      this.scene.stop('map-player-scene');
+      this.scene.stop('map-path-scene');
+      this.scene.stop('map-ui-scene');
+      this.scene.launch('map-player-scene');
+      this.scene.launch('map-path-scene');
+      this.scene.launch('map-ui-scene');
+
+      this.redrawGrid();
+      const newGridCenter = this.gridCenter();
+      this.moveCamera(
+        this.actualGridCenter.x - newGridCenter.x,
+        this.actualGridCenter.y - newGridCenter.y
+      );
+      this.actualGridCenter = newGridCenter;
     });
     MapGeneratorUtils.initSeed(GameDataService.GAME_DATA.mapSeed);
   }
@@ -47,6 +62,8 @@ export class MapScene extends Phaser.Scene {
 
   create() {
     this.updateToCanvasSize();
+    this.actualGridCenter = this.gridCenter();
+
     this.gridOffsetX += GameDataService.GAME_DATA.mapPos.x;
     this.gridOffsetY += GameDataService.GAME_DATA.mapPos.y;
 
@@ -87,6 +104,19 @@ export class MapScene extends Phaser.Scene {
   }
   getCell(x: number, y: number): Phaser.GameObjects.Rectangle {
     return this.tileLayer[y][x];
+  }
+  redrawGrid() {
+    this.clearGrid();
+    this.setGrid();
+    this.drawMap();
+  }
+  clearGrid() {
+    this.tileLayer.forEach((row) => {
+      row.forEach((cell) => {
+        cell.destroy();
+      });
+    });
+    this.tileLayer = [];
   }
   setGrid() {
     const defaultColor = 0x000000;
