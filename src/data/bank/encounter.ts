@@ -80,7 +80,7 @@ export function checkIfEncounterHappens(
   const biome = MapGeneratorUtils.getBiomeData(x, y);
   const biomeType: BIOME_TYPES = biome.type;
   const seed = getRegionSeed(x, y, biome);
-  console.log('huh?', x, y, biome.type);
+
   const triggeredEncounters = ENCOUNTERS[biomeType].filter(
     (scheme: EncounterScheme) => scheme.chance > Math.random()
   );
