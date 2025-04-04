@@ -2,6 +2,7 @@ import * as Phaser from 'phaser';
 import { MapPathUtils } from 'src/utils/map-path.utils';
 import { GameDataService } from 'src/services/game-data.service';
 import { GAUGE_KEYS } from 'src/data/bank/gauge';
+import { checkIfEncounterHappens, Encounter } from 'src/data/bank/encounter';
 
 export class MapPathScene extends Phaser.Scene {
   mapScene: any;
@@ -92,6 +93,30 @@ export class MapPathScene extends Phaser.Scene {
       GameDataService.GAME_DATA.time += step.cell.timeCost;
       this.mapUIScene.showCurrentTime();
       this.mapScene.doColorFilter();
+
+      //Depois do passo ocorrer
+
+      //encouter???
+      const pos = this.mapScene.gridCenter();
+      const triggeredEncounter: Encounter | null = checkIfEncounterHappens(
+        pos.x + this.mapScene.gridOffsetX,
+        pos.y + this.mapScene.gridOffsetY
+      );
+      if (triggeredEncounter) {
+        const elDialogEvent = document.getElementById('event-dialog');
+        const elTitleEvent = document.getElementById('event-title');
+        const elDescriptionEvent = document.getElementById('event-description');
+
+        elDialogEvent?.setAttribute('open', 'true');
+        if (elTitleEvent) elTitleEvent.innerHTML = triggeredEncounter.title;
+        if (elDescriptionEvent)
+          elDescriptionEvent.innerHTML = triggeredEncounter.description;
+
+        this.lockPath = false;
+        this.clearPath();
+        return;
+      }
+
       if (stepIndex < this.pathSteps.length) {
         setTimeout(playerStep, 1000 / 144); //60 fps
       } else {

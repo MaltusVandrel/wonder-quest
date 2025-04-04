@@ -1,5 +1,7 @@
+import { BIOME_TYPES } from 'src/data/bank/biome';
+
 export interface Biome {
-  type: string;
+  type: BIOME_TYPES;
   color: number;
   staminaCost: number;
   timeCost: number;
