@@ -12,7 +12,7 @@ export class MapUIScene extends Phaser.Scene {
     color: '#ffffff',
     stroke: '#000000',
     strokeThickness: 4,
-    fontSize: '20px',
+    fontSize: '100%',
     shadow: {
       offsetX: 0,
       offsetY: 0,
@@ -36,10 +36,23 @@ export class MapUIScene extends Phaser.Scene {
     this.mapScene = this.scene.get('map-scene');
     this.mapPathScene = this.scene.get('map-path-scene');
     this.uiLayer = this.add.layer();
+    this.textStyle.fontSize = this.getFontSize();
     this.showCurrentTime();
     this.showStaminaGauge();
     this.showRestButton();
+
+    window.addEventListener('resize', () => {
+      this.textStyle.fontSize = this.getFontSize();
+    });
+
     // Create UI elements
+  }
+  getFontSize() {
+    const width = parseInt(this.game?.scale?.width + '');
+    const size = width * 0.018;
+    if (size > 26) return '26px';
+    if (size < 12) return '12px';
+    return size + 'px';
   }
   showRestButton() {
     let key: string = 'rest-button';
