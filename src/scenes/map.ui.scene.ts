@@ -1,7 +1,6 @@
 import * as Phaser from 'phaser';
 import { UIElement } from 'src/core/ui-element';
 import { MapGeneratorUtils } from 'src/utils/map-generator.utils';
-import { AppComponent } from 'src/app/app.component';
 import { GameDataService } from 'src/services/game-data.service';
 import { GAUGE_KEYS } from 'src/data/bank/gauge';
 import { getRegionName } from 'src/data/bank/map-region';
@@ -31,8 +30,6 @@ export class MapUIScene extends Phaser.Scene {
   }
 
   create() {
-    const height = parseInt(this.game?.scale?.height + '');
-    const width = parseInt(this.game?.scale?.width + '');
     this.mapScene = this.scene.get('map-scene');
     this.mapPathScene = this.scene.get('map-path-scene');
     this.uiLayer = this.add.layer();
