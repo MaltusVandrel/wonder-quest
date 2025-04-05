@@ -3,6 +3,7 @@ import { MapPathUtils } from 'src/utils/map-path.utils';
 import { GameDataService } from 'src/services/game-data.service';
 import { GAUGE_KEYS } from 'src/data/bank/gauge';
 import { checkIfEncounterHappens, Encounter } from 'src/data/bank/encounter';
+import { showToast } from 'src/utils/ui-notification.util';
 
 export class MapPathScene extends Phaser.Scene {
   mapScene: any;
@@ -103,6 +104,7 @@ export class MapPathScene extends Phaser.Scene {
         pos.y + this.mapScene.gridOffsetY
       );
       if (triggeredEncounter) {
+        /*
         const elDialogEvent = document.getElementById('event-dialog');
         const elTitleEvent = document.getElementById('event-title');
         const elDescriptionEvent = document.getElementById('event-description');
@@ -111,10 +113,12 @@ export class MapPathScene extends Phaser.Scene {
         if (elTitleEvent) elTitleEvent.innerHTML = triggeredEncounter.title;
         if (elDescriptionEvent)
           elDescriptionEvent.innerHTML = triggeredEncounter.description;
-
-        this.lockPath = false;
-        this.clearPath();
-        return;
+        */
+        showToast(triggeredEncounter);
+        //test if is blocking
+        //this.lockPath = false;
+        //this.clearPath();
+        //return;
       }
 
       if (stepIndex < this.pathSteps.length) {

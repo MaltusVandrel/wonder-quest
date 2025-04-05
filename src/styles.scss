@@ -20,3 +20,76 @@ div#phaser-example {
   font-family: "Monocraft Sans", sans-serif;
   cursor: url("assets/cursor.png"), auto;
 }
+
+dialog#event-dialog {
+  &[open] {
+    display: flex;
+  }
+
+  position: fixed;
+  z-index: 9999;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  min-height: 200px;
+  padding: 8px;
+  border-radius: 3px;
+
+  flex-direction: column;
+
+  form {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    flex: 1 1 auto;
+    padding-left: 16px;
+    section {
+      height: 100%;
+      display: block;
+      flex: 1 1 auto;
+    }
+    menu {
+      display: flex;
+      flex-direction: row-reverse;
+      flex-wrap: wrap;
+      margin: 0px;
+      padding: 4px 0px;
+      gap: 8px;
+    }
+  }
+}
+div#toast-holder {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-content: flex-start;
+  align-items: flex-start;
+  flex-wrap: nowrap;
+  position: absolute;
+  top: 0px;
+  gap: 2px;
+  padding: 2px;
+  pointer-events: none;
+  div.toast-element {
+    &.removed {
+      margin-top: -50px; /* Pequeno movimento para cima ao sumir */
+      opacity: 0; /* Gradualmente fica invisível */
+      pointer-events: none;
+    }
+    position: relative;
+    margin: 0px;
+    display: block;
+    height: fit-content;
+    width: fit-content;
+    max-width: 390px;
+    align-self: start;
+    flex: 1 1 auto;
+    background-color: rgba(0, 0, 0, 0.5);
+    color: wheat;
+    padding: 8px;
+    text-overflow: ellipsis;
+    pointer-events: none;
+    transition: margin-top 0.5s ease, opacity 0.3s ease;
+  }
+}

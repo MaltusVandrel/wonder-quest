@@ -4,7 +4,7 @@ import { Biome } from 'src/models/biome';
 import { GameDataService } from 'src/services/game-data.service';
 import { getRegionSeed } from './map-region';
 import { MapGeneratorUtils } from 'src/utils/map-generator.utils';
-const TRIGGER_MULTIPLIER = 1;
+const TRIGGER_MULTIPLIER = 11;
 /*
 interface EncounterScheme {
   key: string;
