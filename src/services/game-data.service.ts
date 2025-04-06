@@ -1,7 +1,9 @@
 import { Injectable } from '@angular/core';
 import { MapRegion } from 'src/data/bank/map-region';
 import { HERO_BUILDER } from 'src/data/builder/hero-builder';
+import { Biome } from 'src/models/biome';
 import { Figure } from 'src/models/figure';
+import { Party } from 'src/models/party';
 export interface TimeData {
   years: number;
   months: number;
@@ -20,8 +22,14 @@ export interface GameData {
    *   */
   playerData: Figure;
   mapSeed: string;
-  mapPos: any;
+  mapPos: { x: number; y: number };
   registeredRegions: Array<MapRegion>;
+  encounterData: { [key: string]: any };
+}
+export interface OveralGameDataParamter {
+  biome?: Biome;
+  pos?: { x: number; y: number };
+  party?: Party;
 }
 
 export class GameDataService {
@@ -35,6 +43,7 @@ export class GameDataService {
     mapSeed: Math.random() + '',
     mapPos: { x: 0, y: 0 },
     registeredRegions: [],
+    encounterData: {},
   };
 
   constructor() {}

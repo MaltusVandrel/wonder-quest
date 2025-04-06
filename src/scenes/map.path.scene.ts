@@ -2,8 +2,8 @@ import * as Phaser from 'phaser';
 import { MapPathUtils } from 'src/utils/map-path.utils';
 import { GameDataService } from 'src/services/game-data.service';
 import { GAUGE_KEYS } from 'src/data/bank/gauge';
-import { checkIfEncounterHappens, Encounter } from 'src/data/bank/encounter';
-import { showToast } from 'src/utils/ui-notification.util';
+import { checkIfEncountersHappens, Encounter } from 'src/data/bank/encounter';
+import { showEncounterDialog, showToast } from 'src/utils/ui-notification.util';
 
 export class MapPathScene extends Phaser.Scene {
   mapScene: any;
@@ -99,11 +99,12 @@ export class MapPathScene extends Phaser.Scene {
 
       //encouter???
       const pos = this.mapScene.gridCenter();
-      const triggeredEncounter: Encounter | null = checkIfEncounterHappens(
-        pos.x + this.mapScene.gridOffsetX,
-        pos.y + this.mapScene.gridOffsetY
-      );
-      if (triggeredEncounter) {
+      const triggeredEncounters: Array<Encounter> | null =
+        checkIfEncountersHappens(
+          pos.x + this.mapScene.gridOffsetX,
+          pos.y + this.mapScene.gridOffsetY
+        );
+      if (triggeredEncounters && triggeredEncounters.length > 0) {
         /*
         const elDialogEvent = document.getElementById('event-dialog');
         const elTitleEvent = document.getElementById('event-title');
@@ -114,7 +115,13 @@ export class MapPathScene extends Phaser.Scene {
         if (elDescriptionEvent)
           elDescriptionEvent.innerHTML = triggeredEncounter.description;
         */
-        showToast(triggeredEncounter);
+        if (
+          triggeredEncounters[triggeredEncounters.length - 1].demandsAttention
+        ) {
+          const encounterToDialog = triggeredEncounters.pop();
+          if (encounterToDialog) showEncounterDialog(encounterToDialog);
+        }
+        triggeredEncounters.forEach(showToast);
         //test if is blocking
         //this.lockPath = false;
         //this.clearPath();
@@ -122,7 +129,7 @@ export class MapPathScene extends Phaser.Scene {
       }
 
       if (stepIndex < this.pathSteps.length) {
-        setTimeout(playerStep, 1000 / 144); //60 fps
+        setTimeout(playerStep, 1000 / 60); //60 fps
       } else {
         this.lockPath = false;
         this.clearPath();
