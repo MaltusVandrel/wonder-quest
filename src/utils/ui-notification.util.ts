@@ -90,8 +90,14 @@ class HTMLEncounterDialogElement extends HTMLDialogElement {
       };
       header.appendChild(dismissButton);
     } else {
+      //apertar esc 2x está fechando, why?
       this.addEventListener('cancel', (event) => {
         event.preventDefault();
+      });
+      this.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+          event.preventDefault();
+        }
       });
     }
 
