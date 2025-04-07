@@ -27,22 +27,34 @@ dialog.dialog-element {
   top: 50%;
   translate: -50% -50%;
   margin: 0px;
+  overflow-y: hidden;
+  overflow-x: visible;
+  button.dismiss {
+    position: absolute;
+    background: none;
+    outline: 0px;
+    border: 0px;
+    font-size: 2em;
+    left: 93.5%;
+    margin-top: -3%;
+    &:hover {
+      transform: scale(1.05);
+    }
+  }
+  progress {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    left: 0px;
+    bottom: -0px;
+    border-radius: 0px;
+    height: 6px;
+  }
   header {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    button.dismiss {
-      padding: 8px;
-      background: none;
-      outline: 0px;
-      border: 0px;
-      font-size: 2em;
-      transform: translate(15px, -25px);
-      &:hover {
-        transform: translate(15px, -25px) scale(1.05);
-      }
-    }
   }
   menu {
     margin: 0px;

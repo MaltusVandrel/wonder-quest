@@ -1,4 +1,4 @@
-import { Encounter } from 'src/data/bank/encounter';
+import { Encounter, GameActionResult } from 'src/data/bank/encounter';
 import { MapScene } from 'src/scenes/map.scene';
 
 class HTMLToastElement extends HTMLDivElement {
@@ -74,13 +74,6 @@ class HTMLEncounterDialogElement extends HTMLDialogElement {
     const header = document.createElement('header');
     const content = document.createElement('section');
     const menu = document.createElement('menu');
-    this.appendChild(header);
-    this.appendChild(content);
-    this.appendChild(menu);
-    const title = document.createElement('h3');
-    title.innerText = encounter.title;
-    header.appendChild(title);
-
     if (encounter.canDismiss) {
       const dismissButton = document.createElement('button');
       dismissButton.innerText = '✕';
@@ -88,9 +81,8 @@ class HTMLEncounterDialogElement extends HTMLDialogElement {
       dismissButton.onclick = () => {
         this.close();
       };
-      header.appendChild(dismissButton);
+      this.appendChild(dismissButton);
     } else {
-      //apertar esc 2x está fechando, why?
       this.addEventListener('cancel', (event) => {
         event.preventDefault();
       });
@@ -100,6 +92,13 @@ class HTMLEncounterDialogElement extends HTMLDialogElement {
         }
       });
     }
+
+    this.appendChild(header);
+    this.appendChild(content);
+    this.appendChild(menu);
+    const title = document.createElement('h3');
+    title.innerText = encounter.title;
+    header.appendChild(title);
 
     if (Array.isArray(encounter.description)) {
       encounter.description.forEach((desc: string) => {
@@ -120,8 +119,16 @@ class HTMLEncounterDialogElement extends HTMLDialogElement {
       if (actionResult.able) {
         actionButton.onclick = () => {
           const actionResult = action.action(encounter.overalGameDataParamter);
-          console.log(actionResult);
 
+          const dialogResult = document.createElement(
+            HTMLGameActionResultDialogElement.extends,
+            {
+              is: HTMLGameActionResultDialogElement.tagname,
+            }
+          ) as HTMLGameActionResultDialogElement;
+          dialogResult.setValue(actionResult);
+          document.getElementsByTagName('body')[0].appendChild(dialogResult);
+          dialogResult.showModal();
           this.close();
         };
       } else {
@@ -134,29 +141,85 @@ class HTMLEncounterDialogElement extends HTMLDialogElement {
   }
 }
 class HTMLGameActionResultDialogElement extends HTMLDialogElement {
-  static readonly tagname = 'dialog-element';
+  static readonly tagname = 'dialog-result-element';
   static readonly extends = 'dialog';
+  static readonly MAX_TIME: number = 3000;
+  timeProgress: number = 0;
+
   backdrop: HTMLDivElement | undefined;
 
   constructor() {
     super();
     this.classList.add(HTMLEncounterDialogElement.tagname);
-
+    MapScene.DIALOG_OPEN_COUNT++;
     this.backdrop = document.createElement('div');
     document.getElementsByTagName('body')[0].appendChild(this.backdrop);
     this.backdrop?.classList.add(
       HTMLEncounterDialogElement.tagname + '-backdrop'
     );
     document
-      .getElementById('phaser-game')
+      .getElementsByTagName('canvas')[0]
       ?.style.setProperty('pointer-events', 'none');
     this.addEventListener('close', () => {
+      MapScene.DIALOG_OPEN_COUNT--;
       document
-        .getElementById('phaser-game')
+        .getElementsByTagName('canvas')[0]
         ?.style.setProperty('pointer-events', 'auto');
       this.remove();
       this.backdrop?.remove();
     });
+  }
+  setValue(result: GameActionResult) {
+    const header = document.createElement('header');
+    const content = document.createElement('section');
+    const menu = document.createElement('menu');
+    const progress = document.createElement('progress') as HTMLProgressElement;
+    progress.setAttribute('max', '100');
+    progress.setAttribute('value', '0');
+    const dismissButton = document.createElement('button');
+    dismissButton.innerText = '✕';
+    dismissButton.classList.add('dismiss');
+    dismissButton.onclick = () => {
+      this.close();
+    };
+    this.appendChild(dismissButton);
+    this.appendChild(content);
+    this.appendChild(menu);
+    this.appendChild(progress);
+
+    if (result.result) {
+      const description = document.createElement('p');
+      description.innerText = result.result;
+      content.appendChild(description);
+    }
+    if (result.reason) {
+      content.innerHTML += '<br/>';
+      const description = document.createElement('small');
+      description.innerText = result.reason;
+      content.appendChild(description);
+    }
+    const actionButton = document.createElement('button');
+    actionButton.innerHTML = 'OK';
+    actionButton.onclick = () => {
+      this.close();
+    };
+    menu.appendChild(actionButton);
+    this.appendChild(menu);
+    let interval = setInterval(() => {
+      this.timeProgress += 60;
+
+      const progressValue =
+        (this.timeProgress / HTMLGameActionResultDialogElement.MAX_TIME) * 100;
+
+      progress.setAttribute(
+        'value',
+        '' + (progressValue > 100 ? 100 : progressValue)
+      );
+      if (progressValue >= 100) {
+        clearInterval(interval);
+        this.close();
+      }
+    }, 60);
   }
 }
 customElements.define(HTMLToastElement.tagname, HTMLToastElement, {
@@ -171,6 +234,14 @@ customElements.define(
     extends: HTMLEncounterDialogElement.extends,
   }
 );
+customElements.define(
+  HTMLGameActionResultDialogElement.tagname,
+  HTMLGameActionResultDialogElement,
+  {
+    extends: HTMLGameActionResultDialogElement.extends,
+  }
+);
+
 export function showToast(encouter: Encounter) {
   const toast = document.createElement(HTMLToastElement.extends, {
     is: HTMLToastElement.tagname,
