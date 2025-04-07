@@ -6,6 +6,7 @@ import { MapGeneratorUtils } from 'src/utils/map-generator.utils';
 import { MapUIScene } from './map.ui.scene';
 
 export class MapScene extends Phaser.Scene {
+  static DIALOG_OPEN_COUNT = 0;
   mapPathScene: any;
   mapPlayerScene: any;
   mapUIScene: any | MapUIScene;
@@ -22,6 +23,7 @@ export class MapScene extends Phaser.Scene {
   gridOffsetX: number = 0;
   gridOffsetY: number = 0;
   actualGridCenter: { x: number; y: number } = { x: 0, y: 0 };
+  activeCell: Phaser.GameObjects.Rectangle | undefined;
   constructor(config: string | Phaser.Types.Scenes.SettingsConfig) {
     super({ key: 'map-scene' });
   }
@@ -139,6 +141,8 @@ export class MapScene extends Phaser.Scene {
         });
         cell.setInteractive();
         cell.addListener('pointerover', () => {
+          if (MapScene.DIALOG_OPEN_COUNT > 0) return;
+          this.activeCell = cell;
           let color = Phaser.Display.Color.ValueToColor(
             cell.getData('biome').color
           );
@@ -152,11 +156,13 @@ export class MapScene extends Phaser.Scene {
           }
         });
         cell.addListener('pointerout', () => {
+          if (MapScene.DIALOG_OPEN_COUNT > 0) return;
           cell.fillColor = cell.getData('biome').color;
           cell.setStrokeStyle(0, 0xffffff);
         });
 
         cell.addListener('pointerup', () => {
+          if (MapScene.DIALOG_OPEN_COUNT > 0) return;
           if (!this.mapPathScene.lockPath && !this.isGridCenter(x, y)) {
             this.mapPathScene.followPath(x, y);
           }

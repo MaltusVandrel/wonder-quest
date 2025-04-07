@@ -4,6 +4,7 @@ import { MapGeneratorUtils } from 'src/utils/map-generator.utils';
 import { GameDataService } from 'src/services/game-data.service';
 import { GAUGE_KEYS } from 'src/data/bank/gauge';
 import { getRegionName } from 'src/data/bank/map-region';
+import { MapScene } from './map.scene';
 
 export class MapUIScene extends Phaser.Scene {
   textStyle: Phaser.Types.GameObjects.Text.TextStyle = {
@@ -67,6 +68,7 @@ export class MapUIScene extends Phaser.Scene {
       .setOrigin(UIElement.ALIGNMENT.END, UIElement.ALIGNMENT.END)
       .setInteractive()
       .on('pointerup', () => {
+        if (MapScene.DIALOG_OPEN_COUNT > 0) return;
         let stamina = GameDataService.GAME_DATA.playerData.getGauge(
           GAUGE_KEYS.STAMINA
         );
@@ -77,9 +79,11 @@ export class MapUIScene extends Phaser.Scene {
         this.showCurrentTime();
       })
       .on('pointerover', () => {
+        if (MapScene.DIALOG_OPEN_COUNT > 0) return;
         element.setShadow(0, 0, '#000000', 15, true, true);
       })
       .on('pointerout', () => {
+        if (MapScene.DIALOG_OPEN_COUNT > 0) return;
         element.setShadow(0, 0, '#000000', 10, false, false);
       });
 

@@ -20,44 +20,60 @@ div#phaser-example {
   font-family: "Monocraft Sans", sans-serif;
   cursor: url("assets/cursor.png"), auto;
 }
-
-dialog#event-dialog {
-  &[open] {
-    display: flex;
-  }
-
+dialog.dialog-element {
   position: fixed;
-  z-index: 9999;
-  top: 50%;
+  margin: auto;
   left: 50%;
-  transform: translate(-50%, -50%);
-  width: 90%;
-  min-height: 200px;
-  padding: 8px;
-  border-radius: 3px;
-
-  flex-direction: column;
-
-  form {
+  top: 50%;
+  translate: -50% -50%;
+  margin: 0px;
+  header {
     display: flex;
-    flex-direction: column;
-    height: 100%;
-    flex: 1 1 auto;
-    padding-left: 16px;
-    section {
-      height: 100%;
-      display: block;
-      flex: 1 1 auto;
-    }
-    menu {
-      display: flex;
-      flex-direction: row-reverse;
-      flex-wrap: wrap;
-      margin: 0px;
-      padding: 4px 0px;
-      gap: 8px;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    button.dismiss {
+      padding: 8px;
+      background: none;
+      outline: 0px;
+      border: 0px;
+      font-size: 2em;
+      transform: translate(15px, -25px);
+      &:hover {
+        transform: translate(15px, -25px) scale(1.05);
+      }
     }
   }
+  menu {
+    margin: 0px;
+    gap: 4px;
+    display: flex;
+    flex-direction: row;
+    justify-content: end;
+    align-items: center;
+    button {
+      padding: 8px;
+      border: none;
+      border-radius: 3px;
+      box-shadow: 0 1px 1px 0px rgba(0, 0, 0, 0.2);
+      &:not(:disabled):hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        box-shadow: 0 1px 2px 1px rgba(0, 0, 0, 0.2);
+        transform: scale(1.05);
+      }
+    }
+  }
+  z-index: 9998;
+}
+div.dialog-element-backdrop {
+  position: fixed;
+  margin: 0px;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 9997;
 }
 div#toast-holder {
   display: flex;
@@ -71,7 +87,9 @@ div#toast-holder {
   gap: 2px;
   padding: 2px;
   pointer-events: none;
+  z-index: 9999;
   div.toast-element {
+    z-index: 10000;
     &.removed {
       margin-top: -50px; /* Pequeno movimento para cima ao sumir */
       opacity: 0; /* Gradualmente fica invisível */
@@ -91,5 +109,14 @@ div#toast-holder {
     text-overflow: ellipsis;
     pointer-events: none;
     transition: margin-top 0.5s ease, opacity 0.3s ease;
+    strong {
+      display: block;
+      position: absolute;
+      margin-left: 95%;
+      margin-top: -5px;
+      font-size: 1.2em;
+      text-shadow: 2px 0 0 black, 0 2px 0 black, -2px 0 0 black, 0 -2px 0 black,
+        2px 2px 0 black, -2px -2px 0 black, -2px 2px 0 black, 2px -2px 0 black;
+    }
   }
 }

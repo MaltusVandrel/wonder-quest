@@ -105,21 +105,19 @@ export class MapPathScene extends Phaser.Scene {
           pos.y + this.mapScene.gridOffsetY
         );
       if (triggeredEncounters && triggeredEncounters.length > 0) {
-        /*
-        const elDialogEvent = document.getElementById('event-dialog');
-        const elTitleEvent = document.getElementById('event-title');
-        const elDescriptionEvent = document.getElementById('event-description');
-
-        elDialogEvent?.setAttribute('open', 'true');
-        if (elTitleEvent) elTitleEvent.innerHTML = triggeredEncounter.title;
-        if (elDescriptionEvent)
-          elDescriptionEvent.innerHTML = triggeredEncounter.description;
-        */
         if (
           triggeredEncounters[triggeredEncounters.length - 1].demandsAttention
         ) {
           const encounterToDialog = triggeredEncounters.pop();
-          if (encounterToDialog) showEncounterDialog(encounterToDialog);
+          if (encounterToDialog) {
+            showEncounterDialog(encounterToDialog);
+            this.mapScene.activeCell.fillColor =
+              this.mapScene.activeCell.getData('biome').color;
+            this.mapScene.activeCell.setStrokeStyle(0, 0xffffff);
+            this.lockPath = false;
+            this.clearPath();
+            return;
+          }
         }
         triggeredEncounters.forEach(showToast);
         //test if is blocking

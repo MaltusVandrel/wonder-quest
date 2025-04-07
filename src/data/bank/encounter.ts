@@ -21,16 +21,16 @@ interface EncounterScheme {
    string];
 }
 */
-export interface EncounterActionResult {
+export interface GameActionResult {
   able?: boolean;
   result?: string;
   reason?: string;
 }
-export interface EncounterAction {
+export interface GameAction {
   title: string;
   hint?: string;
-  action: (params: OveralGameDataParamter) => EncounterActionResult;
-  isAble: (params: OveralGameDataParamter) => EncounterActionResult;
+  action: (params: OveralGameDataParamter) => GameActionResult;
+  isAble: (params: OveralGameDataParamter) => GameActionResult;
 }
 export interface EncounterScheme {
   key: string;
@@ -41,7 +41,7 @@ export interface EncounterScheme {
   blocksOtherEncounters?: boolean;
   priority?: number;
   canDismiss?: boolean;
-  actions?: Array<EncounterAction>;
+  actions?: Array<GameAction>;
   onTrigger?: (data: OveralGameDataParamter) => void;
   canTrigger?: (data: OveralGameDataParamter) => boolean;
 }
@@ -53,7 +53,7 @@ export interface Encounter {
   blocksOtherEncounters?: boolean;
   priority?: number;
   canDismiss?: boolean;
-  actions?: Array<EncounterAction>;
+  actions?: Array<GameAction>;
   onTrigger?: (data: OveralGameDataParamter) => void;
   canTrigger?: (data: OveralGameDataParamter) => boolean;
   overalGameDataParamter: OveralGameDataParamter;
