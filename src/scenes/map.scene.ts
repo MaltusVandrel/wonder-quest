@@ -24,10 +24,14 @@ export class MapScene extends Phaser.Scene {
   gridOffsetY: number = 0;
   actualGridCenter: { x: number; y: number } = { x: 0, y: 0 };
   activeCell: Phaser.GameObjects.Rectangle | undefined;
+  isContinue: boolean | undefined;
   constructor(config: string | Phaser.Types.Scenes.SettingsConfig) {
     super({ key: 'map-scene' });
   }
-
+  init(data: { isContinue: boolean }) {
+    if (data && data.isContinue !== undefined)
+      this.isContinue = data.isContinue;
+  }
   preload() {
     this.load.spritesheet('tiles', '../assets/tiles.png', {
       frameWidth: this.tileSize,
@@ -76,7 +80,8 @@ export class MapScene extends Phaser.Scene {
     this.scene.launch('map-player-scene');
     this.scene.launch('map-path-scene');
     this.scene.launch('map-ui-scene');
-    this.scene.launch('introduction-scene');
+
+    if (!this.isContinue) this.scene.launch('introduction-scene');
     this.mapPathScene = this.scene.get('map-path-scene');
     this.mapPlayerScene = this.scene.get('map-player-scene');
     this.mapUIScene = this.scene.get('map-ui-scene');

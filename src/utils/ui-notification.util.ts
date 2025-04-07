@@ -4,6 +4,7 @@ import { MapScene } from 'src/scenes/map.scene';
 class HTMLToastElement extends HTMLDivElement {
   static readonly tagname = 'toast-element';
   static readonly extends = 'div';
+  static readonly MAX_TIME: number = 7500;
   count: number = 1;
   key: string = '';
   constructor() {
@@ -40,7 +41,7 @@ class HTMLToastElement extends HTMLDivElement {
       setTimeout(() => {
         this.remove();
       }, 300);
-    }, 1500);
+    }, HTMLToastElement.MAX_TIME);
   }
 }
 class HTMLEncounterDialogElement extends HTMLDialogElement {
@@ -143,7 +144,7 @@ class HTMLEncounterDialogElement extends HTMLDialogElement {
 class HTMLGameActionResultDialogElement extends HTMLDialogElement {
   static readonly tagname = 'dialog-result-element';
   static readonly extends = 'dialog';
-  static readonly MAX_TIME: number = 3000;
+  static readonly MAX_TIME: number = 15000;
   timeProgress: number = 0;
 
   backdrop: HTMLDivElement | undefined;
@@ -226,7 +227,6 @@ customElements.define(HTMLToastElement.tagname, HTMLToastElement, {
   extends: HTMLToastElement.extends,
 });
 
-//ESTILIZAR CARAI
 customElements.define(
   HTMLEncounterDialogElement.tagname,
   HTMLEncounterDialogElement,

@@ -86,11 +86,11 @@ export class MainMenuScene extends Phaser.Scene {
     });
   }
 
-  startGame() {
-    this.scene.start('map-scene');
+  startGame(isContinue: boolean = false) {
+    this.scene.start('map-scene', { isContinue: isContinue });
   }
   loadGame() {
     GameDataService.loadData();
-    this.startGame();
+    this.startGame(true);
   }
 }
