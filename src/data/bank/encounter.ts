@@ -100,7 +100,7 @@ export const ENCOUNTERS: { [key in BIOME_TYPES]: Array<EncounterScheme> } = {
       chance: 0.01 * TRIGGER_MULTIPLIER,
       demandsAttention: true,
       blocksOtherEncounters: true,
-      canDismiss: true,
+      canDismiss: false,
       priority: 0,
       actions: [
         {
