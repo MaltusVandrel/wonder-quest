@@ -55,6 +55,7 @@ abstract class HTMLCustomDialogElement<T> extends HTMLDialogElement {
   static readonly PARENT_TAGNAME = 'dialog-element';
   static readonly extends = 'dialog';
   backdrop: HTMLDivElement | undefined;
+  isMouseOver: boolean = false;
   dismissable: boolean = true;
   header: HTMLElement = document.createElement('header');
   content: HTMLElement = document.createElement('section');
@@ -88,6 +89,12 @@ abstract class HTMLCustomDialogElement<T> extends HTMLDialogElement {
       if (!this.dismissable && event.key === 'Escape') {
         event.preventDefault();
       }
+    });
+    this.addEventListener('mouseover', (event) => {
+      this.isMouseOver = true;
+    });
+    this.addEventListener('mouseout', (event) => {
+      this.isMouseOver = false;
     });
   }
   abstract setData(data: T): void;
@@ -193,7 +200,7 @@ class HTMLGameActionResultDialogElement extends HTMLCustomDialogElement<GameActi
 
   static readonly MAX_TIME: number = 15000;
   timeProgress: number = 0;
-
+  interval: any;
   constructor() {
     super();
   }
@@ -231,7 +238,8 @@ class HTMLGameActionResultDialogElement extends HTMLCustomDialogElement<GameActi
     const progress = document.createElement('progress') as HTMLProgressElement;
     progress.setAttribute('max', '100');
     progress.setAttribute('value', '0');
-    let interval = setInterval(() => {
+    this.interval = setInterval(() => {
+      if (this.isMouseOver) return;
       this.timeProgress += 60;
 
       const progressValue =
@@ -242,10 +250,14 @@ class HTMLGameActionResultDialogElement extends HTMLCustomDialogElement<GameActi
         '' + (progressValue > 100 ? 100 : progressValue)
       );
       if (progressValue >= 100) {
-        clearInterval(interval);
+        clearInterval(this.interval);
         this.close();
       }
     }, 60);
+    this.addEventListener('close', () => {
+      if (this.interval) clearInterval(this.interval);
+    });
+
     this.appendChild(progress);
     this.showModal();
   }

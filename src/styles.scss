@@ -2,7 +2,6 @@
 html,
 body,
 div#phaser-example {
-  box-sizing: border-box !important;
   padding: 0px !important;
   margin: 0px !important;
   border: 0px !important;
@@ -19,6 +18,10 @@ div#phaser-example {
 * {
   font-family: "Monocraft Sans", sans-serif;
   cursor: url("assets/cursor.png"), auto;
+  box-sizing: border-box !important;
+}
+::backdrop {
+  display: none;
 }
 dialog.dialog-element {
   position: fixed;
@@ -29,14 +32,16 @@ dialog.dialog-element {
   margin: 0px;
   overflow-y: hidden;
   overflow-x: visible;
+
   button.dismiss {
     position: absolute;
     background: none;
     outline: 0px;
     border: 0px;
     font-size: 2em;
-    left: 93.5%;
-    margin-top: -3%;
+    left: 100%;
+    margin-left: -39px;
+    margin-top: -22px;
     &:hover {
       transform: scale(1.05);
     }
