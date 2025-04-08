@@ -1,5 +1,10 @@
-import { Encounter, GameActionResult } from 'src/data/bank/encounter';
+import {
+  Encounter,
+  GameAction,
+  GameActionResult,
+} from 'src/data/bank/encounter';
 import { MapScene } from 'src/scenes/map.scene';
+import { OveralGameDataParamter } from 'src/services/game-data.service';
 
 class HTMLToastElement extends HTMLDivElement {
   static readonly tagname = 'toast-element';
@@ -17,6 +22,8 @@ class HTMLToastElement extends HTMLDivElement {
     this.innerHTML = Array.isArray(encounter.description)
       ? encounter.description.join('<br/>')
       : encounter.description;
+
+    this.show();
   }
 
   show() {
@@ -44,19 +51,23 @@ class HTMLToastElement extends HTMLDivElement {
     }, HTMLToastElement.MAX_TIME);
   }
 }
-class HTMLEncounterDialogElement extends HTMLDialogElement {
-  static readonly tagname = 'dialog-element';
+abstract class HTMLCustomDialogElement<T> extends HTMLDialogElement {
+  static readonly PARENT_TAGNAME = 'dialog-element';
   static readonly extends = 'dialog';
   backdrop: HTMLDivElement | undefined;
-
+  dismissable: boolean = true;
+  header: HTMLElement = document.createElement('header');
+  content: HTMLElement = document.createElement('section');
+  menu: HTMLElement = document.createElement('menu');
+  menuTitle: HTMLElement = document.createElement('h3');
   constructor() {
     super();
-    this.classList.add(HTMLEncounterDialogElement.tagname);
+    this.classList.add(HTMLCustomDialogElement.PARENT_TAGNAME);
     MapScene.DIALOG_OPEN_COUNT++;
     this.backdrop = document.createElement('div');
     document.getElementsByTagName('body')[0].appendChild(this.backdrop);
     this.backdrop?.classList.add(
-      HTMLEncounterDialogElement.tagname + '-backdrop'
+      HTMLCustomDialogElement.PARENT_TAGNAME + '-backdrop'
     );
     document
       .getElementsByTagName('canvas')[0]
@@ -69,13 +80,19 @@ class HTMLEncounterDialogElement extends HTMLDialogElement {
       this.remove();
       this.backdrop?.remove();
     });
-  }
 
-  setEncounter(encounter: Encounter) {
-    const header = document.createElement('header');
-    const content = document.createElement('section');
-    const menu = document.createElement('menu');
-    if (encounter.canDismiss) {
+    this.addEventListener('cancel', (event) => {
+      if (!this.dismissable) event.preventDefault();
+    });
+    this.addEventListener('keydown', (event) => {
+      if (!this.dismissable && event.key === 'Escape') {
+        event.preventDefault();
+      }
+    });
+  }
+  abstract setData(data: T): void;
+  appendCloseButton() {
+    if (this.dismissable) {
       const dismissButton = document.createElement('button');
       dismissButton.innerText = '✕';
       dismissButton.classList.add('dismiss');
@@ -83,129 +100,137 @@ class HTMLEncounterDialogElement extends HTMLDialogElement {
         this.close();
       };
       this.appendChild(dismissButton);
-    } else {
-      this.addEventListener('cancel', (event) => {
-        event.preventDefault();
-      });
-      this.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape') {
-          event.preventDefault();
-        }
-      });
     }
-
-    this.appendChild(header);
-    this.appendChild(content);
-    this.appendChild(menu);
-    const title = document.createElement('h3');
-    title.innerText = encounter.title;
-    header.appendChild(title);
-
-    if (Array.isArray(encounter.description)) {
-      encounter.description.forEach((desc: string) => {
-        const description = document.createElement('p');
-        description.innerText = desc;
-        content.appendChild(description);
-      });
-    } else {
-      const description = document.createElement('p');
-      description.innerText = encounter.description;
-      content.appendChild(description);
-    }
-
-    encounter.actions?.forEach((action) => {
+  }
+  setUpDefaultStructure() {
+    this.appendChild(this.header);
+    this.appendChild(this.content);
+    this.appendChild(this.menu);
+    this.header.appendChild(this.menuTitle);
+  }
+  setUpSimplifiedStructure() {
+    this.appendCloseButton();
+    this.appendChild(this.content);
+    this.appendChild(this.menu);
+  }
+  setUpActions(
+    actions: Array<GameAction>,
+    overallGameDataParamter: OveralGameDataParamter,
+    resultCallback?: (
+      parentDialog: HTMLCustomDialogElement<any>,
+      result: GameActionResult
+    ) => void
+  ) {
+    actions?.forEach((action) => {
       const actionButton = document.createElement('button');
       actionButton.innerHTML = action.title;
-      const actionResult = action.isAble(encounter.overalGameDataParamter);
+      const actionResult = action.isAble(overallGameDataParamter);
       if (actionResult.able) {
         actionButton.onclick = () => {
-          const actionResult = action.action(encounter.overalGameDataParamter);
-
-          const dialogResult = document.createElement(
-            HTMLGameActionResultDialogElement.extends,
-            {
-              is: HTMLGameActionResultDialogElement.tagname,
-            }
-          ) as HTMLGameActionResultDialogElement;
-          dialogResult.setValue(actionResult);
-          document.getElementsByTagName('body')[0].appendChild(dialogResult);
-          dialogResult.showModal();
-          this.close();
+          const actionResult = action.action(overallGameDataParamter);
+          if (resultCallback) resultCallback(this, actionResult);
         };
       } else {
         actionButton.disabled = true;
         actionButton.title = actionResult.reason || 'Action not available';
       }
       if (action.hint) actionButton.title = action.hint;
-      menu.appendChild(actionButton);
+      this.menu.appendChild(actionButton);
     });
   }
+  setUpSimpleTextContent(data: string | Array<string>) {
+    if (Array.isArray(data)) {
+      data.forEach((desc: string) => {
+        const description = document.createElement('p');
+        description.innerText = desc;
+        this.content.appendChild(description);
+      });
+    } else {
+      const description = document.createElement('p');
+      description.innerText = data;
+      this.content.appendChild(description);
+    }
+  }
 }
-class HTMLGameActionResultDialogElement extends HTMLDialogElement {
-  static readonly tagname = 'dialog-result-element';
-  static readonly extends = 'dialog';
-  static readonly MAX_TIME: number = 15000;
-  timeProgress: number = 0;
-
-  backdrop: HTMLDivElement | undefined;
+class HTMLEncounterDialogElement extends HTMLCustomDialogElement<Encounter> {
+  static readonly tagname = 'dialog-element';
 
   constructor() {
     super();
-    this.classList.add(HTMLEncounterDialogElement.tagname);
-    MapScene.DIALOG_OPEN_COUNT++;
-    this.backdrop = document.createElement('div');
-    document.getElementsByTagName('body')[0].appendChild(this.backdrop);
-    this.backdrop?.classList.add(
-      HTMLEncounterDialogElement.tagname + '-backdrop'
-    );
-    document
-      .getElementsByTagName('canvas')[0]
-      ?.style.setProperty('pointer-events', 'none');
-    this.addEventListener('close', () => {
-      MapScene.DIALOG_OPEN_COUNT--;
-      document
-        .getElementsByTagName('canvas')[0]
-        ?.style.setProperty('pointer-events', 'auto');
-      this.remove();
-      this.backdrop?.remove();
-    });
   }
-  setValue(result: GameActionResult) {
-    const header = document.createElement('header');
-    const content = document.createElement('section');
-    const menu = document.createElement('menu');
-    const progress = document.createElement('progress') as HTMLProgressElement;
-    progress.setAttribute('max', '100');
-    progress.setAttribute('value', '0');
-    const dismissButton = document.createElement('button');
-    dismissButton.innerText = '✕';
-    dismissButton.classList.add('dismiss');
-    dismissButton.onclick = () => {
-      this.close();
+
+  setData(encounter: Encounter) {
+    this.dismissable = encounter.canDismiss == true;
+    this.setUpDefaultStructure();
+    this.menuTitle.innerText = encounter.title;
+    this.setUpSimpleTextContent(encounter.description);
+
+    const resultCallback = (
+      parent: HTMLCustomDialogElement<any>,
+      actionResult: GameActionResult
+    ) => {
+      const dialogResult = document.createElement(
+        HTMLGameActionResultDialogElement.extends,
+        {
+          is: HTMLGameActionResultDialogElement.tagname,
+        }
+      ) as HTMLGameActionResultDialogElement;
+      document.getElementsByTagName('body')[0].appendChild(dialogResult);
+      dialogResult.setData(actionResult);
+      parent.close();
     };
-    this.appendChild(dismissButton);
-    this.appendChild(content);
-    this.appendChild(menu);
-    this.appendChild(progress);
+    if (encounter.actions)
+      this.setUpActions(
+        encounter.actions,
+        encounter.overalGameDataParamter,
+        resultCallback
+      );
+    this.showModal();
+  }
+}
+class HTMLGameActionResultDialogElement extends HTMLCustomDialogElement<GameActionResult> {
+  static readonly tagname = 'dialog-result-element';
+
+  static readonly MAX_TIME: number = 15000;
+  timeProgress: number = 0;
+
+  constructor() {
+    super();
+  }
+  setData(result: GameActionResult) {
+    this.setUpSimplifiedStructure();
 
     if (result.result) {
       const description = document.createElement('p');
       description.innerText = result.result;
-      content.appendChild(description);
+      this.content.appendChild(description);
     }
     if (result.reason) {
-      content.innerHTML += '<br/>';
+      this.content.innerHTML += '<br/>';
       const description = document.createElement('small');
       description.innerText = result.reason;
-      content.appendChild(description);
+      this.content.appendChild(description);
     }
-    const actionButton = document.createElement('button');
-    actionButton.innerHTML = 'OK';
-    actionButton.onclick = () => {
-      this.close();
-    };
-    menu.appendChild(actionButton);
-    this.appendChild(menu);
+
+    this.setUpActions(
+      [
+        {
+          title: 'OK',
+          action: ({}) => {
+            this.close();
+            return {};
+          },
+          isAble: ({}) => {
+            return { able: true };
+          },
+        },
+      ],
+      {}
+    );
+
+    const progress = document.createElement('progress') as HTMLProgressElement;
+    progress.setAttribute('max', '100');
+    progress.setAttribute('value', '0');
     let interval = setInterval(() => {
       this.timeProgress += 60;
 
@@ -221,8 +246,11 @@ class HTMLGameActionResultDialogElement extends HTMLDialogElement {
         this.close();
       }
     }, 60);
+    this.appendChild(progress);
+    this.showModal();
   }
 }
+
 customElements.define(HTMLToastElement.tagname, HTMLToastElement, {
   extends: HTMLToastElement.extends,
 });
@@ -246,10 +274,8 @@ export function showToast(encouter: Encounter) {
   const toast = document.createElement(HTMLToastElement.extends, {
     is: HTMLToastElement.tagname,
   }) as HTMLToastElement;
-
-  toast.setValue(encouter);
   document.getElementById('toast-holder')?.appendChild(toast);
-  toast.show();
+  toast.setValue(encouter);
 }
 export function showEncounterDialog(encouter: Encounter) {
   const dialog = document.createElement(HTMLEncounterDialogElement.extends, {
@@ -257,6 +283,5 @@ export function showEncounterDialog(encouter: Encounter) {
   }) as HTMLEncounterDialogElement;
 
   document.getElementsByTagName('body')[0].appendChild(dialog);
-  dialog.setEncounter(encouter);
-  dialog.showModal();
+  dialog.setData(encouter);
 }
