@@ -23,6 +23,7 @@ export interface GameData {
   playerData: Figure;
   mapSeed: string;
   mapPos: { x: number; y: number };
+  playerPos: { x: number; y: number };
   registeredRegions: Array<MapRegion>;
   encounterData: { [key: string]: any };
 }
@@ -42,6 +43,7 @@ export class GameDataService {
     playerData: HERO_BUILDER.getAHero(1),
     mapSeed: Math.random() + '',
     mapPos: { x: 0, y: 0 },
+    playerPos: { x: 0, y: 0 },
     registeredRegions: [],
     encounterData: {},
   };

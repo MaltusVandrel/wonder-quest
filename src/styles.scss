@@ -20,9 +20,7 @@ div#phaser-example {
   cursor: url("assets/cursor.png"), auto;
   box-sizing: border-box !important;
 }
-::backdrop {
-  display: none;
-}
+
 dialog.dialog-element {
   position: fixed;
   margin: auto;
@@ -87,16 +85,7 @@ dialog.dialog-element {
   }
   z-index: 9998;
 }
-div.dialog-element-backdrop {
-  position: fixed;
-  margin: 0px;
-  left: 0;
-  top: 0;
-  width: 100vw;
-  height: 100vh;
-  background-color: rgba(0, 0, 0, 0.5);
-  z-index: 9997;
-}
+
 div#toast-holder {
   display: flex;
   flex-direction: column;
@@ -121,8 +110,8 @@ div#toast-holder {
     margin: 0px;
     display: block;
     height: fit-content;
-    width: fit-content;
-    max-width: 390px;
+    width: 390px;
+    max-width: 90vw;
     align-self: start;
     flex: 1 1 auto;
     background-color: rgba(0, 0, 0, 0.5);

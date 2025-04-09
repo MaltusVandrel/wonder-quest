@@ -54,22 +54,18 @@ class HTMLToastElement extends HTMLDivElement {
 abstract class HTMLCustomDialogElement<T> extends HTMLDialogElement {
   static readonly PARENT_TAGNAME = 'dialog-element';
   static readonly extends = 'dialog';
-  backdrop: HTMLDivElement | undefined;
   isMouseOver: boolean = false;
   dismissable: boolean = true;
   header: HTMLElement = document.createElement('header');
   content: HTMLElement = document.createElement('section');
   menu: HTMLElement = document.createElement('menu');
   menuTitle: HTMLElement = document.createElement('h3');
+  dataContext: any;
   constructor() {
     super();
     this.classList.add(HTMLCustomDialogElement.PARENT_TAGNAME);
     MapScene.DIALOG_OPEN_COUNT++;
-    this.backdrop = document.createElement('div');
-    document.getElementsByTagName('body')[0].appendChild(this.backdrop);
-    this.backdrop?.classList.add(
-      HTMLCustomDialogElement.PARENT_TAGNAME + '-backdrop'
-    );
+
     document
       .getElementsByTagName('canvas')[0]
       ?.style.setProperty('pointer-events', 'none');
@@ -79,7 +75,6 @@ abstract class HTMLCustomDialogElement<T> extends HTMLDialogElement {
         .getElementsByTagName('canvas')[0]
         ?.style.setProperty('pointer-events', 'auto');
       this.remove();
-      this.backdrop?.remove();
     });
 
     this.addEventListener('cancel', (event) => {
@@ -176,14 +171,7 @@ class HTMLEncounterDialogElement extends HTMLCustomDialogElement<Encounter> {
       parent: HTMLCustomDialogElement<any>,
       actionResult: GameActionResult
     ) => {
-      const dialogResult = document.createElement(
-        HTMLGameActionResultDialogElement.extends,
-        {
-          is: HTMLGameActionResultDialogElement.tagname,
-        }
-      ) as HTMLGameActionResultDialogElement;
-      document.getElementsByTagName('body')[0].appendChild(dialogResult);
-      dialogResult.setData(actionResult);
+      showGameActionResultDialog(actionResult);
       parent.close();
     };
     if (encounter.actions)
@@ -282,18 +270,29 @@ customElements.define(
   }
 );
 
-export function showToast(encouter: Encounter) {
+export function showToast(data: Encounter) {
   const toast = document.createElement(HTMLToastElement.extends, {
     is: HTMLToastElement.tagname,
   }) as HTMLToastElement;
   document.getElementById('toast-holder')?.appendChild(toast);
-  toast.setValue(encouter);
+  toast.setValue(data);
 }
-export function showEncounterDialog(encouter: Encounter) {
+export function showEncounterDialog(data: Encounter) {
   const dialog = document.createElement(HTMLEncounterDialogElement.extends, {
     is: HTMLEncounterDialogElement.tagname,
   }) as HTMLEncounterDialogElement;
 
   document.getElementsByTagName('body')[0].appendChild(dialog);
-  dialog.setData(encouter);
+  dialog.setData(data);
+}
+export function showGameActionResultDialog(data: GameActionResult) {
+  const dialog = document.createElement(
+    HTMLGameActionResultDialogElement.extends,
+    {
+      is: HTMLGameActionResultDialogElement.tagname,
+    }
+  ) as HTMLGameActionResultDialogElement;
+
+  document.getElementsByTagName('body')[0].appendChild(dialog);
+  dialog.setData(data);
 }

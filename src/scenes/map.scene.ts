@@ -55,6 +55,8 @@ export class MapScene extends Phaser.Scene {
         this.actualGridCenter.y - newGridCenter.y
       );
       this.actualGridCenter = newGridCenter;
+      GameDataService.GAME_DATA.playerPos = newGridCenter;
+      this.doColorFilter();
     });
     MapGeneratorUtils.initSeed(GameDataService.GAME_DATA.mapSeed);
   }
@@ -88,14 +90,12 @@ export class MapScene extends Phaser.Scene {
     this.introductionScene = this.scene.get('introduction-scene');
 
     this.doColorFilter();
-    // findUnregistredRegionInVisibleMap(this);
   }
 
   moveCamera(incrementOnOffsetX: number, incrementOnOffsetY: number) {
     this.gridOffsetX += incrementOnOffsetX;
     this.gridOffsetY += incrementOnOffsetY;
     this.mapUpdate();
-    // findUnregistredRegionInVisibleMap(this);
   }
 
   mapUpdate(isFirstTime: boolean = false) {
