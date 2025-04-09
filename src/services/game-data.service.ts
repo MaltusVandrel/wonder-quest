@@ -24,6 +24,7 @@ export interface GameData {
   mapSeed: string;
   mapPos: { x: number; y: number };
   playerPos: { x: number; y: number };
+  screenSize: { x: number; y: number };
   registeredRegions: Array<MapRegion>;
   encounterData: { [key: string]: any };
 }
@@ -44,6 +45,7 @@ export class GameDataService {
     mapSeed: Math.random() + '',
     mapPos: { x: 0, y: 0 },
     playerPos: { x: 0, y: 0 },
+    screenSize: { x: 0, y: 0 },
     registeredRegions: [],
     encounterData: {},
   };

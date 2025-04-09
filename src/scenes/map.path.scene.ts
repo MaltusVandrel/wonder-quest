@@ -28,9 +28,9 @@ export class MapPathScene extends Phaser.Scene {
     let playerY = this.mapPlayerScene.player?.getData('y');
     if (
       playerX < 0 ||
-      playerX > this.mapScene.screenGridYSize ||
+      playerX > this.mapScene.screenGridWidthSize ||
       playerY < 0 ||
-      playerY > this.mapScene.screenGridXSize
+      playerY > this.mapScene.screenGridHeightSize
     ) {
       return;
     }
@@ -40,8 +40,8 @@ export class MapPathScene extends Phaser.Scene {
       playerY,
       x,
       y,
-      this.mapScene.screenGridXSize,
-      this.mapScene.screenGridYSize,
+      this.mapScene.screenGridHeightSize,
+      this.mapScene.screenGridWidthSize,
       this.mapScene.gridOffsetX,
       this.mapScene.gridOffsetY
     );

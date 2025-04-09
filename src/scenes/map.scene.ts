@@ -18,8 +18,8 @@ export class MapScene extends Phaser.Scene {
   tileLayer: Array<Array<Phaser.GameObjects.Rectangle>> = [];
   colorFilter: Phaser.GameObjects.Graphics | undefined;
 
-  screenGridXSize = 0;
-  screenGridYSize = 0;
+  screenGridHeightSize = 0;
+  screenGridWidthSize = 0;
   gridOffsetX: number = 0;
   gridOffsetY: number = 0;
   actualGridCenter: { x: number; y: number } = { x: 0, y: 0 };
@@ -55,7 +55,6 @@ export class MapScene extends Phaser.Scene {
         this.actualGridCenter.y - newGridCenter.y
       );
       this.actualGridCenter = newGridCenter;
-      GameDataService.GAME_DATA.playerPos = newGridCenter;
       this.doColorFilter();
     });
     MapGeneratorUtils.initSeed(GameDataService.GAME_DATA.mapSeed);
@@ -64,19 +63,36 @@ export class MapScene extends Phaser.Scene {
   updateToCanvasSize() {
     const height = parseInt(this.game?.scale?.height + '');
     const width = parseInt(this.game?.scale?.width + '');
-    this.screenGridXSize = Math.ceil(height / this.tileSize);
-    this.screenGridYSize = Math.ceil(width / this.tileSize);
+    this.screenGridHeightSize = Math.ceil(height / this.tileSize);
+    this.screenGridWidthSize = Math.ceil(width / this.tileSize);
   }
 
   create() {
     this.updateToCanvasSize();
+
     this.actualGridCenter = this.gridCenter();
 
-    this.gridOffsetX += GameDataService.GAME_DATA.mapPos.x;
-    this.gridOffsetY += GameDataService.GAME_DATA.mapPos.y;
+    const diffMapCenter = {
+      x: GameDataService.GAME_DATA.mapPos.x + this.actualGridCenter.x,
+      y: GameDataService.GAME_DATA.mapPos.y + this.actualGridCenter.y,
+    };
+    const diffPlayerCenter = {
+      x: GameDataService.GAME_DATA.playerPos.x - this.actualGridCenter.x,
+      y: GameDataService.GAME_DATA.playerPos.y - this.actualGridCenter.y,
+    };
+    this.gridOffsetX += GameDataService.GAME_DATA.mapPos.x + diffPlayerCenter.x;
+    this.gridOffsetY += GameDataService.GAME_DATA.mapPos.y + diffPlayerCenter.y;
 
     this.tileLayer = [];
     this.mapUpdate(true);
+
+    console.log(
+      'POS',
+      GameDataService.GAME_DATA.mapPos,
+      GameDataService.GAME_DATA.playerPos,
+      diffMapCenter,
+      diffPlayerCenter
+    );
 
     // Start the Player and Path scenes
     this.scene.launch('map-player-scene');
@@ -101,12 +117,16 @@ export class MapScene extends Phaser.Scene {
   mapUpdate(isFirstTime: boolean = false) {
     if (isFirstTime) this.setGrid();
     MapGeneratorUtils.generateChunk(
-      this.screenGridXSize,
-      this.screenGridYSize,
+      this.screenGridHeightSize,
+      this.screenGridWidthSize,
       this.gridOffsetX,
       this.gridOffsetY
     );
-
+    GameDataService.GAME_DATA.mapPos = {
+      x: this.gridOffsetX,
+      y: this.gridOffsetY,
+    };
+    GameDataService.GAME_DATA.playerPos = this.gridCenter();
     this.drawMap();
   }
   getCell(x: number, y: number): Phaser.GameObjects.Rectangle {
@@ -127,10 +147,10 @@ export class MapScene extends Phaser.Scene {
   }
   setGrid() {
     const defaultColor = 0x000000;
-    for (let y = 0; y < this.screenGridXSize; y++) {
+    for (let y = 0; y < this.screenGridHeightSize; y++) {
       if (!this.tileLayer[y]) this.tileLayer[y] = [];
 
-      for (let x = 0; x < this.screenGridYSize; x++) {
+      for (let x = 0; x < this.screenGridWidthSize; x++) {
         let cell = this.add.rectangle(
           x * this.tileSize + this.centeringOffset,
           y * this.tileSize + this.centeringOffset,
@@ -179,9 +199,9 @@ export class MapScene extends Phaser.Scene {
   }
   drawMap() {
     /* RIP easy life, here laied a destruct and redraw, easy, hot and loyal.*/
-    for (let y = 0; y < this.screenGridXSize; y++) {
+    for (let y = 0; y < this.screenGridHeightSize; y++) {
       const newY = y + this.gridOffsetY;
-      for (let x = 0; x < this.screenGridYSize; x++) {
+      for (let x = 0; x < this.screenGridWidthSize; x++) {
         const newX = x + this.gridOffsetX;
         const biome = MapGeneratorUtils.getBiomeData(newX, newY);
 
@@ -198,8 +218,8 @@ export class MapScene extends Phaser.Scene {
     }
   }
   doColorFilter() {
-    const width = this.screenGridYSize * this.tileSize;
-    const height = this.screenGridXSize * this.tileSize;
+    const width = this.screenGridWidthSize * this.tileSize;
+    const height = this.screenGridHeightSize * this.tileSize;
     const time = GameDataService.getTimeData();
     if (this.colorFilter) {
       this.colorFilter.destroy();
