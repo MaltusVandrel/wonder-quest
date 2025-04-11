@@ -11,18 +11,75 @@ div#phaser-example {
 }
 
 @font-face {
-  font-family: "Monocraft Sans";
-  src: url(assets/Monocraft-nerd-fonts-patched.ttf);
+  font-family: "Caviar Dreams";
+  src: url(assets/fonts/caviar_dreams/CaviarDreams.ttf);
+  font-weight: normal;
+  font-style: normal;
+}
+@font-face {
+  font-family: "Caviar Dreams";
+  src: url(assets/fonts/caviar_dreams/CaviarDreams_Bold.ttf);
+  font-weight: bold;
+  font-style: normal;
+}
+@font-face {
+  font-family: "Caviar Dreams";
+  src: url(assets/fonts/caviar_dreams/CaviarDreams_Italic.ttf);
+  font-weight: normal;
+  font-style: italic;
 }
 
+@font-face {
+  font-family: "Caviar Dreams";
+  src: url(assets/fonts/caviar_dreams/CaviarDreams_BoldItalic.ttf);
+  font-weight: bold;
+  font-style: italic;
+}
 * {
-  font-family: "Monocraft Sans", sans-serif;
+  font-family: "Caviar Dreams", sans-serif;
   cursor: url("assets/cursor.png"), auto;
   box-sizing: border-box !important;
 }
 
-button.rest-button {
+.ui-pos-topright {
+  top: 0px;
+  right: 0px;
+  margin: 8px 8px 0px 0px;
+}
+.ui-pos-bottomright {
+  bottom: 0px;
+  right: 0px;
+  margin: 0px 8px 8px 0px;
+}
+.ui-pos-topleft {
+  top: 0px;
+  left: 0px;
+  margin: 8px 0px 0px 8px;
+}
+.ui-pos-bottomleft {
+  bottom: 0px;
+  left: 0px;
+  margin: 0px 0px 8px 8px;
+}
+.ui-display-column {
+  display: flex;
+  flex-direction: column;
+}
+.ui-width-100 {
+  width: 100%;
+}
+.ui-element {
   position: absolute;
+}
+
+.ui-panel {
+  background: #f2f2f2;
+  padding: 8px;
+  border-radius: 3px;
+  min-width: 123px;
+}
+
+button.rest-button {
   bottom: 0px;
   right: 0px;
   margin: 8px;

@@ -44,3 +44,7 @@ I want a world completly new and unexplored, where I can create a simple charact
 ## WoW such CICD
 
 - https://wonder-quest.netlify.app/
+
+## CREDITS
+
+- Font 'Caviar Dreams' by https://www.dafont.com/pt/lauren-thompson.d1997

@@ -4,6 +4,7 @@ import { GameDataService } from 'src/services/game-data.service';
 import { GAUGE_KEYS } from 'src/data/bank/gauge';
 import { checkIfEncountersHappens, Encounter } from 'src/data/bank/encounter';
 import { showEncounterDialog, showToast } from 'src/utils/ui-notification.util';
+import { showStaminaGauge } from 'src/utils/ui-elements.util';
 
 export class MapPathScene extends Phaser.Scene {
   mapScene: any;
@@ -90,7 +91,7 @@ export class MapPathScene extends Phaser.Scene {
       this.mapScene.moveCamera(-incrementOnOffsetX, -incrementOnOffsetY);
       this.pathPositionUpdate(-incrementOnOffsetX, -incrementOnOffsetY);
       stamina.consumed += step.cell.staminaCost;
-      this.mapUIScene.showStaminaGauge();
+      showStaminaGauge();
       GameDataService.GAME_DATA.time += step.cell.timeCost;
       this.mapUIScene.showCurrentTime();
       this.mapScene.doColorFilter();

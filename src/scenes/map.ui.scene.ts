@@ -36,7 +36,6 @@ export class MapUIScene extends Phaser.Scene {
     this.uiLayer = this.add.layer();
     this.textStyle.fontSize = this.getFontSize();
     this.showCurrentTime();
-    this.showStaminaGauge();
 
     window.addEventListener('resize', () => {
       this.textStyle.fontSize = this.getFontSize();
@@ -52,29 +51,6 @@ export class MapUIScene extends Phaser.Scene {
     return size + 'px';
   }
 
-  showStaminaGauge() {
-    let key: string = 'status-info';
-    if (this.uiElements[key]) {
-      this.uiElements[key].destroy();
-    }
-
-    const stamina = GameDataService.GAME_DATA.playerData.getGauge(
-      GAUGE_KEYS.STAMINA
-    );
-    const percentualStatus = (
-      (stamina.getCurrentValue() / stamina.modValue) *
-      100
-    ).toFixed(2);
-    let element = this.add
-      .text(
-        this.getPosX(UIElement.ALIGNMENT.END, 0),
-        this.getPosY(UIElement.ALIGNMENT.START, 12),
-        `stamina: ${percentualStatus}%`,
-        this.textStyle
-      )
-      .setOrigin(UIElement.ALIGNMENT.END, UIElement.ALIGNMENT.START);
-    this.uiElements[key] = element;
-  }
   showCurrentTime() {
     let key: string = 'now-time';
     if (this.uiElements[key]) {
