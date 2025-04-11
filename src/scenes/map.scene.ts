@@ -171,7 +171,7 @@ export class MapScene extends Phaser.Scene {
           }
         });
         cell.addListener('pointerout', () => {
-          if (MapScene.isUiBlocking()) return;
+          //if (MapScene.isUiBlocking()) return;
           cell.fillColor = cell.getData('biome').color;
           cell.setStrokeStyle(0, 0xffffff);
         });
