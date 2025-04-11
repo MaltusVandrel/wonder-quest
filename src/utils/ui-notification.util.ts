@@ -126,6 +126,7 @@ abstract class HTMLCustomDialogElement<T> extends HTMLDialogElement {
     actions?.forEach((action) => {
       const actionButton = document.createElement('button');
       actionButton.innerHTML = action.title;
+      actionButton.classList.add('ui-game-button');
       const actionResult = action.isAble(overallGameDataParamter);
       if (actionResult.able) {
         actionButton.onclick = () => {

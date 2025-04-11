@@ -4,9 +4,11 @@ import { GameDataService } from 'src/services/game-data.service';
 import { ColorUtils } from 'src/utils/color.utils';
 import { MapGeneratorUtils } from 'src/utils/map-generator.utils';
 import { MapUIScene } from './map.ui.scene';
+import { setUpUi } from 'src/utils/ui-elements.util';
 
 export class MapScene extends Phaser.Scene {
   static DIALOG_OPEN_COUNT = 0;
+  static HOVER_UI_ELEMENT: boolean = false;
   mapPathScene: any;
   mapPlayerScene: any;
   mapUIScene: any | MapUIScene;
@@ -69,13 +71,9 @@ export class MapScene extends Phaser.Scene {
 
   create() {
     this.updateToCanvasSize();
-
+    setUpUi();
     this.actualGridCenter = this.gridCenter();
 
-    const diffMapCenter = {
-      x: GameDataService.GAME_DATA.mapPos.x + this.actualGridCenter.x,
-      y: GameDataService.GAME_DATA.mapPos.y + this.actualGridCenter.y,
-    };
     const diffPlayerCenter = {
       x: GameDataService.GAME_DATA.playerPos.x - this.actualGridCenter.x,
       y: GameDataService.GAME_DATA.playerPos.y - this.actualGridCenter.y,
@@ -85,14 +83,6 @@ export class MapScene extends Phaser.Scene {
 
     this.tileLayer = [];
     this.mapUpdate(true);
-
-    console.log(
-      'POS',
-      GameDataService.GAME_DATA.mapPos,
-      GameDataService.GAME_DATA.playerPos,
-      diffMapCenter,
-      diffPlayerCenter
-    );
 
     // Start the Player and Path scenes
     this.scene.launch('map-player-scene');
@@ -166,7 +156,7 @@ export class MapScene extends Phaser.Scene {
         });
         cell.setInteractive();
         cell.addListener('pointerover', () => {
-          if (MapScene.DIALOG_OPEN_COUNT > 0) return;
+          if (MapScene.isUiBlocking()) return;
           this.activeCell = cell;
           let color = Phaser.Display.Color.ValueToColor(
             cell.getData('biome').color
@@ -181,13 +171,13 @@ export class MapScene extends Phaser.Scene {
           }
         });
         cell.addListener('pointerout', () => {
-          if (MapScene.DIALOG_OPEN_COUNT > 0) return;
+          if (MapScene.isUiBlocking()) return;
           cell.fillColor = cell.getData('biome').color;
           cell.setStrokeStyle(0, 0xffffff);
         });
 
         cell.addListener('pointerup', () => {
-          if (MapScene.DIALOG_OPEN_COUNT > 0) return;
+          if (MapScene.isUiBlocking()) return;
           if (!this.mapPathScene.lockPath && !this.isGridCenter(x, y)) {
             this.mapPathScene.followPath(x, y);
           }
@@ -247,5 +237,8 @@ export class MapScene extends Phaser.Scene {
   isGridCenter(x: number, y: number): boolean {
     const centerPos = this.gridCenter();
     return centerPos.x == x && centerPos.y == y;
+  }
+  static isUiBlocking(): boolean {
+    return MapScene.DIALOG_OPEN_COUNT > 0 || MapScene.HOVER_UI_ELEMENT;
   }
 }

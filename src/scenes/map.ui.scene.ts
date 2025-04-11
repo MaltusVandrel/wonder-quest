@@ -37,7 +37,6 @@ export class MapUIScene extends Phaser.Scene {
     this.textStyle.fontSize = this.getFontSize();
     this.showCurrentTime();
     this.showStaminaGauge();
-    this.showRestButton();
 
     window.addEventListener('resize', () => {
       this.textStyle.fontSize = this.getFontSize();
@@ -51,43 +50,6 @@ export class MapUIScene extends Phaser.Scene {
     if (size > 26) return '26px';
     if (size < 12) return '12px';
     return size + 'px';
-  }
-  showRestButton() {
-    let key: string = 'rest-button';
-    if (this.uiElements[key]) {
-      this.uiElements[key].destroy();
-    }
-
-    let element = this.add
-      .text(
-        this.getPosX(UIElement.ALIGNMENT.END, 0),
-        this.getPosY(UIElement.ALIGNMENT.END, 12),
-        `REST`,
-        this.textStyle
-      )
-      .setOrigin(UIElement.ALIGNMENT.END, UIElement.ALIGNMENT.END)
-      .setInteractive()
-      .on('pointerup', () => {
-        if (MapScene.DIALOG_OPEN_COUNT > 0) return;
-        let stamina = GameDataService.GAME_DATA.playerData.getGauge(
-          GAUGE_KEYS.STAMINA
-        );
-        stamina.consumed = 0;
-        GameDataService.GAME_DATA.time += 8 * 60;
-        this.mapScene.doColorFilter();
-        this.showStaminaGauge();
-        this.showCurrentTime();
-      })
-      .on('pointerover', () => {
-        if (MapScene.DIALOG_OPEN_COUNT > 0) return;
-        element.setShadow(0, 0, '#000000', 15, true, true);
-      })
-      .on('pointerout', () => {
-        if (MapScene.DIALOG_OPEN_COUNT > 0) return;
-        element.setShadow(0, 0, '#000000', 10, false, false);
-      });
-
-    this.uiElements[key] = element;
   }
 
   showStaminaGauge() {

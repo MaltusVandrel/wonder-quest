@@ -9,6 +9,13 @@ import { MapUIScene } from 'src/scenes/map.ui.scene';
 import { GameDataService } from 'src/services/game-data.service';
 import { MapPathUtils } from 'src/utils/map-path.utils';
 
+declare global {
+  interface Window {
+    game: any;
+  }
+}
+
+window.game = window.game || {};
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -39,7 +46,8 @@ export class AppComponent implements OnInit {
   ngOnInit(): void {
     /*do not delete yay!*/
     console.log('yay!');
-    this.game = new Phaser.Game(this.config);
+    this.game = window.game = new Phaser.Game(this.config);
+
     window.addEventListener('resize', () => {
       this.resizeGame();
     });
