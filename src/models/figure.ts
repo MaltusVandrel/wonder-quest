@@ -36,11 +36,11 @@ export class Figure {
   static instantiate(data: any): Figure {
     let obj = new Figure();
 
-    obj.name = data.key;
-    obj.level = data.parent;
+    obj.name = data.name;
+    obj.level = data.level;
 
-    obj.xpForNextLevel = data.modValue;
-    obj.xp = data.consumed;
+    obj.xpForNextLevel = data.xpForNextLevel;
+    obj.xp = data.xp;
     obj.gauges = [];
     obj.stats = [];
     for (let gauge of data.gauges) {

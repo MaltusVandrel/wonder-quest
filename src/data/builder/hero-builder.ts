@@ -8,8 +8,8 @@ export let HERO_BUILDER = {
     let being: Figure = new Figure();
     being.name = 'Hero';
     being.level = level;
-    setGauges(being);
     setStats(being);
+    setGauges(being);
     return being;
   },
 };

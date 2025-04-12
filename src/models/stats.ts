@@ -17,7 +17,12 @@ export class Stat extends ChildComponent {
 
     return obj;
   }
-
+  getCurrentValue(): number {
+    return this.value;
+  }
+  getInfluenceValue(): number {
+    return (this.value - 10) / 2;
+  }
   constructor() {
     super();
   }

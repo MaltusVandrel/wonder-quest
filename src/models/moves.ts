@@ -1,0 +1,1 @@
+//@description its like anime thecniches, spin your blade around and other non historical stuff that u cant really do with weapons but try to stop me bitch, cry harder and cope. Spells to but they are cool and sexy

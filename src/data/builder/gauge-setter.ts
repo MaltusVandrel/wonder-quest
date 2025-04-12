@@ -9,6 +9,7 @@ export function setGauges(being: Figure) {
     let gauge = new Gauge();
     gauge.title = { ...GAUGE_TITLES }[key] || '';
     gauge.key = key || '';
+    gauge.parent = being;
     being.gauges.push(gauge);
   }
 }

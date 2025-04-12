@@ -7,8 +7,8 @@ export let SLIME_BUILDER = {
     let being: Figure = new Figure();
     being.name = 'Slime';
     being.level = level;
-    setGauges(being);
     setStats(being);
+    setGauges(being);
     return being;
   },
 };

@@ -9,6 +9,8 @@ export function setStats(being: Figure) {
     let attr = new Stat();
     attr.title = { ...STAT_TITLES }[key] || '';
     attr.key = key || '';
+    attr.value = 10 + (Math.ceil(Math.random() * 15) - 5);
+    attr.parent = being;
     being.stats.push(attr);
   }
 }

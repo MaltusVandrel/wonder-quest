@@ -82,13 +82,16 @@ export function showStaminaGauge() {
   const stamina = GameDataService.GAME_DATA.playerData.getGauge(
     GAUGE_KEYS.STAMINA
   );
+
   const percentualStatus = (
-    (stamina.getCurrentValue() / stamina.modValue) *
+    (stamina.getCurrentValue() / stamina.getModValue()) *
     100
   ).toFixed(2);
+
   if (elValue) {
-    elValue.innerHTML = percentualStatus + '%';
+    elValue.innerHTML = stamina.getCurrentValue().toFixed(2);
   }
+
   if (elGauge) {
     elGauge.setAttribute('value', percentualStatus);
   }
