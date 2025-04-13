@@ -162,7 +162,7 @@ export function chooseBiome(
     biome = BIOMES[BIOME_TYPES.DEEP_WATERS];
   } else if (inRange(elevation, 0.25, 0.3)) {
     biome = BIOMES[BIOME_TYPES.SHALLOW_WATERS];
-    if (inRange(wonder, 0.6, 1)) {
+    if (inRange(wonder, 0.6, 1) && inRange(elevation, 0.29, 0.3)) {
       biome = BIOMES[BIOME_TYPES.REEFS];
     }
   } else if (inRange(elevation, 0.3, 0.32)) {
@@ -170,7 +170,7 @@ export function chooseBiome(
     if (inRange(moisture, 0.8, 1)) {
       biome = BIOMES[BIOME_TYPES.MARSH];
     }
-    if (inRange(localVariation, 0.8, 1)) {
+    if (inRange(elevation, 0.31, 0.32) && inRange(localVariation, 0.8, 1)) {
       biome = BIOMES[BIOME_TYPES.CLIFF];
     }
   } else if (inRange(elevation, 0.32, 0.7)) {
