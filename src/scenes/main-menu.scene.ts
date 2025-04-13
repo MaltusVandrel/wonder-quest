@@ -1,5 +1,9 @@
 import * as Phaser from 'phaser';
 import { GameDataService } from 'src/services/game-data.service';
+import {
+  setUpMainMenuUI,
+  tearDownMainMenuUI,
+} from 'src/utils/ui-elements.util';
 
 export class MainMenuScene extends Phaser.Scene {
   textStyle: Phaser.Types.GameObjects.Text.TextStyle = {
@@ -22,6 +26,7 @@ export class MainMenuScene extends Phaser.Scene {
   }
 
   create() {
+    setUpMainMenuUI();
     const height = parseInt(this.game?.scale?.height + '');
     const width = parseInt(this.game?.scale?.width + '');
 
@@ -40,56 +45,21 @@ export class MainMenuScene extends Phaser.Scene {
 
     emitter.addEmitZone({ type: 'random', source: shape, quantity: 100 });
     const dataExists = GameDataService.existsData();
-    let continueButton: any;
-    if (dataExists) {
-      continueButton = this.add
-        .text(width / 2, height / 2 - 20, 'Continue Game', this.textStyle)
-        .setOrigin(0.5, 0.5)
-        .setInteractive()
-        .on('pointerup', () => this.loadGame())
-        .on('pointerover', () => {
-          continueButton.setShadow(0, 0, '#ffffff', 10, true, true);
-        })
-        .on('pointerout', () => {
-          continueButton.setShadow(0, 0, '#ffffff', 0, false, false);
-        });
-    }
-
-    // Create main menu elements
-    const startButton = this.add
-      .text(
-        width / 2,
-        height / 2 + (dataExists ? 40 : 0),
-        dataExists ? 'New Game' : 'Start Game',
-        this.textStyle
-      )
-      .setOrigin(0.5, 0.5)
-      .setInteractive()
-      .on('pointerup', () => this.startGame())
-      .on('pointerover', () => {
-        startButton.setShadow(0, 0, '#ffffff', 10, true, true);
-      })
-      .on('pointerout', () => {
-        startButton.setShadow(0, 0, '#ffffff', 0, false, false);
-      });
 
     window.addEventListener('resize', () => {
       const height = parseInt(this.game?.scale?.height + '');
       const width = parseInt(this.game?.scale?.width + '');
-      if (continueButton) {
-        continueButton.setPosition(width / 2, height / 2 - 20);
-        startButton.setPosition(width / 2, height / 2 + (dataExists ? 40 : 0));
-      } else {
-        startButton.setPosition(width / 2, height / 2);
-      }
+
       shape.setSize(width, height);
     });
   }
 
   startGame(isContinue: boolean = false) {
-    this.scene.start('map-scene', { isContinue: isContinue });
+    tearDownMainMenuUI();
+    this.scene.start('introduction-scene', { isContinue: isContinue });
   }
   loadGame() {
+    tearDownMainMenuUI();
     GameDataService.loadData();
     this.startGame(true);
   }

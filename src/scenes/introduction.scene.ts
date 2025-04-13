@@ -1,5 +1,6 @@
 import * as Phaser from 'phaser';
 import { GameDataService } from 'src/services/game-data.service';
+import { setUpIntroductionUI } from 'src/utils/ui-elements.util';
 
 const READING_TIME = 5000;
 const EASE_IN_TWEEN_DURATION = 1500;
@@ -16,12 +17,15 @@ export class IntroductionScene extends Phaser.Scene {
   width: number = 0;
   height: number = 0;
   abortedIntroduction: boolean = false;
-
+  isContinue: boolean | undefined;
   texts: Array<Array<string>> = [];
   constructor() {
     super({ key: 'introduction-scene' });
   }
-
+  init(data: { isContinue: boolean }) {
+    if (data && data.isContinue !== undefined)
+      this.isContinue = data.isContinue;
+  }
   preload() {
     this.load.font(
       'Monocraft Sans',
@@ -34,18 +38,9 @@ export class IntroductionScene extends Phaser.Scene {
   }
 
   create() {
-    this.texts = [
-      [
-        'A realm welcomes you from beyond the misty veil',
-        'It draws breath for ' + GameDataService.getTimeData().years + ' years',
-      ],
-      ['You awake across the sepia mist...'],
-    ];
-
     this.height = parseInt(this.game?.scale?.height + '');
     this.width = parseInt(this.game?.scale?.width + '');
 
-    this.textLayer = this.add.layer();
     // Create particle emitter
     this.emitter = this.add.particles(0, 0, 'particle', {
       scale: { start: 1, end: 0 },
@@ -60,64 +55,25 @@ export class IntroductionScene extends Phaser.Scene {
 
     this.emitter.addEmitZone({ type: 'random', source: shape, quantity: 100 });
 
-    this.presentTexts();
     window.addEventListener('resize', () => {
       this.height = parseInt(this.game?.scale?.height + '');
       this.width = parseInt(this.game?.scale?.width + '');
       //welcomeText.setPosition(width / 2, height / 2);
       shape.setSize(this.width, this.height);
     });
+    /*
     window.addEventListener('keydown', () => {
       this.fadeOutAndDestroy();
     });
     window.addEventListener('pointerup', () => {
       this.fadeOutAndDestroy();
     });
-  }
-  presentTexts() {
-    let index = 0;
-
-    let showTexts = () => {
-      if (this.abortedIntroduction) return;
-
-      const texts = this.texts[index];
-      let timeoutFunction;
-      let welcomeText = this.add
-        .text(this.width / 2, this.height / 2, texts, this.textStyle)
-        .setOrigin(0.5, 0.5)
-        .setAlpha(0);
-      this.textLayer?.add(welcomeText);
-
-      this.tweens.chain({
-        targets: welcomeText,
-        tweens: [
-          {
-            alpha: 1, // Target alpha value
-            duration: EASE_IN_TWEEN_DURATION, // Duration of the fade-in effect in milliseconds
-            ease: 'Power2', // Easing function}
-          },
-          {
-            alpha: 0, // Target alpha value
-            duration: EASE_OUT_TWEEN_DURATION, // Duration of the fade-in effect in milliseconds
-            ease: 'Power2', // Easing function
-            delay: READING_TIME - EASE_IN_TWEEN_DURATION,
-          },
-        ],
-      });
-
-      /*  this.tweens.add();
-       */
-      if (index < this.texts.length) {
-        index++;
-        timeoutFunction = setTimeout(
-          showTexts,
-          READING_TIME + EASE_OUT_TWEEN_DURATION
-        );
-      } else {
-        this.fadeOutAndDestroy();
-      }
-    };
-    showTexts();
+    */
+    if (!this.isContinue) {
+      setUpIntroductionUI();
+    } else {
+      this.fadeOutAndDestroy();
+    }
   }
 
   setBlackBackGround() {
@@ -133,6 +89,7 @@ export class IntroductionScene extends Phaser.Scene {
   }
   fadeOutAndDestroy() {
     this.abortedIntroduction = true;
+    this.scene.launch('map-scene');
     this.tweens.add({
       targets: [this.blackBackground, this.textLayer, this.emitter],
       alpha: 0, // Target alpha value

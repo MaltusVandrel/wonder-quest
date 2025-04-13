@@ -2,10 +2,10 @@ import { Figure } from '../models/figure';
 import { Context } from './context';
 import { MessageHandler } from './message-handler';
 import { first } from 'rxjs';
-import { GAUGE_KEYS } from '../data/bank/gauge';
 import { Injectable } from '@angular/core';
 import { CalcUtil } from 'src/utils/calc.utils';
-import { STAT_KEYS } from 'src/data/bank/stats';
+import { STAT_KEYS } from 'src/models/stats';
+import { GAUGE_KEYS } from 'src/models/gauge';
 
 @Injectable()
 export class BattleContext extends Context {

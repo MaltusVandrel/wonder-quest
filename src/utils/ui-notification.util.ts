@@ -252,6 +252,66 @@ class HTMLGameActionResultDialogElement extends HTMLCustomDialogElement<GameActi
   }
 }
 
+class HTMLAlertDialogElement extends HTMLCustomDialogElement<string> {
+  static readonly tagname = 'dialog-alert-element';
+
+  static readonly MAX_TIME: number = 15000;
+  timeProgress: number = 0;
+  interval: any;
+  constructor() {
+    super();
+  }
+  setData(data: string) {
+    this.setUpSimplifiedStructure();
+
+    const description = document.createElement('p');
+    description.innerText = data;
+    this.content.appendChild(description);
+
+    this.setUpActions(
+      [
+        {
+          title: 'OK',
+          action: ({}) => {
+            this.close();
+            return {};
+          },
+          isAble: ({}) => {
+            return { able: true };
+          },
+        },
+      ],
+      {}
+    );
+
+    const progress = document.createElement('progress') as HTMLProgressElement;
+    progress.setAttribute('max', '100');
+    progress.setAttribute('value', '0');
+    this.interval = setInterval(() => {
+      if (this.isMouseOver) return;
+      this.timeProgress += 60;
+
+      const progressValue =
+        (this.timeProgress / HTMLGameActionResultDialogElement.MAX_TIME) * 100;
+
+      progress.setAttribute(
+        'value',
+        '' + (progressValue > 100 ? 100 : progressValue)
+      );
+      if (progressValue >= 100) {
+        clearInterval(this.interval);
+        this.close();
+      }
+    }, 60);
+    this.addEventListener('close', () => {
+      if (this.interval) clearInterval(this.interval);
+    });
+
+    this.appendChild(progress);
+    this.showModal();
+  }
+}
+
 customElements.define(HTMLToastElement.tagname, HTMLToastElement, {
   extends: HTMLToastElement.extends,
 });
@@ -270,6 +330,9 @@ customElements.define(
     extends: HTMLGameActionResultDialogElement.extends,
   }
 );
+customElements.define(HTMLAlertDialogElement.tagname, HTMLAlertDialogElement, {
+  extends: HTMLAlertDialogElement.extends,
+});
 
 export function showToast(data: Encounter) {
   const toast = document.createElement(HTMLToastElement.extends, {
@@ -293,6 +356,15 @@ export function showGameActionResultDialog(data: GameActionResult) {
       is: HTMLGameActionResultDialogElement.tagname,
     }
   ) as HTMLGameActionResultDialogElement;
+
+  document.getElementsByTagName('body')[0].appendChild(dialog);
+  dialog.setData(data);
+}
+
+export function showAlertDialog(data: string) {
+  const dialog = document.createElement(HTMLAlertDialogElement.extends, {
+    is: HTMLAlertDialogElement.tagname,
+  }) as HTMLAlertDialogElement;
 
   document.getElementsByTagName('body')[0].appendChild(dialog);
   dialog.setData(data);

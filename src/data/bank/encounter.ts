@@ -1,4 +1,4 @@
-import { Party } from 'src/models/party';
+import { Company } from 'src/models/company';
 import { BIOME_TYPES } from './biome';
 import { Biome } from 'src/models/biome';
 import {

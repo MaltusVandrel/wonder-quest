@@ -1,10 +1,11 @@
 import * as Phaser from 'phaser';
 import { MapPathUtils } from 'src/utils/map-path.utils';
 import { GameDataService } from 'src/services/game-data.service';
-import { GAUGE_KEYS } from 'src/data/bank/gauge';
+
 import { checkIfEncountersHappens, Encounter } from 'src/data/bank/encounter';
 import { showEncounterDialog, showToast } from 'src/utils/ui-notification.util';
 import { showStaminaGauge } from 'src/utils/ui-elements.util';
+import { GAUGE_KEYS } from 'src/models/gauge';
 
 export class MapPathScene extends Phaser.Scene {
   mapScene: any;
@@ -73,9 +74,7 @@ export class MapPathScene extends Phaser.Scene {
     let playerStep = () => {
       const lastStep = this.pathSteps[stepIndex - 1];
       let step = this.pathSteps[stepIndex++];
-      const stamina = GameDataService.GAME_DATA.playerData.getGauge(
-        GAUGE_KEYS.STAMINA
-      );
+      const stamina = GameDataService.GAME_DATA.companyData.stamina;
       if (!stamina.canHandleValue(step.cell.staminaCost)) {
         this.lockPath = false;
         this.clearPath();

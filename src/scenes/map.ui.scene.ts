@@ -2,7 +2,7 @@ import * as Phaser from 'phaser';
 import { UIElement } from 'src/core/ui-element';
 import { MapGeneratorUtils } from 'src/utils/map-generator.utils';
 import { GameDataService } from 'src/services/game-data.service';
-import { GAUGE_KEYS } from 'src/data/bank/gauge';
+
 import { getRegionName } from 'src/data/bank/map-region';
 import { MapScene } from './map.scene';
 

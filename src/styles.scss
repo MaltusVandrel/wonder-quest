@@ -40,7 +40,17 @@ div#phaser-example {
   cursor: url("assets/cursor.png"), auto;
   box-sizing: border-box !important;
 }
-
+.capitalize {
+  text-transform: capitalize;
+}
+//wow so french
+.ui-element {
+  position: absolute;
+}
+.ui-width-100 {
+  width: 100%;
+}
+//Gay positions
 .ui-pos-topright {
   top: 0px;
   right: 0px;
@@ -61,17 +71,43 @@ div#phaser-example {
   left: 0px;
   margin: 0px 0px 8px 8px;
 }
+.ui-pos-center {
+  top: 50%;
+  left: 50%;
+  margin: 8px 0px 0px 8px;
+  transform: translate(-50%, -50%);
+  margin: 0px 0px 0px 0px;
+}
+.ui-pos-topcenter {
+  top: 0px;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 8px 0px 0px 0px;
+}
+.ui-pos-bottomcenter {
+  bottom: 0px;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 8px 0px 8px 0px;
+}
+.ui-pos-leftcenter {
+  top: 50%;
+  left: 0px;
+  transform: translateY(-50%);
+  margin: 0px 0px 0px 8px;
+}
+.ui-pos-rightcenter {
+  top: 50%;
+  right: 0px;
+  transform: translateY(-50%);
+  margin: 0px 8px 0px 0px;
+}
 .ui-display-column {
   display: flex;
   flex-direction: column;
 }
-.ui-width-100 {
-  width: 100%;
-}
-.ui-element {
-  position: absolute;
-}
 
+//elements
 .ui-panel {
   background: #f2f2f2;
   padding: 8px;
@@ -79,12 +115,6 @@ div#phaser-example {
   min-width: 123px;
 }
 
-button.rest-button {
-  bottom: 0px;
-  right: 0px;
-  margin: 8px;
-  font-size: 1.2em;
-}
 button.ui-game-button {
   padding: 8px;
   border: none;
@@ -107,6 +137,90 @@ button.ui-game-button {
     background-color: #d3d3d3;
   }
 }
+
+//specific named elements
+button.rest-button {
+  bottom: 0px;
+  right: 0px;
+  margin: 8px;
+  font-size: 1.2em;
+}
+.mainmenu-button-holder {
+  gap: 8px;
+}
+.mainmenu-button {
+  font-size: 1.8em;
+  backdrop-filter: blur(2.5px);
+  color: wheat;
+  background-color: rgba(255, 255, 255, 0.25) !important;
+  transition: 0.1s !important;
+  &:hover,
+  &:active {
+    text-shadow: 0 0 3px wheat;
+  }
+}
+.introduction-panel {
+  backdrop-filter: blur(2.5px);
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  border-radius: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  max-height: 85vh;
+  width: 70vw;
+  padding: 16px;
+  font-size: 1.6em;
+  p {
+    color: wheat;
+    margin: 8px 0 20px 0;
+  }
+  .names-holder {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 4px;
+    .name-option {
+      width: calc(33% - 4px);
+      min-width: fit-content;
+      font-size: 1em;
+      backdrop-filter: blur(2.5px);
+      color: wheat;
+      padding: 8px;
+      background-color: rgba(255, 255, 255, 0) !important;
+      transition: 0.1s !important;
+      &:hover,
+      &:active {
+        text-shadow: 0 0 3px wheat;
+      }
+    }
+  }
+  section {
+    overflow-y: auto;
+    scrollbar-color: wheat rgba(0, 0, 0, 0);
+    scrollbar-width: thin;
+  }
+  menu {
+    align-self: flex-end;
+    width: 100%;
+    padding: 0px;
+    display: flex;
+    justify-content: center;
+    button {
+      width: calc(33% - 4px);
+      min-width: fit-content;
+      font-size: 1em;
+      backdrop-filter: blur(2.5px);
+      color: wheat;
+      padding: 8px;
+      background-color: rgba(255, 255, 255, 0) !important;
+      transition: 0.1s !important;
+      &:hover,
+      &:active {
+        text-shadow: 0 0 3px wheat;
+      }
+    }
+  }
+}
+
+//notifications stuff
 ::backdrop {
   pointer-events: none;
 }

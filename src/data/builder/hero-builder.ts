@@ -4,9 +4,9 @@ import { setGauges } from './gauge-setter';
 import { setStats } from './stats-setter';
 
 export let HERO_BUILDER = {
-  getAHero(level: number): Figure {
+  getAHero(level: number, data: any): Figure {
     let being: Figure = new Figure();
-    being.name = 'Hero';
+    being.name = data.name;
     being.level = level;
     setStats(being);
     setGauges(being);

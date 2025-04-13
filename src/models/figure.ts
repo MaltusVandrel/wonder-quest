@@ -1,7 +1,6 @@
 import { BattleContext } from '../core/battle-context';
-import { STAT_KEYS } from '../data/bank/stats';
 
-import { Stat } from './stats';
+import { Stat, STAT_KEYS } from './stats';
 import { ChildComponent } from './child-component';
 import { Gauge } from './gauge';
 import { CalcUtil } from 'src/utils/calc.utils';
@@ -15,6 +14,8 @@ export class Figure {
   */
   name: string = '';
   level: number = 1;
+  data: any = {};
+
   gauges: Gauge[] = [];
   stats: Stat[] = [];
   //takes usually 2+level monster of same level to level up

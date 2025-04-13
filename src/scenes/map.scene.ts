@@ -4,7 +4,7 @@ import { GameDataService } from 'src/services/game-data.service';
 import { ColorUtils } from 'src/utils/color.utils';
 import { MapGeneratorUtils } from 'src/utils/map-generator.utils';
 import { MapUIScene } from './map.ui.scene';
-import { setUpUi } from 'src/utils/ui-elements.util';
+import { setMapUpUI } from 'src/utils/ui-elements.util';
 
 export class MapScene extends Phaser.Scene {
   static DIALOG_OPEN_COUNT = 0;
@@ -26,14 +26,11 @@ export class MapScene extends Phaser.Scene {
   gridOffsetY: number = 0;
   actualGridCenter: { x: number; y: number } = { x: 0, y: 0 };
   activeCell: Phaser.GameObjects.Rectangle | undefined;
-  isContinue: boolean | undefined;
+
   constructor(config: string | Phaser.Types.Scenes.SettingsConfig) {
     super({ key: 'map-scene' });
   }
-  init(data: { isContinue: boolean }) {
-    if (data && data.isContinue !== undefined)
-      this.isContinue = data.isContinue;
-  }
+
   preload() {
     this.load.spritesheet('tiles', '../assets/tiles.png', {
       frameWidth: this.tileSize,
@@ -71,7 +68,7 @@ export class MapScene extends Phaser.Scene {
 
   create() {
     this.updateToCanvasSize();
-    setUpUi();
+    setMapUpUI();
     this.actualGridCenter = this.gridCenter();
 
     const diffPlayerCenter = {
@@ -89,7 +86,6 @@ export class MapScene extends Phaser.Scene {
     this.scene.launch('map-path-scene');
     this.scene.launch('map-ui-scene');
 
-    if (!this.isContinue) this.scene.launch('introduction-scene');
     this.mapPathScene = this.scene.get('map-path-scene');
     this.mapPlayerScene = this.scene.get('map-player-scene');
     this.mapUIScene = this.scene.get('map-ui-scene');
