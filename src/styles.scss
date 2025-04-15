@@ -50,6 +50,12 @@ div#phaser-example {
 .ui-width-100 {
   width: 100%;
 }
+.dark-primary-text-color {
+  color: #633;
+}
+.light-primary-text-color {
+  color: wheat;
+}
 //Gay positions
 .ui-pos-topright {
   top: 0px;
@@ -106,6 +112,10 @@ div#phaser-example {
   display: flex;
   flex-direction: column;
 }
+.ui-display-row {
+  display: flex;
+  flex-direction: row;
+}
 
 //elements
 .ui-panel {
@@ -113,6 +123,7 @@ div#phaser-example {
   padding: 8px;
   border-radius: 3px;
   min-width: 123px;
+  gap: 4px;
 }
 
 button.ui-game-button {
@@ -247,7 +258,7 @@ dialog.dialog-element {
       transform: scale(1.05);
     }
   }
-  progress {
+  progress.dialog-closing-progress {
     position: absolute;
     bottom: 0;
     width: 100%;
@@ -317,4 +328,104 @@ div#toast-holder {
         2px 2px 0 black, -2px -2px 0 black, -2px 2px 0 black, 2px -2px 0 black;
     }
   }
+}
+
+.dialog-company-element {
+  width: calc(100vw - 8px);
+  height: calc(100vh - 8px);
+
+  .info-member-panel {
+    display: flex;
+    align-items: flex-start;
+  }
+
+  .member-button-holder {
+    overflow-x: auto;
+    white-space: nowrap;
+    padding: 4px 0px;
+
+    button {
+      margin-right: 8px;
+    }
+  }
+  .stats-holder {
+    strong {
+      text-transform: capitalize;
+    }
+    tbody {
+      tr {
+        td {
+          min-width: 15px;
+          text-align: end;
+        }
+      }
+    }
+  }
+  .gauge-holder {
+    .gauge-value {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+    progress {
+      border-radius: 16px;
+      overflow: hidden;
+      height: 8px;
+      &.VITALITY {
+        border: 1px solid #d33;
+        background-color: #d33 !important;
+        &::-moz-progress-value {
+          background-color: #d33 !important;
+        }
+
+        &::-webkit-progress-value {
+          background-color: #d33 !important;
+        }
+      }
+      &.STAMINA {
+        border: 1px solid #5a5;
+        background-color: #5a5 !important;
+        &::-moz-progress-value {
+          background: #5a5 !important;
+        }
+        &::-webkit-progress-value {
+          background: #5a5 !important;
+        }
+      }
+      &.MANA {
+        border: 1px solid #3ac;
+        background-color: #3ac !important;
+        &::-moz-progress-value {
+          background-color: #3ac !important;
+        }
+        &::-webkit-progress-value {
+          background-color: #3ac !important;
+        }
+      }
+      &::-moz-progress-bar {
+        background-color: rgba(255, 255, 255, 0.9);
+      }
+      &::-webkit-progress-bar {
+        background-color: rgba(255, 255, 255, 0.9);
+      }
+    }
+    strong {
+      text-transform: capitalize;
+    }
+    tbody {
+      tr {
+        td {
+          text-align: end;
+        }
+      }
+    }
+  }
+}
+
+.negativo {
+  color: #d33;
+}
+.positivo {
+  color: #35d;
 }

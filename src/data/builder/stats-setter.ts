@@ -1,10 +1,10 @@
-import { Stat, STAT_KEYS, STAT_TITLES } from '../../models/stats';
+import { Stat, STAT_KEY, STAT_TITLES } from '../../models/stats';
 import { Figure } from '../../models/figure';
 
 let STATS: Stat[] = [];
 
 export function setStats(being: Figure) {
-  for (let key of Object.keys(STAT_KEYS)) {
+  for (let key of Object.keys(STAT_KEY)) {
     let attr = new Stat(being);
     attr.title = { ...STAT_TITLES }[key] || '';
     attr.key = key || '';

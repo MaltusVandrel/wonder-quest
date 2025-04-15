@@ -4,7 +4,7 @@ import { MessageHandler } from './message-handler';
 import { first } from 'rxjs';
 import { Injectable } from '@angular/core';
 import { CalcUtil } from 'src/utils/calc.utils';
-import { STAT_KEYS } from 'src/models/stats';
+import { STAT_KEY } from 'src/models/stats';
 import { GAUGE_KEYS } from 'src/models/gauge';
 
 @Injectable()
@@ -40,8 +40,8 @@ export class BattleContext extends Context {
       b = this.player;
     } else {
       if (
-        CalcUtil.getRandom(this.player.getStat(STAT_KEYS.LUCK).value) >=
-        CalcUtil.getRandom(this.foe.getStat(STAT_KEYS.LUCK).value)
+        CalcUtil.getRandom(this.player.getStat(STAT_KEY.LUCK).value) >=
+        CalcUtil.getRandom(this.foe.getStat(STAT_KEY.LUCK).value)
       ) {
         a = this.player;
         b = this.foe;
@@ -129,7 +129,7 @@ export class BattleContext extends Context {
   }
   private getAttack(a: Figure, b: Figure): string {
     let attackPower = 3;
-    let strengthInfluence = 1 + a.getStat(STAT_KEYS.STRENGTH).value / 10;
+    let strengthInfluence = 1 + a.getStat(STAT_KEY.STRENGTH).value / 10;
     let levelDiffInfluence = 1 + (a.level - b.level / 10) / 100;
     let damage =
       attackPower *

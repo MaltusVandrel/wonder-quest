@@ -1,7 +1,7 @@
 import { GAUGE_KEYS } from 'src/models/gauge';
 import { MapScene } from 'src/scenes/map.scene';
 import { GameDataService } from 'src/services/game-data.service';
-import { showAlertDialog } from './ui-notification.util';
+import { showAlertDialog, showCompanyDialog } from './ui-notification.util';
 import { FigureName, NAMES } from 'src/data/bank/names';
 import { HERO_BUILDER } from 'src/data/builder/hero-builder';
 import { Figure } from 'src/models/figure';
@@ -42,11 +42,27 @@ function doStatusPanel() {
   const panel = document.createElement('div');
   panel.classList.add('ui-element');
   panel.classList.add('ui-panel');
-  panel.classList.add('ui-display-column');
+  panel.classList.add('ui-display-row');
   panel.classList.add('ui-pos-topright');
-  panel.classList.add('ui-game-button');
+
   panel.classList.add('rest-button');
 
+  const buttonsHold = document.createElement('div');
+  buttonsHold.classList.add('ui-display-row');
+
+  const characterButton = document.createElement('button');
+  characterButton.classList.add('ra');
+  characterButton.classList.add('ra-player');
+  characterButton.classList.add('ui-game-button');
+  characterButton.classList.add('dark-primary-text-color');
+  characterButton.addEventListener('click', () => {
+    showCompanyDialog();
+  });
+  buttonsHold.appendChild(characterButton);
+  panel.appendChild(buttonsHold);
+
+  const statusHolder = document.createElement('div');
+  statusHolder.classList.add('ui-display-column');
   const smol = document.createElement('small');
   const labelStamina = document.createElement('label');
   const outputStamina = document.createElement('output');
@@ -57,7 +73,8 @@ function doStatusPanel() {
   outputStamina.style.float = 'right';
   smol.appendChild(labelStamina);
   smol.appendChild(outputStamina);
-  panel.appendChild(smol);
+  statusHolder.appendChild(smol);
+  panel.appendChild(statusHolder);
   //panel.addEventListener('click', (event) => {});
   const staminaMeter = document.createElement('meter');
   staminaMeter.id = 'gauge-stamina-meter';
@@ -69,7 +86,7 @@ function doStatusPanel() {
   staminaMeter.setAttribute('value', '0');
   staminaMeter.classList.add('ui-width-100');
   staminaMeter.style.opacity = '0.6';
-  panel.appendChild(staminaMeter);
+  statusHolder.appendChild(staminaMeter);
   setHoverBlocking(panel);
   document.getElementsByTagName('body')[0].appendChild(panel);
 }

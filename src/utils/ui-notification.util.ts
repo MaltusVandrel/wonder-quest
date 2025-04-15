@@ -3,8 +3,13 @@ import {
   GameAction,
   GameActionResult,
 } from 'src/data/bank/encounter';
+import { Gauge, GAUGE_INFOS, GAUGE_KEYS } from 'src/models/gauge';
+import { Stat, STAT_INFOS, STAT_KEY } from 'src/models/stats';
 import { MapScene } from 'src/scenes/map.scene';
-import { OveralGameDataParamter } from 'src/services/game-data.service';
+import {
+  GameDataService,
+  OveralGameDataParamter,
+} from 'src/services/game-data.service';
 
 class HTMLToastElement extends HTMLDivElement {
   static readonly tagname = 'toast-element';
@@ -64,6 +69,7 @@ abstract class HTMLCustomDialogElement<T> extends HTMLDialogElement {
   constructor() {
     super();
     this.classList.add(HTMLCustomDialogElement.PARENT_TAGNAME);
+
     MapScene.DIALOG_OPEN_COUNT++;
 
     document
@@ -105,6 +111,7 @@ abstract class HTMLCustomDialogElement<T> extends HTMLDialogElement {
     }
   }
   setUpDefaultStructure() {
+    this.appendCloseButton();
     this.appendChild(this.header);
     this.appendChild(this.content);
     this.appendChild(this.menu);
@@ -160,6 +167,7 @@ class HTMLEncounterDialogElement extends HTMLCustomDialogElement<Encounter> {
 
   constructor() {
     super();
+    this.classList.add(HTMLEncounterDialogElement.tagname);
   }
 
   setData(encounter: Encounter) {
@@ -192,6 +200,7 @@ class HTMLGameActionResultDialogElement extends HTMLCustomDialogElement<GameActi
   interval: any;
   constructor() {
     super();
+    this.classList.add(HTMLGameActionResultDialogElement.tagname);
   }
   setData(result: GameActionResult) {
     this.setUpSimplifiedStructure();
@@ -225,6 +234,7 @@ class HTMLGameActionResultDialogElement extends HTMLCustomDialogElement<GameActi
     );
 
     const progress = document.createElement('progress') as HTMLProgressElement;
+    progress.classList.add('dialog-closing-progress');
     progress.setAttribute('max', '100');
     progress.setAttribute('value', '0');
     this.interval = setInterval(() => {
@@ -260,6 +270,7 @@ class HTMLAlertDialogElement extends HTMLCustomDialogElement<string> {
   interval: any;
   constructor() {
     super();
+    this.classList.add(HTMLAlertDialogElement.tagname);
   }
   setData(data: string) {
     this.setUpSimplifiedStructure();
@@ -312,6 +323,90 @@ class HTMLAlertDialogElement extends HTMLCustomDialogElement<string> {
   }
 }
 
+class HTMLCompanyDialogElement extends HTMLCustomDialogElement<any> {
+  static readonly tagname = 'dialog-company-element';
+
+  static readonly MAX_TIME: number = 15000;
+  timeProgress: number = 0;
+  interval: any;
+  constructor() {
+    super();
+    this.classList.add(HTMLCompanyDialogElement.tagname);
+  }
+  setData(data: any) {
+    this.dismissable = true;
+    this.setUpDefaultStructure();
+    this.menuTitle.innerText = 'Company';
+    const company = GameDataService.GAME_DATA.companyData;
+
+    const memberPanel = document.createElement('div');
+    memberPanel.classList.add('member-panel');
+
+    const memberName = document.createElement('h4');
+
+    const infoMemberPanel = document.createElement('div');
+    infoMemberPanel.classList.add('info-member-panel');
+
+    const gaugeHolder = document.createElement('table');
+    gaugeHolder.classList.add('gauge-holder');
+
+    const statsHolder = document.createElement('table');
+    statsHolder.classList.add('stats-holder');
+
+    infoMemberPanel.appendChild(gaugeHolder);
+    infoMemberPanel.appendChild(statsHolder);
+
+    const memberButtonHolder = document.createElement('div');
+    memberButtonHolder.classList.add('member-button-holder');
+
+    company.members.forEach((member) => {
+      const memberButton = document.createElement('button');
+      memberButton.classList.add('ui-game-button');
+      memberButton.innerText = member.character.name;
+      memberButton.addEventListener('click', () => {
+        memberName.innerHTML = `${member.character.name}, Level ${member.character.level}`;
+
+        gaugeHolder.innerHTML = '';
+        GAUGE_INFOS;
+        Object.keys(GAUGE_KEYS).forEach((key: string) => {
+          const gauge: Gauge = member.character.getGauge(key);
+          gaugeHolder.innerHTML += `<tr><td title="${
+            GAUGE_INFOS[key as GAUGE_KEYS]?.description
+          }"><strong>${gauge.title}:</strong></td>
+            <td class='gauge-value' ><span>${gauge
+              .getCurrentValue()
+              .toFixed(0)}/${gauge
+            .getModValue()
+            .toFixed(0)} </span><progress  class='${key}' value='${
+            (gauge.getCurrentValue() / gauge.getModValue()) * 100
+          }' max='100'/></td></tr>`;
+        });
+
+        statsHolder.innerHTML = '';
+        Object.keys(STAT_KEY).forEach((key: string) => {
+          const stat: Stat = member.character.getStat(key);
+          statsHolder.innerHTML += `<tr><td title="${
+            STAT_INFOS[key as STAT_KEY]?.description
+          }"><strong>${stat.title}:</strong></td>
+            <td>${stat.getCurrentValue()} </td><td>
+            (<span class='${
+              stat.getInfluenceValue() < 0 ? 'negativo' : 'positivo'
+            }' >${Math.abs(stat.getInfluenceValue())}</span>)</td></tr>`;
+        });
+      });
+      memberButtonHolder.appendChild(memberButton);
+    });
+
+    this.content.appendChild(memberButtonHolder);
+    memberPanel.appendChild(memberName);
+    memberPanel.appendChild(infoMemberPanel);
+
+    this.content.appendChild(memberPanel);
+
+    this.showModal();
+  }
+}
+
 customElements.define(HTMLToastElement.tagname, HTMLToastElement, {
   extends: HTMLToastElement.extends,
 });
@@ -333,6 +428,13 @@ customElements.define(
 customElements.define(HTMLAlertDialogElement.tagname, HTMLAlertDialogElement, {
   extends: HTMLAlertDialogElement.extends,
 });
+customElements.define(
+  HTMLCompanyDialogElement.tagname,
+  HTMLCompanyDialogElement,
+  {
+    extends: HTMLCompanyDialogElement.extends,
+  }
+);
 
 export function showToast(data: Encounter) {
   const toast = document.createElement(HTMLToastElement.extends, {
@@ -365,6 +467,14 @@ export function showAlertDialog(data: string) {
   const dialog = document.createElement(HTMLAlertDialogElement.extends, {
     is: HTMLAlertDialogElement.tagname,
   }) as HTMLAlertDialogElement;
+
+  document.getElementsByTagName('body')[0].appendChild(dialog);
+  dialog.setData(data);
+}
+export function showCompanyDialog(data?: any) {
+  const dialog = document.createElement(HTMLCompanyDialogElement.extends, {
+    is: HTMLCompanyDialogElement.tagname,
+  }) as HTMLCompanyDialogElement;
 
   document.getElementsByTagName('body')[0].appendChild(dialog);
   dialog.setData(data);

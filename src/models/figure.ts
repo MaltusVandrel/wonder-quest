@@ -1,6 +1,6 @@
 import { BattleContext } from '../core/battle-context';
 
-import { Stat, STAT_KEYS } from './stats';
+import { Stat, STAT_KEY } from './stats';
 import { ChildComponent } from './child-component';
 import { Gauge } from './gauge';
 import { CalcUtil } from 'src/utils/calc.utils';
@@ -68,11 +68,11 @@ export class Figure {
   }
 
   getSpeed(): number {
-    let agi = this.getStat(STAT_KEYS.AGILITY);
-    let dex = this.getStat(STAT_KEYS.DEXTERITY);
-    let prc = this.getStat(STAT_KEYS.PERCEPTION);
-    let itt = this.getStat(STAT_KEYS.INTUITION);
-    let luk = this.getStat(STAT_KEYS.LUCK);
+    let agi = this.getStat(STAT_KEY.AGILITY);
+    let dex = this.getStat(STAT_KEY.DEXTERITY);
+    let prc = this.getStat(STAT_KEY.PERCEPTION);
+    let itt = this.getStat(STAT_KEY.INTUITION);
+    let luk = this.getStat(STAT_KEY.LUCK);
     return (
       agi.value * 2.5 -
       (dex.value + prc.value + itt.value) -

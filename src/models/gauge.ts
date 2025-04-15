@@ -1,7 +1,7 @@
 import { ChildComponent } from './child-component';
 import { Company, COMPANY_POSITION } from './company';
 import { Figure } from './figure';
-import { STAT_KEYS } from './stats';
+import { STAT_KEY } from './stats';
 
 const MODFIERS_INTENSITY = 1;
 const MODFIERS_INFLUENCE = {
@@ -16,6 +16,11 @@ export enum GAUGE_KEYS {
   STAMINA = 'STAMINA',
   MANA = 'MANA',
 }
+interface GaugeInfo {
+  title: string;
+  description: string;
+}
+
 export const GAUGE_TITLES: { [key in GAUGE_KEYS]: string } = {
   VITALITY: 'vitality',
   STAMINA: 'stamina',
@@ -28,8 +33,17 @@ export const GAUGE_DESCRIPTIONS: { [key in GAUGE_KEYS]: string } = {
     'Represents the energy reserve that allows you to do task and an extra boost in actions. ',
   MANA: 'Represents the allowance to manipulate the supernatural powers.',
 };
+export const GAUGE_INFOS: { [key in GAUGE_KEYS]: GaugeInfo } = Object.keys(
+  GAUGE_KEYS
+).reduce((acc, key) => {
+  acc[key as GAUGE_KEYS] = {
+    title: GAUGE_TITLES[key as GAUGE_KEYS],
+    description: GAUGE_DESCRIPTIONS[key as GAUGE_KEYS],
+  };
+  return acc;
+}, {} as { [key in GAUGE_KEYS]: GaugeInfo });
 export const GAUGE_MODFIERS: {
-  [key in GAUGE_KEYS]: Partial<{ [key in STAT_KEYS]: number }>;
+  [key in GAUGE_KEYS]: { [key in STAT_KEY]: number };
 } = {
   VITALITY: {
     VIGOR: MODFIERS_INFLUENCE.MAX * MODFIERS_INTENSITY,
@@ -118,7 +132,7 @@ export class Gauge extends ChildComponent {
       for (let mod of Object.keys(mods)) {
         value +=
           (this.parent as Figure).getStat(mod).getInfluenceValue() *
-          (mods[mod as STAT_KEYS] || 1);
+          (mods[mod as STAT_KEY] || 1);
       }
 
       return value * (1 + this.parent.level / 15);
