@@ -32,6 +32,7 @@ export interface OveralGameDataParamter {
   biome?: Biome;
   pos?: { x: number; y: number };
   company?: Company;
+  encounterTriggerType?: string;
 }
 
 export class GameDataService {

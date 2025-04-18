@@ -148,7 +148,7 @@ export function setUpMainMenuUI() {
   opcoesButton.innerHTML = 'OPTIONS';
   opcoesButton.addEventListener('click', () => {
     showAlertDialog(
-      'Ask Fernando to take his head out of his ass and do the options menu.'
+      'Ask the tech lead to take his head out of his ass and do the options menu.'
     );
   });
 

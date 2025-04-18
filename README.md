@@ -40,6 +40,9 @@ I want a world completly new and unexplored, where I can create a simple charact
 - Save file: https://medium.com/differential-blog/using-messagepack-with-typescript-17ae388ded2a
 - saving circular json: https://www.30secondsofcode.org/js/s/stringify-circular-json/
 - event emmiter: https://stackblitz.com/edit/typescript-es6-events-emitter-class?file=EventEmitter.ts
+- Gay art 3d : https://www.youtube.com/watch?v=ERA7-I5nPAU&ab_channel=t3ssel8r
+- gay colorful bulshit : https://www.youtube.com/watch?v=f4s1h2YETNY&
+- gay pixelart animation: https://smackstudio.com/?utm_source=youtube&utm_medium=social&utm_campaign=channel
 
 ## WoW such CICD
 

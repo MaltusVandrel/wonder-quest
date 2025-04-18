@@ -7,7 +7,8 @@ import {
 } from 'src/services/game-data.service';
 import { getRegionSeed } from './map-region';
 import { MapGeneratorUtils } from 'src/utils/map-generator.utils';
-const TRIGGER_MULTIPLIER = 11;
+import { DIALOG_TYPES } from 'src/utils/ui-notification.util';
+const TRIGGER_MULTIPLIER = 1;
 /*
 interface EncounterScheme {
   key: string;
@@ -24,7 +25,10 @@ interface EncounterScheme {
 export interface GameActionResult {
   able?: boolean;
   result?: string;
+  keepParentOpen?: boolean;
   reason?: string;
+  dialogType?: DIALOG_TYPES;
+  customReturnBehaviour?: (params: OveralGameDataParamter) => void;
 }
 export interface GameAction {
   title: string;
@@ -153,6 +157,41 @@ export const ENCOUNTERS: { [key in BIOME_TYPES]: Array<EncounterScheme> } = {
         GameDataService.GAME_DATA.encounterData['bunny.funny.happenstance'] = 0;
       },
     },
+    {
+      key: 'monster.fight.slime',
+      title: 'A slime appears',
+      description: 'An aggressive slime attacks!',
+      chance: 0.05 * TRIGGER_MULTIPLIER,
+      demandsAttention: true,
+      blocksOtherEncounters: true,
+      canDismiss: false,
+      priority: 0,
+      actions: [
+        {
+          title: 'Fight',
+          action: (data: OveralGameDataParamter) => {
+            return {
+              result: 'The battle begins!',
+              dialogType: DIALOG_TYPES.BATTLE,
+            };
+          },
+          isAble: (data: OveralGameDataParamter) => {
+            return { able: true };
+          },
+        },
+        {
+          title: 'Run',
+          action: (data: OveralGameDataParamter) => {
+            return {
+              result: 'You fleed!',
+            };
+          },
+          isAble: (data: OveralGameDataParamter) => {
+            return { able: true };
+          },
+        },
+      ],
+    },
   ],
   [BIOME_TYPES.WOODS]: [],
   [BIOME_TYPES.SWAMP]: [],
@@ -184,20 +223,37 @@ function populateEncounter(
     overalGameDataParamter: overalGameDataParamter,
   };
 }
-//fuck that is a great name, thank you *Lady gaga voice* Fernando
-export function checkIfEncountersHappens(
+
+export function checkIfEncountersHappensOnTravel(
   x: number,
   y: number
 ): Array<Encounter> | null {
   const biome = MapGeneratorUtils.getBiomeData(x, y);
   const biomeType: BIOME_TYPES = biome.type;
-  const seed = getRegionSeed(x, y, biome);
-  const enconters = ENCOUNTERS[biomeType];
+
   const overalGameDataParamter: OveralGameDataParamter = {
     biome: biome,
     pos: { x, y },
+    encounterTriggerType: 'travel',
   };
 
+  return checkIfEncountersHappens(overalGameDataParamter);
+}
+
+//fuck that is a great name, thank you *Lady gaga voice* Fernando
+function checkIfEncountersHappens(
+  overalGameDataParamter: OveralGameDataParamter
+): Array<Encounter> | null {
+  if (overalGameDataParamter.biome == null) throw 'Tell the biome ya fucker!';
+  if (overalGameDataParamter.pos == null) throw 'Tell the position ya fucker!';
+  if (overalGameDataParamter.encounterTriggerType == null)
+    throw 'Tell the trigger type ya fucker!';
+
+  const pos: { x: number; y: number } = overalGameDataParamter.pos;
+  const biome = overalGameDataParamter.biome;
+  const biomeType: BIOME_TYPES = biome.type;
+  const seed = getRegionSeed(pos.x, pos.y, biome);
+  const enconters = ENCOUNTERS[biomeType];
   const triggerableEncounters = enconters.filter((scheme: EncounterScheme) =>
     scheme.canTrigger ? scheme.canTrigger(overalGameDataParamter) : true
   );

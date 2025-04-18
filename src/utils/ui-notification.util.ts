@@ -3,6 +3,8 @@ import {
   GameAction,
   GameActionResult,
 } from 'src/data/bank/encounter';
+import { SLIME_BUILDER } from 'src/data/builder/slime-builder';
+import { Figure } from 'src/models/figure';
 import { Gauge, GAUGE_INFOS, GAUGE_KEYS } from 'src/models/gauge';
 import { Stat, STAT_INFOS, STAT_KEY } from 'src/models/stats';
 import { MapScene } from 'src/scenes/map.scene';
@@ -180,8 +182,17 @@ class HTMLEncounterDialogElement extends HTMLCustomDialogElement<Encounter> {
       parent: HTMLCustomDialogElement<any>,
       actionResult: GameActionResult
     ) => {
-      showGameActionResultDialog(actionResult);
-      parent.close();
+      if (actionResult.customReturnBehaviour) {
+        actionResult.customReturnBehaviour(encounter.overalGameDataParamter);
+        return;
+      }
+
+      if (actionResult.dialogType) {
+        showDialog(encounter.overalGameDataParamter, actionResult.dialogType);
+      } else {
+        showGameActionResultDialog(actionResult);
+      }
+      if (!(actionResult.keepParentOpen == true)) parent.close();
     };
     if (encounter.actions)
       this.setUpActions(
@@ -406,6 +417,128 @@ class HTMLCompanyDialogElement extends HTMLCustomDialogElement<any> {
     this.showModal();
   }
 }
+class HTMLBattleDialogElement extends HTMLCustomDialogElement<any> {
+  static readonly tagname = 'dialog-battle-element';
+
+  static readonly MAX_TIME: number = 15000;
+  timeProgress: number = 0;
+  interval: any;
+  constructor() {
+    super();
+    this.classList.add(HTMLBattleDialogElement.tagname);
+  }
+  setData(data: any) {
+    this.dismissable = false;
+    this.setUpDefaultStructure();
+    this.menuTitle.innerText = 'Battle!!';
+    const textPanel = document.createElement('div');
+    const orderPanel = document.createElement('div');
+    textPanel.classList.add('text-panel');
+    orderPanel.classList.add('order-panel');
+
+    const teamsAggressionSheet = [
+      {
+        team: 'friend',
+        behaviour: 0,
+        relationship: [{ team: 'foe', aggresion: 1 }],
+      },
+      {
+        team: 'foe',
+        behaviour: 1,
+        relationships: [{ team: 'friend', aggresion: 1 }],
+      },
+    ];
+
+    const BEHAVIOUR: { [key: string]: number } = {
+      ALLY: -1,
+      PLAYER: 0,
+      FOE: 1,
+    };
+    interface TeamRelationship {
+      team: string;
+      behaviour: number;
+      relationships: Array<{ team: string; aggresion: number }>;
+    }
+
+    interface BattleActor {
+      actor: Figure;
+      team: string;
+      speed: number;
+      progress: number;
+    }
+    interface BattleActionSlot {
+      actor: BattleActor;
+      speed: number;
+    }
+    const company = GameDataService.GAME_DATA.companyData;
+
+    const friend = company.members[0].character;
+    const foe = SLIME_BUILDER.getASlime(1);
+
+    /**
+     * SET ACTORS
+     */
+
+    const battleActors: BattleActor[] = [];
+    battleActors.push({
+      actor: friend,
+      team: 'friend',
+      speed: friend.getNormalSpeed(),
+      progress: 0,
+    });
+    battleActors.push({
+      actor: foe,
+      team: 'foe',
+      speed: foe.getNormalSpeed(),
+      progress: 0,
+    });
+
+    /**
+     * DO ORDER
+     */
+
+    //coloca o mais rapido na frente
+    battleActors.sort((actorA: BattleActor, actorB: BattleActor) => {
+      return actorB.speed - actorA.speed;
+    });
+
+    //usa a maior speed como referencia
+    const treadmill = battleActors[0].speed;
+
+    const orderList: BattleActionSlot[] = [];
+    let rollingIndex = 0;
+    do {
+      const battleActor = battleActors[rollingIndex];
+      const actionSpeed = battleActor.actor.getActionSpeed();
+      battleActor.progress += actionSpeed;
+      if (battleActor.progress >= treadmill) {
+        battleActor.progress -= treadmill;
+        orderList.push({ actor: battleActor, speed: actionSpeed });
+      }
+      rollingIndex++;
+      if (rollingIndex >= battleActors.length) rollingIndex = 0;
+    } while (orderList.length < 60);
+
+    /**
+     * DO BATTLE
+     */
+
+    textPanel.innerHTML = `<p>${foe.name} attacks ${friend.name}!</p>`;
+
+    orderList.forEach((actionSlot: BattleActionSlot, index: number) => {
+      const nameP = document.createElement('p');
+      nameP.innerHTML = `${index + 1} - ${actionSlot.actor.actor.name}`;
+      orderPanel.appendChild(nameP);
+    });
+
+    this.content.appendChild(textPanel);
+    this.content.appendChild(orderPanel);
+
+    this.menu.remove();
+
+    this.showModal();
+  }
+}
 
 customElements.define(HTMLToastElement.tagname, HTMLToastElement, {
   extends: HTMLToastElement.extends,
@@ -435,6 +568,13 @@ customElements.define(
     extends: HTMLCompanyDialogElement.extends,
   }
 );
+customElements.define(
+  HTMLBattleDialogElement.tagname,
+  HTMLBattleDialogElement,
+  {
+    extends: HTMLBattleDialogElement.extends,
+  }
+);
 
 export function showToast(data: Encounter) {
   const toast = document.createElement(HTMLToastElement.extends, {
@@ -443,6 +583,37 @@ export function showToast(data: Encounter) {
   document.getElementById('toast-holder')?.appendChild(toast);
   toast.setValue(data);
 }
+export enum DIALOG_TYPES {
+  ENCOUNTER = 'encounter',
+  GAME_ACTION_RESULT = 'game-action-result',
+  ALERT = 'alert',
+  COMPANY = 'company',
+  BATTLE = 'battle',
+}
+
+interface DialogClass<T> {
+  new (): HTMLCustomDialogElement<T>; // Constructor signature
+  extends: string; // Static property for the `extends` attribute
+  tagname: string; // Static property for the `is` attribute
+}
+const MAP_DIALOG_TYPE_TO_CLASS: { [key in DIALOG_TYPES]: DialogClass<any> } = {
+  [DIALOG_TYPES.ENCOUNTER]: HTMLEncounterDialogElement,
+  [DIALOG_TYPES.GAME_ACTION_RESULT]: HTMLGameActionResultDialogElement,
+  [DIALOG_TYPES.ALERT]: HTMLAlertDialogElement,
+  [DIALOG_TYPES.COMPANY]: HTMLCompanyDialogElement,
+  [DIALOG_TYPES.BATTLE]: HTMLBattleDialogElement,
+};
+
+export function showDialog<T>(data: T, type: DIALOG_TYPES) {
+  const varClass = MAP_DIALOG_TYPE_TO_CLASS[type];
+  const dialog = document.createElement(varClass.extends, {
+    is: varClass.tagname,
+  }) as HTMLCustomDialogElement<T>;
+  document.body.appendChild(dialog);
+  dialog.setData(data);
+  dialog.showModal();
+}
+
 export function showEncounterDialog(data: Encounter) {
   const dialog = document.createElement(HTMLEncounterDialogElement.extends, {
     is: HTMLEncounterDialogElement.tagname,

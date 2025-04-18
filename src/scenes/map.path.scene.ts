@@ -2,7 +2,10 @@ import * as Phaser from 'phaser';
 import { MapPathUtils } from 'src/utils/map-path.utils';
 import { GameDataService } from 'src/services/game-data.service';
 
-import { checkIfEncountersHappens, Encounter } from 'src/data/bank/encounter';
+import {
+  checkIfEncountersHappensOnTravel,
+  Encounter,
+} from 'src/data/bank/encounter';
 import { showEncounterDialog, showToast } from 'src/utils/ui-notification.util';
 import { showStaminaGauge } from 'src/utils/ui-elements.util';
 import { GAUGE_KEYS } from 'src/models/gauge';
@@ -100,7 +103,7 @@ export class MapPathScene extends Phaser.Scene {
       //encouter???
       const pos = this.mapScene.gridCenter();
       const triggeredEncounters: Array<Encounter> | null =
-        checkIfEncountersHappens(
+        checkIfEncountersHappensOnTravel(
           pos.x + this.mapScene.gridOffsetX,
           pos.y + this.mapScene.gridOffsetY
         );

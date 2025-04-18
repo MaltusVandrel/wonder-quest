@@ -64,23 +64,31 @@ export class Figure {
     return gauge;
   }
   getInitiative(): number {
-    return this.getSpeed() / 10 + this.level / 4;
+    return this.getActionSpeed();
   }
 
-  getSpeed(): number {
-    let agi = this.getStat(STAT_KEY.AGILITY);
-    let dex = this.getStat(STAT_KEY.DEXTERITY);
-    let prc = this.getStat(STAT_KEY.PERCEPTION);
-    let itt = this.getStat(STAT_KEY.INTUITION);
-    let luk = this.getStat(STAT_KEY.LUCK);
-    return (
-      agi.value * 2.5 -
-      (dex.value + prc.value + itt.value) -
-      CalcUtil.getRandom(luk.value * 10)
-    );
+  getNormalSpeed(): number {
+    const agi = this.getStat(STAT_KEY.AGILITY);
+    const dex = this.getStat(STAT_KEY.DEXTERITY);
+    const prc = this.getStat(STAT_KEY.PERCEPTION);
+    const itt = this.getStat(STAT_KEY.INTUITION);
+    const speed =
+      agi.getInfluenceValue() * 2.5 +
+      (dex.getInfluenceValue() +
+        prc.getInfluenceValue() +
+        itt.getInfluenceValue());
+    return speed > 0 ? speed : 1;
   }
+
+  getActionSpeed(): number {
+    const luk = this.getStat(STAT_KEY.LUCK);
+    const normalSpeed = this.getNormalSpeed();
+    normalSpeed + CalcUtil.getRandom(luk.getInfluenceValue()) + this.level / 4;
+    return normalSpeed > 0 ? normalSpeed : 1;
+  }
+
   getTurnTime(): number {
-    const speedAmount = this.getSpeed();
+    const speedAmount = this.getActionSpeed();
     return BattleContext.defaultTurnTiming * (1 + speedAmount / 100);
   }
 }
