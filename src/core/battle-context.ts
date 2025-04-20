@@ -17,6 +17,8 @@ interface TeamRelationship {
 interface BattleTeam {
   name: string;
   actors: Array<BattleActor>;
+  actionBehaviour: number;
+  isPlayer: boolean;
   relationships: Array<{ team: BattleTeam; behaviour: number }>;
 }
 
@@ -65,12 +67,16 @@ export class BattleContext extends Context {
     groups: Array<{
       members: Array<Figure>;
       teamName: string;
+      actionBehaviour: number;
       relationships: Array<{ teamName: string; behaviour: number }>;
     }>
   ) {
     this.battleTeams = groups.map((group) => {
       const battleTeam: BattleTeam = {
         name: group.teamName,
+        actionBehaviour: group.actionBehaviour,
+        isPlayer:
+          group.actionBehaviour == BattleContext.ACTION_BEHAVIOUR.PLAYER,
         actors: [],
         relationships: [],
       };
@@ -121,6 +127,7 @@ export class BattleContext extends Context {
       {
         teamName: 'friends',
         members: friends,
+        actionBehaviour: BattleContext.ACTION_BEHAVIOUR.PLAYER,
         relationships: [
           {
             teamName: 'foes',
@@ -131,6 +138,7 @@ export class BattleContext extends Context {
       {
         teamName: 'foes',
         members: foes,
+        actionBehaviour: BattleContext.ACTION_BEHAVIOUR.AUTO,
         relationships: [
           {
             teamName: 'friends',
@@ -158,11 +166,14 @@ export class BattleContext extends Context {
   }
   doActionList() {
     //usa a maior speed como referencia
-    const treadmill = this.battleActors[0].speed;
+    const activeActors = this.battleActors.filter(
+      (actor: BattleActor) => !actor.character.isFainted()
+    );
+    const treadmill = activeActors[0].speed;
     this.actionSlots = [];
     let rollingIndex = 0;
     do {
-      const battleActor = this.battleActors[rollingIndex];
+      const battleActor = activeActors[rollingIndex];
       const actionSpeed = battleActor.character.getActionSpeed();
       battleActor.progress += actionSpeed;
       battleActor.overallProgress += actionSpeed;
@@ -175,7 +186,7 @@ export class BattleContext extends Context {
         });
       }
       rollingIndex++;
-      if (rollingIndex >= this.battleActors.length) rollingIndex = 0;
+      if (rollingIndex >= activeActors.length) rollingIndex = 0;
     } while (this.actionSlots.length < 60);
   }
   showActionList(activeSlot: BattleActionSlot) {
@@ -220,8 +231,9 @@ export class BattleContext extends Context {
     const aimedTeam = enemyTeams[0];
 
     //add some Relevant Decision Making RDM in future, for now, get random
-    const aimedBattleActor =
-      aimedTeam.actors[Math.floor(aimedTeam.actors.length * Math.random())];
+    const aimedBattleActor = aimedTeam.actors.filter(
+      (actor: BattleActor) => !actor.character.isFainted()
+    )[Math.floor(aimedTeam.actors.length * Math.random())];
     const aimedChar = aimedBattleActor.character;
 
     this.doAttack(char, aimedChar);
@@ -235,6 +247,105 @@ export class BattleContext extends Context {
     }
     //check if theres any foe alive
 
+    const isThereAnyAdversaryAlive = this.isThereAnyAdversaryAlive(
+      enemyTeams,
+      alliesTeam
+    );
+
+    const playerTeam = this.battleTeams.filter(
+      (team) => team.actionBehaviour == BattleContext.ACTION_BEHAVIOUR.PLAYER
+    )[0];
+
+    const thereIsAnyPlayerAlive =
+      playerTeam.actors.filter((actor) => !actor.character.isFainted()).length >
+      0;
+
+    let thereIsAnyAllyAlive = false;
+    const playerAlliesTeam: Array<BattleTeam> = playerTeam.relationships
+      .filter(
+        (rel) => rel.behaviour == BattleContext.RELATIONSHIP_BEHAVIOUR.ALLY
+      )
+      .map((rel) => rel.team);
+    playerAlliesTeam.forEach((allyTeam) => {
+      if (thereIsAnyAllyAlive) return;
+      thereIsAnyAllyAlive =
+        allyTeam.actors.filter((actor) => !actor.character.isFainted()).length >
+        0;
+    });
+
+    if (!thereIsAnyPlayerAlive && !thereIsAnyAllyAlive) {
+      //*
+      // If theres no ally to withnesses, the battle ends.
+      // Usually this the end when the player fells
+      // */
+      let message = '';
+      if (alliesTeam && alliesTeam.length > 0) {
+        const allies = alliesTeam.join(', ');
+        message = `The battle ended. ${team.name} and the allies ${allies} got dragged by the mist...`;
+      } else {
+        message = `The battle ended. ${team.name} got dragged by the mist...`;
+      }
+      BattleContext.delay(300).then(
+        () => (this.textPanel.innerHTML += `<p>${message}</p>`)
+      );
+      BattleContext.delay(300).then(() => {
+        this.onEndCallback();
+      });
+    } else if (isThereAnyAdversaryAlive) {
+      //*
+      // If battle to be had stuff continues
+      // */
+      await BattleContext.delay(300).then(() => this.unravelBattle());
+    } else {
+      //*
+      // If player wons OR unrelated team wins
+      // */
+
+      let message = '';
+      if (alliesTeam && alliesTeam.length > 0) {
+        const allies = alliesTeam.map((team) => team.name).join(', ');
+        message = `${team.name} and the allies ${allies} won!`;
+      } else {
+        message = `${team.name} won!`;
+      }
+      //If not player then reatreat team
+      if (
+        !team.isPlayer &&
+        team.relationships.filter((rel) => rel.team.isPlayer).length == 0
+      ) {
+        message += ' They retreated from the battle.';
+        BattleContext.delay(300).then(() => {
+          this.battleActors = this.battleActors.filter(
+            (actor) => actor.team.name != team.name
+          );
+          this.battleTeams = this.battleTeams.filter(
+            (battleTeam) => battleTeam.name != team.name
+          );
+          alliesTeam.forEach((allyTeam) => {
+            this.battleActors = this.battleActors.filter(
+              (actor) => actor.team.name != allyTeam.name
+            );
+            this.battleTeams = this.battleTeams.filter(
+              (battleTeam) => battleTeam.name != allyTeam.name
+            );
+          });
+          this.doActionList();
+        });
+      }
+
+      BattleContext.delay(300).then(
+        () => (this.textPanel.innerHTML += `<p>${message}</p>`)
+      );
+
+      BattleContext.delay(300).then(() => {
+        this.onEndCallback();
+      });
+    }
+  }
+  isThereAnyAdversaryAlive(
+    enemyTeams: BattleTeam[],
+    alliesTeam: BattleTeam[]
+  ): boolean {
     //Unilateral behaviour cannot ever happen, it may be assimetric but never unilateral
     const adversarialTeams: BattleTeam[] = enemyTeams.concat([]);
     alliesTeam.forEach((allyTeam) => {
@@ -251,61 +362,14 @@ export class BattleContext extends Context {
       .map((battleTeam) => battleTeam.name)
       .join('|');
 
-    let thereIsAnyAdversaryAlive =
+    return (
       this.battleActors.filter((battleActor) => {
         return (
           adversarialTeamsString.indexOf(battleActor.team.name) > -1 &&
           !battleActor.character.isFainted()
         );
-      }).length > 0;
-
-    let thereIsAnyPlayerAlive =
-      team.actors.filter((actor) => !actor.character.isFainted()).length > 0;
-
-    let thereIsAnyAllyAlive = false;
-
-    alliesTeam.forEach((allyTeam) => {
-      if (thereIsAnyAllyAlive) return;
-      thereIsAnyAllyAlive =
-        allyTeam.actors.filter((actor) => !actor.character.isFainted()).length >
-        0;
-    });
-    if (!thereIsAnyPlayerAlive && !thereIsAnyAllyAlive) {
-      //está entrando aqui erroneamente
-      let message = '';
-
-      if (alliesTeam && alliesTeam.length > 0) {
-        const allies = alliesTeam.join(', ');
-        message = `The battle ended. ${team.name} and the allies ${allies} got dragged by the mist...`;
-      } else {
-        message = `The battle ended. ${team.name} got dragged by the mist...`;
-      }
-      BattleContext.delay(300).then(
-        () => (this.textPanel.innerHTML += `<p>${message}</p>`)
-      );
-      BattleContext.delay(300).then(() => {
-        this.onEndCallback();
-      });
-    } else if (thereIsAnyAdversaryAlive) {
-      await BattleContext.delay(300).then(() => this.unravelBattle());
-    } else {
-      let message = '';
-      if (alliesTeam && alliesTeam.length > 0) {
-        const allies = alliesTeam.map((team) => team.name).join(', ');
-        message = `${team.name} and the allies ${allies} won!`;
-      } else {
-        message = `${team.name} won!`;
-      }
-      //checar se foi player ou inimigo. ha uma chance de um grupo neutro simplesmente ganhar a vazar
-      //mas ainda ter animosidade entre player e outrs times
-      //tambem tem que refazer a listagem de ordem após a queda e ou retorno de alguem
-      BattleContext.delay(300).then(
-        () => (this.textPanel.innerHTML += `<p>${message}</p>`)
-      );
-      BattleContext.delay(300).then(() => {
-        this.onEndCallback();
-      });
-    }
+      }).length > 0
+    );
   }
   doAttack(char: Figure, aimedChar: Figure) {
     const leveDiff = char.level - aimedChar.level;
