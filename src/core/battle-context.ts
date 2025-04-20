@@ -231,12 +231,18 @@ export class BattleContext extends Context {
     const aimedTeam = enemyTeams[0];
 
     //add some Relevant Decision Making RDM in future, for now, get random
-    const aimedBattleActor = aimedTeam.actors.filter(
+    const aliveAimedBattleActors = aimedTeam.actors.filter(
       (actor: BattleActor) => !actor.character.isFainted()
-    )[Math.floor(aimedTeam.actors.length * Math.random())];
+    );
+    const aimedBattleActor =
+      aliveAimedBattleActors[
+        Math.floor(aliveAimedBattleActors.length * Math.random())
+      ];
+
     const aimedChar = aimedBattleActor.character;
 
     this.doAttack(char, aimedChar);
+
     if (aimedChar.isFainted()) {
       //gay xp and shit
       BattleContext.delay(300).then(
