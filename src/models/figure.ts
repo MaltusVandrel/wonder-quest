@@ -2,7 +2,7 @@ import { BattleContext } from '../core/battle-context';
 
 import { Stat, STAT_KEY } from './stats';
 import { ChildComponent } from './child-component';
-import { Gauge } from './gauge';
+import { Gauge, GAUGE_KEYS } from './gauge';
 import { CalcUtil } from 'src/utils/calc.utils';
 
 export class Figure {
@@ -63,6 +63,9 @@ export class Figure {
     if (!gauge) throw 'Gauge not present.';
     return gauge;
   }
+  isFainted(): boolean {
+    return this.getGauge(GAUGE_KEYS.VITALITY).getCurrentValue() <= 0;
+  }
   getInitiative(): number {
     return this.getActionSpeed();
   }
@@ -85,10 +88,5 @@ export class Figure {
     const normalSpeed = this.getNormalSpeed();
     normalSpeed + CalcUtil.getRandom(luk.getInfluenceValue()) + this.level / 4;
     return normalSpeed > 0 ? normalSpeed : 1;
-  }
-
-  getTurnTime(): number {
-    const speedAmount = this.getActionSpeed();
-    return BattleContext.defaultTurnTiming * (1 + speedAmount / 100);
   }
 }

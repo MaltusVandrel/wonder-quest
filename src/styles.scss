@@ -252,8 +252,9 @@ dialog.dialog-element {
     border: 0px;
     font-size: 2em;
     left: 100%;
+    top: 0;
     margin-left: -39px;
-    margin-top: -22px;
+    margin-top: -6px;
     &:hover {
       transform: scale(1.05);
     }

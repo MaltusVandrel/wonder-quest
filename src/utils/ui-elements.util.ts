@@ -29,6 +29,11 @@ function doRestButton() {
     let stamina = GameDataService.GAME_DATA.companyData.stamina;
     stamina.consumed = 0;
     GameDataService.GAME_DATA.time += 8 * 60;
+    GameDataService.GAME_DATA.companyData.members.forEach(
+      (member: { character: Figure; positions: COMPANY_POSITION[] }) => {
+        member.character.gauges.forEach((gauge) => (gauge.consumed = 0));
+      }
+    );
     mapScene.doColorFilter();
     showStaminaGauge();
     mapUIScene.showCurrentTime();

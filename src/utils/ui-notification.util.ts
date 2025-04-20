@@ -1,3 +1,4 @@
+import { BattleContext } from 'src/core/battle-context';
 import {
   Encounter,
   GameAction,
@@ -435,101 +436,14 @@ class HTMLBattleDialogElement extends HTMLCustomDialogElement<any> {
     const orderPanel = document.createElement('div');
     textPanel.classList.add('text-panel');
     orderPanel.classList.add('order-panel');
+    const battContext = BattleContext.build(textPanel, orderPanel);
+    battContext.onEnd(() => {
+      console.log(this);
 
-    const teamsAggressionSheet = [
-      {
-        team: 'friend',
-        behaviour: 0,
-        relationship: [{ team: 'foe', aggresion: 1 }],
-      },
-      {
-        team: 'foe',
-        behaviour: 1,
-        relationships: [{ team: 'friend', aggresion: 1 }],
-      },
-    ];
-
-    const BEHAVIOUR: { [key: string]: number } = {
-      ALLY: -1,
-      PLAYER: 0,
-      FOE: 1,
-    };
-    interface TeamRelationship {
-      team: string;
-      behaviour: number;
-      relationships: Array<{ team: string; aggresion: number }>;
-    }
-
-    interface BattleActor {
-      actor: Figure;
-      team: string;
-      speed: number;
-      progress: number;
-    }
-    interface BattleActionSlot {
-      actor: BattleActor;
-      speed: number;
-    }
-    const company = GameDataService.GAME_DATA.companyData;
-
-    const friend = company.members[0].character;
-    const foe = SLIME_BUILDER.getASlime(1);
-
-    /**
-     * SET ACTORS
-     */
-
-    const battleActors: BattleActor[] = [];
-    battleActors.push({
-      actor: friend,
-      team: 'friend',
-      speed: friend.getNormalSpeed(),
-      progress: 0,
+      this.dismissable = true;
+      this.appendCloseButton();
     });
-    battleActors.push({
-      actor: foe,
-      team: 'foe',
-      speed: foe.getNormalSpeed(),
-      progress: 0,
-    });
-
-    /**
-     * DO ORDER
-     */
-
-    //coloca o mais rapido na frente
-    battleActors.sort((actorA: BattleActor, actorB: BattleActor) => {
-      return actorB.speed - actorA.speed;
-    });
-
-    //usa a maior speed como referencia
-    const treadmill = battleActors[0].speed;
-
-    const orderList: BattleActionSlot[] = [];
-    let rollingIndex = 0;
-    do {
-      const battleActor = battleActors[rollingIndex];
-      const actionSpeed = battleActor.actor.getActionSpeed();
-      battleActor.progress += actionSpeed;
-      if (battleActor.progress >= treadmill) {
-        battleActor.progress -= treadmill;
-        orderList.push({ actor: battleActor, speed: actionSpeed });
-      }
-      rollingIndex++;
-      if (rollingIndex >= battleActors.length) rollingIndex = 0;
-    } while (orderList.length < 60);
-
-    /**
-     * DO BATTLE
-     */
-
-    textPanel.innerHTML = `<p>${foe.name} attacks ${friend.name}!</p>`;
-
-    orderList.forEach((actionSlot: BattleActionSlot, index: number) => {
-      const nameP = document.createElement('p');
-      nameP.innerHTML = `${index + 1} - ${actionSlot.actor.actor.name}`;
-      orderPanel.appendChild(nameP);
-    });
+    battContext.start();
 
     this.content.appendChild(textPanel);
     this.content.appendChild(orderPanel);

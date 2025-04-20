@@ -1,166 +1,329 @@
 import { Figure } from '../models/figure';
 import { Context } from './context';
 import { MessageHandler } from './message-handler';
-import { first } from 'rxjs';
+import { BehaviorSubject, first } from 'rxjs';
 import { Injectable } from '@angular/core';
 import { CalcUtil } from 'src/utils/calc.utils';
 import { STAT_KEY } from 'src/models/stats';
 import { GAUGE_KEYS } from 'src/models/gauge';
+import { GameDataService } from 'src/services/game-data.service';
+import { SLIME_BUILDER } from 'src/data/builder/slime-builder';
 
-@Injectable()
+interface TeamRelationship {
+  team: string;
+  behaviour: number;
+  relationships: Array<{ team: string; aggresion: number }>;
+}
+interface BattleTeam {
+  name: string;
+  actors: Array<BattleActor>;
+  relationships: Array<{ team: BattleTeam; behaviour: number }>;
+}
+
+interface BattleActor {
+  character: Figure;
+  team: BattleTeam;
+  speed: number;
+  progress: number;
+  overallProgress: number;
+}
+interface BattleActionSlot {
+  battleActor: BattleActor;
+  speed: number;
+  timeStamp: number;
+}
+
 export class BattleContext extends Context {
-  public static defaultTurnTiming: number = 6000;
-  public type: String = 'battle';
-  public player: Figure = new Figure();
-  public foe: Figure = new Figure();
-  public elapsedTime: number = 0;
-  public choosingAction?: Promise<boolean>;
-  public actionList: { actor: Figure; time: number }[] = [];
+  static RELATIONSHIP_BEHAVIOUR = {
+    ALLY: -1,
+    PLAYER: 0,
+    FOE: 1,
+  };
+  static ACTION_BEHAVIOUR = {
+    PLAYER: 0,
+    AUTO: 1,
+  };
+  self: BattleContext = this;
+  textPanel: HTMLElement;
+  orderPanel: HTMLElement;
+  actionSlots: Array<BattleActionSlot> = [];
+  teamRelationships: Array<TeamRelationship> = [];
+  battleActors: Array<BattleActor> = [];
+  battleTeams: Array<BattleTeam> = [];
+  onEndCallback: () => void = () => {};
+  constructor(textPanel: HTMLElement, orderPanel: HTMLElement) {
+    super('battle');
+    Context.ACTIVE_CONTEXTS[this.type] = this;
 
-  constructor(private messageHandler: MessageHandler) {
-    super();
+    this.textPanel = textPanel;
+    this.orderPanel = orderPanel;
   }
-  public setParticipants(player: Figure, foe: Figure) {
-    this.foe = foe;
-    this.player = player;
-    console.log('player', this.player);
+  static build(textPanel: HTMLElement, orderPanel: HTMLElement): BattleContext {
+    return new BattleContext(textPanel, orderPanel);
   }
+  doTeams(
+    groups: Array<{
+      members: Array<Figure>;
+      teamName: string;
+      relationships: Array<{ teamName: string; behaviour: number }>;
+    }>
+  ) {
+    this.battleTeams = groups.map((group) => {
+      const battleTeam: BattleTeam = {
+        name: group.teamName,
+        actors: [],
+        relationships: [],
+      };
+      battleTeam.actors = group.members.map((character: Figure) => {
+        const battleActor: BattleActor = {
+          team: battleTeam,
+          character: character,
+          progress: 0,
+          overallProgress: 0,
+          speed: character.getNormalSpeed(),
+        };
+        return battleActor;
+      });
+      return battleTeam;
+    });
+    this.battleTeams.forEach((team: BattleTeam, index: number) => {
+      const group = groups[index];
+      team.relationships = group.relationships.map((rel) => {
+        return {
+          team: this.getTeamByName(rel.teamName),
+          behaviour: rel.behaviour,
+        };
+      });
+    });
+    this.battleActors = [];
+    this.battleTeams.forEach((team) =>
+      team.actors.forEach((actor) => this.battleActors.push(actor))
+    );
+  }
+  getTeamByName(teamName: string): BattleTeam {
+    return this.battleTeams.filter((team) => team.name == teamName)[0];
+  }
+  onEnd(callback: () => void) {
+    this.onEndCallback = callback;
+  }
+  start() {
+    const company = GameDataService.GAME_DATA.companyData;
 
-  private getListOrder(): Figure[] {
-    let playerInitiative = this.player.getInitiative();
-    let foeInitiative = this.foe.getInitiative();
-    let percentage60 = 1.6;
-    let a: Figure;
-    let b: Figure;
-    if (playerInitiative >= foeInitiative * percentage60) {
-      a = this.player;
-      b = this.foe;
-    } else if (foeInitiative >= playerInitiative * percentage60) {
-      a = this.foe;
-      b = this.player;
-    } else {
-      if (
-        CalcUtil.getRandom(this.player.getStat(STAT_KEY.LUCK).value) >=
-        CalcUtil.getRandom(this.foe.getStat(STAT_KEY.LUCK).value)
-      ) {
-        a = this.player;
-        b = this.foe;
-      } else {
-        a = this.foe;
-        b = this.player;
+    const friend = company.members[0].character;
+    const slimeA = SLIME_BUILDER.getASlime(2);
+    slimeA.name = 'Slime Jason';
+    const slimeB = SLIME_BUILDER.getASlime(2);
+    slimeB.name = 'Slime Carlos';
+
+    const friends = [friend];
+    const foes = [slimeA, slimeB];
+    this.doTeams([
+      {
+        teamName: 'friends',
+        members: friends,
+        relationships: [
+          {
+            teamName: 'foes',
+            behaviour: BattleContext.RELATIONSHIP_BEHAVIOUR.FOE,
+          },
+        ],
+      },
+      {
+        teamName: 'foes',
+        members: foes,
+        relationships: [
+          {
+            teamName: 'friends',
+            behaviour: BattleContext.RELATIONSHIP_BEHAVIOUR.FOE,
+          },
+        ],
+      },
+    ]);
+
+    /**
+     * DO ORDER
+     */
+    this.doActionList();
+    //coloca o mais rapido na frente
+    this.battleActors.sort((actorA: BattleActor, actorB: BattleActor) => {
+      return actorB.speed - actorA.speed;
+    });
+
+    /**
+     * DO BATTLE
+     */
+
+    this.textPanel.innerHTML = `<p>Foes attack ${friend.name}!</p>`;
+    BattleContext.delay(300).then(() => this.unravelBattle());
+  }
+  doActionList() {
+    //usa a maior speed como referencia
+    const treadmill = this.battleActors[0].speed;
+    this.actionSlots = [];
+    let rollingIndex = 0;
+    do {
+      const battleActor = this.battleActors[rollingIndex];
+      const actionSpeed = battleActor.character.getActionSpeed();
+      battleActor.progress += actionSpeed;
+      battleActor.overallProgress += actionSpeed;
+      if (battleActor.progress >= treadmill) {
+        battleActor.progress -= treadmill;
+        this.actionSlots.push({
+          battleActor: battleActor,
+          speed: actionSpeed,
+          timeStamp: battleActor.overallProgress,
+        });
       }
-    }
-    return [a, b];
+      rollingIndex++;
+      if (rollingIndex >= this.battleActors.length) rollingIndex = 0;
+    } while (this.actionSlots.length < 60);
   }
-  private buildActionList() {
-    let order: Figure[] = this.getListOrder();
-    let fist = true;
-
-    for (let being of order) {
-      let time = being.getTurnTime() / (fist ? 2 : 1);
-      fist = false;
-      let turns = 0;
-      while (turns < 60) {
-        this.actionList.push({ actor: being, time: time });
-        time += being.getTurnTime();
-        turns++;
-      }
+  showActionList(activeSlot: BattleActionSlot) {
+    this.orderPanel.innerHTML = '';
+    if (activeSlot) {
+      const nameP = document.createElement('p');
+      nameP.innerHTML = `<strong>${activeSlot.battleActor.character.name}</strong>`;
+      this.orderPanel.appendChild(nameP);
     }
-    this.actionList.sort((a, b) => {
-      return a.time >= b.time ? 1 : -1;
+    this.actionSlots.forEach((actionSlot: BattleActionSlot, index: number) => {
+      const nameP = document.createElement('p');
+      nameP.innerHTML = `${index + 1} - ${
+        actionSlot.battleActor.character.name
+      }`;
+      this.orderPanel.appendChild(nameP);
     });
   }
+  async unravelBattle() {
+    const actionSlot: BattleActionSlot | undefined = this.actionSlots.shift();
+    if (actionSlot == undefined) throw 'Populate the battle slots ya fucker';
 
-  private getTarget(being: Figure) {
-    if (being == this.player) {
-      return this.foe;
-    } else {
-      return this.player;
+    const battleActor: BattleActor = actionSlot.battleActor;
+    const char: Figure = actionSlot.battleActor.character;
+    const team: BattleTeam = battleActor.team;
+
+    const alliesTeam: Array<BattleTeam> = team.relationships
+      .filter(
+        (rel) => rel.behaviour == BattleContext.RELATIONSHIP_BEHAVIOUR.ALLY
+      )
+      .map((rel) => rel.team);
+
+    const enemyTeams: Array<BattleTeam> = team.relationships
+      .filter(
+        (rel) => rel.behaviour >= BattleContext.RELATIONSHIP_BEHAVIOUR.FOE
+      )
+      .sort((relA, relB) => relB.behaviour - relA.behaviour)
+      .map((rel) => rel.team);
+
+    //remove action from list
+    this.showActionList(actionSlot);
+
+    const aimedTeam = enemyTeams[0];
+
+    //add some Relevant Decision Making RDM in future, for now, get random
+    const aimedBattleActor =
+      aimedTeam.actors[Math.floor(aimedTeam.actors.length * Math.random())];
+    const aimedChar = aimedBattleActor.character;
+
+    this.doAttack(char, aimedChar);
+    if (aimedChar.isFainted()) {
+      //gay xp and shit
+      BattleContext.delay(300).then(
+        () =>
+          (this.textPanel.innerHTML += `<p>${aimedChar.name} was felled.</p>`)
+      );
+      this.doActionList();
     }
-  }
-  //add atack action in the player turn
-  //add atacks
-  //add winding up time
-  //add post attack recharge time
-  public async run() {
-    this.buildActionList();
+    //check if theres any foe alive
 
-    this.messageHandler.add(
-      'A battle between <span class="bold">' +
-        this.player.name +
-        '(' +
-        this.player.getGauge(GAUGE_KEYS.VITALITY).getCurrentValue() +
-        'hp)' +
-        '</span> and <span class="bold">' +
-        this.foe.name +
-        '(' +
-        this.foe.getGauge(GAUGE_KEYS.VITALITY).getCurrentValue() +
-        'hp) </span> ' +
-        ' has begun!'
-    );
+    //Unilateral behaviour cannot ever happen, it may be assimetric but never unilateral
+    const adversarialTeams: BattleTeam[] = enemyTeams.concat([]);
+    alliesTeam.forEach((allyTeam) => {
+      adversarialTeams.concat(
+        allyTeam.relationships
+          .filter(
+            (rel) => rel.behaviour >= BattleContext.RELATIONSHIP_BEHAVIOUR.FOE
+          )
+          .map((rel) => rel.team)
+      );
+    });
 
-    while (
-      this.actionList.length > 0 &&
-      this.foe.getGauge(GAUGE_KEYS.VITALITY).getCurrentValue() > 0 &&
-      this.player.getGauge(GAUGE_KEYS.VITALITY).getCurrentValue() > 0
-    ) {
-      let actionTurn = this.actionList.shift();
-      if (actionTurn) {
-        if (actionTurn.actor == this.player) {
-          await this.waitForAction();
-        } else {
-          await this.delay(900);
-        }
-        let msg = this.getAttack(
-          actionTurn.actor,
-          this.getTarget(actionTurn.actor)
+    const adversarialTeamsString = adversarialTeams
+      .map((battleTeam) => battleTeam.name)
+      .join('|');
+
+    let thereIsAnyAdversaryAlive =
+      this.battleActors.filter((battleActor) => {
+        return (
+          adversarialTeamsString.indexOf(battleActor.team.name) > -1 &&
+          !battleActor.character.isFainted()
         );
-        this.messageHandler.add(msg);
-      } else {
-        break;
-      }
-    }
-    let being = this.player;
-    if (this.foe.getGauge(GAUGE_KEYS.VITALITY).getCurrentValue() > 0)
-      being = this.foe;
-    this.messageHandler.add(
-      '<span class="bold">' + being.name + '</span> won the battle!'
-    );
-  }
-  private getAttack(a: Figure, b: Figure): string {
-    let attackPower = 3;
-    let strengthInfluence = 1 + a.getStat(STAT_KEY.STRENGTH).value / 10;
-    let levelDiffInfluence = 1 + (a.level - b.level / 10) / 100;
-    let damage =
-      attackPower *
-      levelDiffInfluence *
-      strengthInfluence *
-      (CalcUtil.getAValueBetween(80, 120) / 100);
-    damage = Math.round(damage);
-    b.getGauge(GAUGE_KEYS.VITALITY).consumed += damage;
-    return (
-      '<span class="bold">' +
-      a.name +
-      '</span> attacks <span class="bold">' +
-      b.name +
-      '! (' +
-      damage +
-      'dmg)</span>'
-    );
-  }
-  private delay(ms: number): Promise<any> {
-    return new Promise((res) => setTimeout(res, ms));
-  }
-  private waitForAction(): Promise<any> {
-    this.choosingAction = new Promise<boolean>(function (resolve, reject) {
-      window.addEventListener('actionSelected', ((event: CustomEvent) => {
-        resolve(true);
-      }) as EventListener);
-    });
+      }).length > 0;
 
-    return this.choosingAction;
+    let thereIsAnyPlayerAlive =
+      team.actors.filter((actor) => !actor.character.isFainted()).length > 0;
+
+    let thereIsAnyAllyAlive = false;
+
+    alliesTeam.forEach((allyTeam) => {
+      if (thereIsAnyAllyAlive) return;
+      thereIsAnyAllyAlive =
+        allyTeam.actors.filter((actor) => !actor.character.isFainted()).length >
+        0;
+    });
+    if (!thereIsAnyPlayerAlive && !thereIsAnyAllyAlive) {
+      //está entrando aqui erroneamente
+      let message = '';
+
+      if (alliesTeam && alliesTeam.length > 0) {
+        const allies = alliesTeam.join(', ');
+        message = `The battle ended. ${team.name} and the allies ${allies} got dragged by the mist...`;
+      } else {
+        message = `The battle ended. ${team.name} got dragged by the mist...`;
+      }
+      BattleContext.delay(300).then(
+        () => (this.textPanel.innerHTML += `<p>${message}</p>`)
+      );
+      BattleContext.delay(300).then(() => {
+        this.onEndCallback();
+      });
+    } else if (thereIsAnyAdversaryAlive) {
+      await BattleContext.delay(300).then(() => this.unravelBattle());
+    } else {
+      let message = '';
+      if (alliesTeam && alliesTeam.length > 0) {
+        const allies = alliesTeam.map((team) => team.name).join(', ');
+        message = `${team.name} and the allies ${allies} won!`;
+      } else {
+        message = `${team.name} won!`;
+      }
+      //checar se foi player ou inimigo. ha uma chance de um grupo neutro simplesmente ganhar a vazar
+      //mas ainda ter animosidade entre player e outrs times
+      //tambem tem que refazer a listagem de ordem após a queda e ou retorno de alguem
+      BattleContext.delay(300).then(
+        () => (this.textPanel.innerHTML += `<p>${message}</p>`)
+      );
+      BattleContext.delay(300).then(() => {
+        this.onEndCallback();
+      });
+    }
   }
-  public triggerAction() {
-    window.dispatchEvent(new CustomEvent('actionSelected', {}));
+  doAttack(char: Figure, aimedChar: Figure) {
+    const leveDiff = char.level - aimedChar.level;
+    const leveDiffOposing = leveDiff * -1;
+
+    //do moves in the future, for now simple damage
+    const stronk = char.getStat(STAT_KEY.STRENGTH).getInfluenceValue();
+    const damage = 50 * (1 + stronk / 10) * (1 + leveDiff / 10);
+
+    const destronk = aimedChar.getStat(STAT_KEY.ENDURANCE).getInfluenceValue();
+    const reduction = destronk * (1 + leveDiffOposing / 10);
+    const calculedDamage = damage - reduction;
+    const effectiveDamate = calculedDamage >= 1 ? calculedDamage : 1;
+    aimedChar.getGauge(GAUGE_KEYS.VITALITY).consumed += effectiveDamate;
+
+    this.textPanel.innerHTML += `<p>${char.name} bonked ${aimedChar.name} for ${effectiveDamate}dmg!</p>`;
+  }
+  static delay(ms: number): Promise<any> {
+    return new Promise((res) => setTimeout(res, ms));
   }
 }

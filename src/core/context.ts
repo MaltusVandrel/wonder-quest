@@ -1,3 +1,7 @@
 export abstract class Context {
-  public abstract type: String;
+  static ACTIVE_CONTEXTS: { [key: string]: any } = {};
+  public type: string;
+  constructor(type: string) {
+    this.type = type;
+  }
 }

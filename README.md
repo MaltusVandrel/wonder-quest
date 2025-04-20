@@ -30,6 +30,14 @@ I want a world completly new and unexplored, where I can create a simple charact
 - add on the introduction that explains you are a force not the being
 - Monsters
 - - Wolves, Caterpie but Big!, Goblin, Centauro, Shark, Mermaids, Big Lizards, Bandits, Dragons, Wyvens, Slime, Bear, Cotton bunny but its like a plant? (fluffball)
+- Multiplayer element!!
+- - You get to a panteic statue and send a gift
+- - "I here sacrifice a (gift) of (love)"
+- - "I (preay) for a (gift) of (love)"
+- Alchemia/cooking (itens with certain properties may replace others of same, its better to know the recipes but its possible to experiment. its a good idea to not punish experiments with less specific 'fail-state' potions/plates )
+- cooking has taste descriptos in igridient that may change the final plate
+- most interactions the sims like (glance over specifics, descrie hows abouts)
+- its secondary quest skrim
 
 ## Possible inspirations for the future
 
