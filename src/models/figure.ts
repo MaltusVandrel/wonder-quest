@@ -6,6 +6,8 @@ import { Gauge, GAUGE_KEYS } from './gauge';
 import { CalcUtil } from 'src/utils/calc.utils';
 
 export class Figure {
+  id: string =
+    new Date().getTime() + '-' + Math.floor(Math.random() * 100000000000);
   //gauge
   //stats
   /*
@@ -36,7 +38,8 @@ export class Figure {
   }
   static instantiate(data: any): Figure {
     let obj = new Figure();
-
+    obj.id = data.id;
+    obj.data = data.data;
     obj.name = data.name;
     obj.level = data.level;
 
@@ -76,10 +79,11 @@ export class Figure {
     const prc = this.getStat(STAT_KEY.PERCEPTION);
     const itt = this.getStat(STAT_KEY.INTUITION);
     const speed =
-      agi.getInfluenceValue() * 2.5 +
-      (dex.getInfluenceValue() +
-        prc.getInfluenceValue() +
-        itt.getInfluenceValue());
+      (agi.getInfluenceValue() * 2.5 +
+        (dex.getInfluenceValue() +
+          prc.getInfluenceValue() +
+          itt.getInfluenceValue())) /
+      2.5;
     return speed > 0 ? speed : 1;
   }
 
