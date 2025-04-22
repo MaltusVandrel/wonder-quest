@@ -443,13 +443,12 @@ div#toast-holder {
       height: calc(100vh - 132px);
       overflow-x: hidden;
       padding-right: 8px;
+      display: flex;
+      flex-direction: column;
       p {
         width: max-content;
         margin: 0px;
         margin-bottom: 8px;
-        &:nth-child(1) {
-          font-weight: bold;
-        }
       }
     }
   }

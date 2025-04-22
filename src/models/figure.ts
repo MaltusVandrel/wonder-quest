@@ -6,8 +6,7 @@ import { Gauge, GAUGE_KEYS } from './gauge';
 import { CalcUtil } from 'src/utils/calc.utils';
 
 export class Figure {
-  id: string =
-    new Date().getTime() + '-' + Math.floor(Math.random() * 100000000000);
+  id: string = CalcUtil.genId();
   //gauge
   //stats
   /*

@@ -27,12 +27,14 @@ interface BattleActor {
   team: BattleTeam;
   speed: number;
   progress: number;
-  overallProgress: number;
+  isAuto: boolean;
 }
 interface BattleActionSlot {
+  id: string;
   battleActor: BattleActor;
   speed: number;
   timeStamp: number;
+  localProgress: number;
 }
 
 export class BattleContext extends Context {
@@ -49,6 +51,7 @@ export class BattleContext extends Context {
   self: BattleContext = this;
   textPanel: HTMLElement;
   orderPanel: HTMLElement;
+  actionMenu: HTMLElement;
   actionSlots: Array<BattleActionSlot> = [];
   teamRelationships: Array<TeamRelationship> = [];
   battleActors: Array<BattleActor> = [];
@@ -58,15 +61,24 @@ export class BattleContext extends Context {
   turn: number = 0;
   turnDuration: number = 0;
   onEndCallback: () => void = () => {};
-  constructor(textPanel: HTMLElement, orderPanel: HTMLElement) {
+  constructor(
+    textPanel: HTMLElement,
+    orderPanel: HTMLElement,
+    actionMenu: HTMLElement
+  ) {
     super('battle');
     Context.ACTIVE_CONTEXTS[this.type] = this;
 
     this.textPanel = textPanel;
     this.orderPanel = orderPanel;
+    this.actionMenu = actionMenu;
   }
-  static build(textPanel: HTMLElement, orderPanel: HTMLElement): BattleContext {
-    return new BattleContext(textPanel, orderPanel);
+  static build(
+    textPanel: HTMLElement,
+    orderPanel: HTMLElement,
+    actionMenu: HTMLElement
+  ): BattleContext {
+    return new BattleContext(textPanel, orderPanel, actionMenu);
   }
   doTeams(
     groups: Array<{
@@ -77,11 +89,12 @@ export class BattleContext extends Context {
     }>
   ) {
     this.battleTeams = groups.map((group) => {
+      const isPlayer =
+        group.actionBehaviour == BattleContext.ACTION_BEHAVIOUR.PLAYER;
       const battleTeam: BattleTeam = {
         name: group.teamName,
         actionBehaviour: group.actionBehaviour,
-        isPlayer:
-          group.actionBehaviour == BattleContext.ACTION_BEHAVIOUR.PLAYER,
+        isPlayer: isPlayer,
         actors: [],
         relationships: [],
       };
@@ -90,8 +103,8 @@ export class BattleContext extends Context {
           team: battleTeam,
           character: character,
           progress: 0,
-          overallProgress: 0,
           speed: character.getNormalSpeed(),
+          isAuto: isPlayer ? character.data.autoBattle == true : true,
         };
         return battleActor;
       });
@@ -165,14 +178,12 @@ export class BattleContext extends Context {
     ]);
 
     /**
-     * DO ORDER
+     * Alterar pra mudar behaviour da batalha conforme desejado
+     * e ou idealizado
      */
     this.turnDuration = this.battleActors[0].speed * 2.25;
     this.doActionList();
 
-    //remove action from list
-    //this.showActionListUI();
-    //coloca o mais rapido na frente
     this.battleActors.sort((actorA: BattleActor, actorB: BattleActor) => {
       return actorB.speed - actorA.speed;
     });
@@ -189,18 +200,21 @@ export class BattleContext extends Context {
       .filter((actor: BattleActor) => !actor.character.isFainted())
       .sort((a: BattleActor, b: BattleActor) => b.speed - a.speed);
     const actionSlots: BattleActionSlot[] = [];
-    let startingTurn = this.turn;
-    if (this.actionSlots.length > 0) {
-    }
-    let runs = 0;
+    //let startingTurn = this.turn;
+    //if (this.actionSlots.length > 0) { }
+    //let runs = 0;
     activeActors.forEach((actor: BattleActor) => {
       while (actor.progress < this.turnDuration * (10 + this.turn)) {
         const speed = actor.character.getActionSpeed();
+        //me da valor pequeno pra quem tem velocidade alta
+        //o oposto é real
         const progress = this.turnDuration - speed;
         actionSlots.push({
+          id: CalcUtil.genId(),
           battleActor: actor,
           speed: speed,
           timeStamp: actor.progress + progress,
+          localProgress: progress,
         });
         actor.progress += progress;
       }
@@ -208,19 +222,11 @@ export class BattleContext extends Context {
     actionSlots.sort(
       (a: BattleActionSlot, b: BattleActionSlot) => a.timeStamp - b.timeStamp
     );
-    actionSlots.forEach((actionSlot: BattleActionSlot) => {
-      const nameP = document.createElement('p');
-      nameP.classList.add(
-        `turn-slot-${this.toNameKey(
-          actionSlot.battleActor.team.name
-        )}-${this.toNameKey(actionSlot.battleActor.character.name)}`
-      );
-      nameP.innerHTML = `${actionSlot.timeStamp.toFixed(0)} - ${
-        actionSlot.battleActor.character.name
-      }`;
-      this.orderPanel.appendChild(nameP);
+    actionSlots.forEach((actionSlot: BattleActionSlot, index: number) => {
+      this.actionSlotToElement(actionSlot);
     });
     this.actionSlots.push(...actionSlots);
+    this.setOrderActionListUI();
   }
 
   removeActorFromBattle(actorToRemove: BattleActor) {
@@ -237,44 +243,86 @@ export class BattleContext extends Context {
       el.remove();
     });
   }
-
-  removeFirstFromActionListUI() {
-    Array.from(this.orderPanel.children)[0].remove();
+  actionSlotToElement(actionSlot: BattleActionSlot) {
+    const slotP = document.createElement('p');
+    slotP.classList.add(
+      `turn-slot-${this.toNameKey(
+        actionSlot.battleActor.team.name
+      )}-${this.toNameKey(actionSlot.battleActor.character.name)}`
+    );
+    slotP.innerHTML = `${actionSlot.timeStamp.toFixed(0)} - ${
+      actionSlot.battleActor.character.name
+    }`;
+    slotP.id = actionSlot.id;
+    this.orderPanel.appendChild(slotP);
   }
-
-  addNewBattleActor(
-    activeSlot: BattleActionSlot,
-    actualSet: number,
-    character: Figure,
-    team: BattleTeam
-  ) {}
+  removeActionFromUI(action: BattleActionSlot) {
+    document.getElementById(action.id)?.remove();
+  }
+  setOrderActionListUI() {
+    this.actionSlots.forEach((actionSlot: BattleActionSlot, index: number) => {
+      const el = document.getElementById(actionSlot.id);
+      if (el) el.style.order = `${index}`;
+    });
+  }
+  addNewBattleActor(timeStamp: number, character: Figure, team: BattleTeam) {
+    const actorProgress = this.turnDuration - character.getActionSpeed();
+    const isPlayer = team.isPlayer;
+    const actor: BattleActor = {
+      team: team,
+      character: character,
+      progress: timeStamp + actorProgress,
+      speed: character.getNormalSpeed(),
+      isAuto: isPlayer ? character.data.autoBattle == true : true,
+    };
+    team.actors.push(actor);
+    this.battleActors.push(actor);
+    this.battleActors.sort((actorA: BattleActor, actorB: BattleActor) => {
+      return actorB.speed - actorA.speed;
+    });
+    while (actor.progress < this.turnDuration * (10 + this.turn)) {
+      const speed = actor.character.getActionSpeed();
+      const progress = this.turnDuration - speed;
+      const actionSlot: BattleActionSlot = {
+        id: CalcUtil.genId(),
+        battleActor: actor,
+        speed: speed,
+        timeStamp: actor.progress + progress,
+        localProgress: progress,
+      };
+      this.actionSlots.push(actionSlot);
+      actor.progress += progress;
+      this.actionSlotToElement(actionSlot);
+    }
+    this.actionSlots.sort((a, b) => a.timeStamp - b.timeStamp);
+    this.setOrderActionListUI();
+  }
   async unravelBattle() {
     const actionSlot: BattleActionSlot | undefined = this.actionSlots.shift();
     if (actionSlot == undefined) throw 'Populate the battle slots ya fucker';
 
-    this.removeFirstFromActionListUI();
+    this.removeActionFromUI(actionSlot);
     this.turn++;
-    /*
-    if (this.turn == 10) {
-      const slime = SLIME_BUILDER.getASlime(9);
+
+    if (this.turn == 3) {
+      const slime = SLIME_BUILDER.getASlime(2);
       slime.name =
         'XSlime ' +
         'ABCDEFGHIJKLMNOPQRSTVUWXYZ'.split('')[Math.floor(Math.random() * 26)];
       this.addNewBattleActor(
-        actionSlot,
+        actionSlot.timeStamp,
         slime,
         this.getTeamByName('foes')
       );
-     
+
       //this.actionSlots.map((slot)=>slot)
       BattleContext.delay().then(() => {
         const newP = document.createElement('p');
         newP.innerHTML += `${this.turn} - ${slime.name} arrived in the battle.`;
         this.textPanel.insertBefore(newP, this.textPanel.childNodes[0]);
-       
       });
     }
-*/
+
     this.doActionList();
 
     const battleActor: BattleActor = actionSlot.battleActor;
@@ -307,7 +355,13 @@ export class BattleContext extends Context {
 
     const aimedChar = aimedBattleActor.character;
 
-    this.doAttack(char, aimedChar);
+    if (!team.isPlayer || battleActor.isAuto) {
+      this.doAttack(char, aimedChar);
+    } else {
+      const res: any = await this.chooseAction(char);
+      console.log(res);
+      this.doAttack(char, aimedChar);
+    }
 
     if (aimedChar.isFainted()) {
       //gay xp and shit
@@ -351,13 +405,27 @@ export class BattleContext extends Context {
       }).length > 0
     );
   }
+
+  chooseAction(char: Figure): Promise<any> {
+    const promise = new Promise((res) => {
+      this.actionMenu.innerHTML = '';
+      const doShitButton = document.createElement('button');
+      doShitButton.innerHTML = 'Do Shit ' + char.name + '!';
+      doShitButton.addEventListener('click', () => {
+        res('Lol');
+      });
+      this.actionMenu.appendChild(doShitButton);
+    });
+
+    return promise;
+  }
   doAttack(char: Figure, aimedChar: Figure) {
     const leveDiff = char.level - aimedChar.level;
     const leveDiffOposing = leveDiff * -1;
 
     //do moves in the future, for now simple damage
     const stronk = char.getStat(STAT_KEY.STRENGTH).getInfluenceValue();
-    const damage = 30 * (1 + stronk / 10) * (1 + leveDiff / 10);
+    const damage = 10 * (1 + stronk / 10) * (1 + leveDiff / 10);
 
     const destronk = aimedChar.getStat(STAT_KEY.ENDURANCE).getInfluenceValue();
     const reduction = destronk * (1 + leveDiffOposing / 10);

@@ -359,13 +359,13 @@ class HTMLCompanyDialogElement extends HTMLCustomDialogElement<any> {
     const infoMemberPanel = document.createElement('div');
     infoMemberPanel.classList.add('info-member-panel');
 
-    const gaugeHolder = document.createElement('table');
-    gaugeHolder.classList.add('gauge-holder');
+    const fistColumnHolder = document.createElement('div');
+    fistColumnHolder.classList.add('fist-column-holder');
 
     const statsHolder = document.createElement('table');
     statsHolder.classList.add('stats-holder');
 
-    infoMemberPanel.appendChild(gaugeHolder);
+    infoMemberPanel.appendChild(fistColumnHolder);
     infoMemberPanel.appendChild(statsHolder);
 
     const memberButtonHolder = document.createElement('div');
@@ -378,8 +378,10 @@ class HTMLCompanyDialogElement extends HTMLCustomDialogElement<any> {
       memberButton.addEventListener('click', () => {
         memberName.innerHTML = `${member.character.name}, Level ${member.character.level}`;
 
-        gaugeHolder.innerHTML = '';
-        GAUGE_INFOS;
+        fistColumnHolder.innerHTML = '';
+        const gaugeHolder = document.createElement('table');
+        gaugeHolder.classList.add('gauge-holder');
+
         Object.keys(GAUGE_KEYS).forEach((key: string) => {
           const gauge: Gauge = member.character.getGauge(key);
           gaugeHolder.innerHTML += `<tr><td title="${
@@ -393,6 +395,23 @@ class HTMLCompanyDialogElement extends HTMLCustomDialogElement<any> {
             (gauge.getCurrentValue() / gauge.getModValue()) * 100
           }' max='100'/></td></tr>`;
         });
+        fistColumnHolder.appendChild(gaugeHolder);
+        fistColumnHolder.innerHTML += '<hr/>';
+        const confAutobattleDiv = document.createElement('div');
+        const autoBattleInput = document.createElement('input');
+        autoBattleInput.type = 'checkbox';
+        autoBattleInput.name = 'auto-battle';
+        autoBattleInput.id = 'auto-battle';
+        autoBattleInput.checked = member.character.data.autoBattle;
+        autoBattleInput.addEventListener('change', () => {
+          member.character.data.autoBattle = autoBattleInput.checked;
+        });
+        const autoBattleLabel = document.createElement('label');
+        autoBattleLabel.setAttribute('for', 'auto-battle');
+        autoBattleLabel.innerText = 'Auto Battle?';
+        confAutobattleDiv.appendChild(autoBattleInput);
+        confAutobattleDiv.appendChild(autoBattleLabel);
+        fistColumnHolder.appendChild(confAutobattleDiv);
 
         statsHolder.innerHTML = '';
         Object.keys(STAT_KEY).forEach((key: string) => {
@@ -436,7 +455,7 @@ class HTMLBattleDialogElement extends HTMLCustomDialogElement<any> {
     const orderPanel = document.createElement('div');
     textPanel.classList.add('text-panel');
     orderPanel.classList.add('order-panel');
-    const battContext = BattleContext.build(textPanel, orderPanel);
+    const battContext = BattleContext.build(textPanel, orderPanel, this.menu);
     battContext.onEnd(() => {
       console.log(this);
 
@@ -447,8 +466,6 @@ class HTMLBattleDialogElement extends HTMLCustomDialogElement<any> {
 
     this.content.appendChild(textPanel);
     this.content.appendChild(orderPanel);
-
-    this.menu.remove();
 
     this.showModal();
   }
