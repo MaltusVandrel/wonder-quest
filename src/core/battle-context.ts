@@ -301,7 +301,6 @@ export class BattleContext extends Context {
     const actionSlot: BattleActionSlot | undefined = this.actionSlots.shift();
     if (actionSlot == undefined) throw 'Populate the battle slots ya fucker';
 
-    this.removeActionFromUI(actionSlot);
     this.turn++;
 
     if (this.turn == 3) {
@@ -362,6 +361,7 @@ export class BattleContext extends Context {
       console.log(res);
       this.doAttack(char, aimedChar);
     }
+    this.removeActionFromUI(actionSlot);
 
     if (aimedChar.isFainted()) {
       //gay xp and shit
@@ -407,12 +407,13 @@ export class BattleContext extends Context {
   }
 
   chooseAction(char: Figure): Promise<any> {
-    const promise = new Promise((res) => {
-      this.actionMenu.innerHTML = '';
+    const promise = new Promise((resolve) => {
       const doShitButton = document.createElement('button');
+      doShitButton.classList.add('ui-game-button');
       doShitButton.innerHTML = 'Do Shit ' + char.name + '!';
       doShitButton.addEventListener('click', () => {
-        res('Lol');
+        this.actionMenu.innerHTML = '';
+        resolve('Lol');
       });
       this.actionMenu.appendChild(doShitButton);
     });
