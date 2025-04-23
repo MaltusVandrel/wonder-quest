@@ -3,11 +3,13 @@ import { BIOME_TYPES } from './biome';
 import { Biome } from 'src/models/biome';
 import {
   GameDataService,
-  OveralGameDataParamter,
+  OveralGameDataParamter as OverallGameDataParamter,
 } from 'src/services/game-data.service';
 import { getRegionSeed } from './map-region';
 import { MapGeneratorUtils } from 'src/utils/map-generator.utils';
 import { DIALOG_TYPES } from 'src/utils/ui-notification.util';
+import { BattleContext, BattleGroup } from 'src/core/battle-context';
+import { SLIME_BUILDER } from '../builder/slime-builder';
 const TRIGGER_MULTIPLIER = 1;
 /*
 interface EncounterScheme {
@@ -28,13 +30,13 @@ export interface GameActionResult {
   keepParentOpen?: boolean;
   reason?: string;
   dialogType?: DIALOG_TYPES;
-  customReturnBehaviour?: (params: OveralGameDataParamter) => void;
+  customReturnBehaviour?: (params: OverallGameDataParamter) => void;
 }
 export interface GameAction {
   title: string;
   hint?: string;
-  action: (params: OveralGameDataParamter) => GameActionResult;
-  isAble: (params: OveralGameDataParamter) => GameActionResult;
+  action: (params: OverallGameDataParamter) => GameActionResult;
+  isAble: (params: OverallGameDataParamter) => GameActionResult;
 }
 export interface EncounterScheme {
   key: string;
@@ -46,8 +48,8 @@ export interface EncounterScheme {
   priority?: number;
   canDismiss?: boolean;
   actions?: Array<GameAction>;
-  onTrigger?: (data: OveralGameDataParamter) => void;
-  canTrigger?: (data: OveralGameDataParamter) => boolean;
+  onTrigger?: (data: OverallGameDataParamter) => void;
+  canTrigger?: (data: OverallGameDataParamter) => boolean;
 }
 export interface Encounter {
   key: string;
@@ -58,9 +60,9 @@ export interface Encounter {
   priority?: number;
   canDismiss?: boolean;
   actions?: Array<GameAction>;
-  onTrigger?: (data: OveralGameDataParamter) => void;
-  canTrigger?: (data: OveralGameDataParamter) => boolean;
-  overalGameDataParamter: OveralGameDataParamter;
+  onTrigger?: (data: OverallGameDataParamter) => void;
+  canTrigger?: (data: OverallGameDataParamter) => boolean;
+  overallGameDataParamter: OverallGameDataParamter;
 }
 BIOME_TYPES;
 export const ENCOUNTERS: { [key in BIOME_TYPES]: Array<EncounterScheme> } = {
@@ -80,7 +82,7 @@ export const ENCOUNTERS: { [key in BIOME_TYPES]: Array<EncounterScheme> } = {
       chance: 0.01 * TRIGGER_MULTIPLIER,
       demandsAttention: false,
 
-      onTrigger: (data: OveralGameDataParamter) => {
+      onTrigger: (data: OverallGameDataParamter) => {
         let hapenstance =
           GameDataService.GAME_DATA.encounterData['bunny.funny.happenstance'] ||
           0;
@@ -109,34 +111,34 @@ export const ENCOUNTERS: { [key in BIOME_TYPES]: Array<EncounterScheme> } = {
       actions: [
         {
           title: 'Fight',
-          action: (data: OveralGameDataParamter) => {
+          action: (data: OverallGameDataParamter) => {
             return {
               result:
                 'The Bunny sense your weakness, you too, you give up and he spares you. You live to see another day.',
             };
           },
-          isAble: (data: OveralGameDataParamter) => {
+          isAble: (data: OverallGameDataParamter) => {
             return { able: true };
           },
         },
         {
           title: 'Run',
-          action: (data: OveralGameDataParamter) => {
+          action: (data: OverallGameDataParamter) => {
             return {
               result:
                 'Theres no way to outrun The Bunny. It catches up to you, but then spares you. You live to see another day.',
             };
           },
-          isAble: (data: OveralGameDataParamter) => {
+          isAble: (data: OverallGameDataParamter) => {
             return { able: true };
           },
         },
         {
           title: 'Destroy it',
-          action: (data: OveralGameDataParamter) => {
+          action: (data: OverallGameDataParamter) => {
             return { able: false };
           },
-          isAble: (data: OveralGameDataParamter) => {
+          isAble: (data: OverallGameDataParamter) => {
             return {
               able: false,
               reason: 'Theres nothing strong enough to do this.',
@@ -144,7 +146,7 @@ export const ENCOUNTERS: { [key in BIOME_TYPES]: Array<EncounterScheme> } = {
           },
         },
       ],
-      canTrigger: (data: OveralGameDataParamter) => {
+      canTrigger: (data: OverallGameDataParamter) => {
         let bunnyHapenstance =
           GameDataService.GAME_DATA.encounterData['bunny.funny.happenstance'] ||
           0;
@@ -153,7 +155,7 @@ export const ENCOUNTERS: { [key in BIOME_TYPES]: Array<EncounterScheme> } = {
         }
         return false;
       },
-      onTrigger: (data: OveralGameDataParamter) => {
+      onTrigger: (data: OverallGameDataParamter) => {
         GameDataService.GAME_DATA.encounterData['bunny.funny.happenstance'] = 0;
       },
     },
@@ -169,24 +171,50 @@ export const ENCOUNTERS: { [key in BIOME_TYPES]: Array<EncounterScheme> } = {
       actions: [
         {
           title: 'Fight',
-          action: (data: OveralGameDataParamter) => {
+          action: (data: OverallGameDataParamter) => {
+            const groups: Array<BattleGroup> = [];
+            const numberOfEnemies = Math.ceil(Math.random() * 3);
+            const level = Math.ceil(Math.random() * 3);
+            const names = 'ABC'.split('');
+            const enemies = Array.from({ length: numberOfEnemies }).map(
+              (_, i) => {
+                const slime = SLIME_BUILDER.getASlime(level);
+                slime.name += ' ' + names[i];
+                return slime;
+              }
+            );
+            groups.push({
+              members: enemies,
+              teamName: 'Slimes',
+              teamKey: 'slime',
+              actionBehaviour: BattleContext.ACTION_BEHAVIOUR.AUTO,
+              relationships: [
+                {
+                  teamKey: BattleContext.TEAM_KEY_PLAYER,
+                  behaviour: BattleContext.RELATIONSHIP_BEHAVIOUR.FOE,
+                },
+              ],
+            });
+
+            data.groups = groups;
+
             return {
               result: 'The battle begins!',
               dialogType: DIALOG_TYPES.BATTLE,
             };
           },
-          isAble: (data: OveralGameDataParamter) => {
+          isAble: (data: OverallGameDataParamter) => {
             return { able: true };
           },
         },
         {
           title: 'Run',
-          action: (data: OveralGameDataParamter) => {
+          action: (data: OverallGameDataParamter) => {
             return {
               result: 'You fleed!',
             };
           },
-          isAble: (data: OveralGameDataParamter) => {
+          isAble: (data: OverallGameDataParamter) => {
             return { able: true };
           },
         },
@@ -207,7 +235,7 @@ export const ENCOUNTERS: { [key in BIOME_TYPES]: Array<EncounterScheme> } = {
 
 function populateEncounter(
   scheme: EncounterScheme,
-  overalGameDataParamter: OveralGameDataParamter
+  overalGameDataParamter: OverallGameDataParamter
 ): Encounter {
   return {
     key: scheme.key,
@@ -220,7 +248,7 @@ function populateEncounter(
     actions: scheme.actions,
     onTrigger: scheme.onTrigger,
     canTrigger: scheme.canTrigger,
-    overalGameDataParamter: overalGameDataParamter,
+    overallGameDataParamter: overalGameDataParamter,
   };
 }
 
@@ -231,7 +259,7 @@ export function checkIfEncountersHappensOnTravel(
   const biome = MapGeneratorUtils.getBiomeData(x, y);
   const biomeType: BIOME_TYPES = biome.type;
 
-  const overalGameDataParamter: OveralGameDataParamter = {
+  const overalGameDataParamter: OverallGameDataParamter = {
     biome: biome,
     pos: { x, y },
     encounterTriggerType: 'travel',
@@ -242,7 +270,7 @@ export function checkIfEncountersHappensOnTravel(
 
 //fuck that is a great name, thank you *Lady gaga voice* Fernando
 function checkIfEncountersHappens(
-  overalGameDataParamter: OveralGameDataParamter
+  overalGameDataParamter: OverallGameDataParamter
 ): Array<Encounter> | null {
   if (overalGameDataParamter.biome == null) throw 'Tell the biome ya fucker!';
   if (overalGameDataParamter.pos == null) throw 'Tell the position ya fucker!';

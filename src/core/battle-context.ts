@@ -8,20 +8,22 @@ import { STAT_KEY } from 'src/models/stats';
 import { GAUGE_KEYS } from 'src/models/gauge';
 import { GameDataService } from 'src/services/game-data.service';
 import { SLIME_BUILDER } from 'src/data/builder/slime-builder';
+import { COMPANY_POSITION } from 'src/models/company';
+import { group } from '@angular/animations';
 
-interface TeamRelationship {
-  team: string;
-  behaviour: number;
-  relationships: Array<{ team: string; aggresion: number }>;
-}
 interface BattleTeam {
+  id: string;
   name: string;
+  key: string;
   actors: Array<BattleActor>;
   actionBehaviour: number;
   isPlayer: boolean;
-  relationships: Array<{ team: BattleTeam; behaviour: number }>;
+  relationships: Array<TeamRelationship>;
 }
-
+interface TeamRelationship {
+  team: BattleTeam;
+  behaviour: number;
+}
 interface BattleActor {
   character: Figure;
   team: BattleTeam;
@@ -36,8 +38,16 @@ interface BattleActionSlot {
   timeStamp: number;
   localProgress: number;
 }
-
+export interface BattleGroup {
+  members: Array<Figure>;
+  teamName: string;
+  teamKey: string;
+  actionBehaviour: number;
+  relationships: Array<{ teamKey: string; behaviour: number }>;
+}
 export class BattleContext extends Context {
+  static TEAM_KEY_PLAYER: string = 'player';
+
   static RELATIONSHIP_BEHAVIOUR = {
     ALLY: -1,
     PLAYER: 0,
@@ -53,18 +63,19 @@ export class BattleContext extends Context {
   orderPanel: HTMLElement;
   actionMenu: HTMLElement;
   actionSlots: Array<BattleActionSlot> = [];
-  teamRelationships: Array<TeamRelationship> = [];
   battleActors: Array<BattleActor> = [];
   battleTeams: Array<BattleTeam> = [];
   timeProgress: number = 0;
   sets: number = 0;
   turn: number = 0;
   turnDuration: number = 0;
+  groups: Array<BattleGroup> = [];
   onEndCallback: () => void = () => {};
   constructor(
     textPanel: HTMLElement,
     orderPanel: HTMLElement,
-    actionMenu: HTMLElement
+    actionMenu: HTMLElement,
+    groups: Array<BattleGroup>
   ) {
     super('battle');
     Context.ACTIVE_CONTEXTS[this.type] = this;
@@ -72,27 +83,63 @@ export class BattleContext extends Context {
     this.textPanel = textPanel;
     this.orderPanel = orderPanel;
     this.actionMenu = actionMenu;
+    this.groups = groups;
   }
   static build(
     textPanel: HTMLElement,
     orderPanel: HTMLElement,
-    actionMenu: HTMLElement
+    actionMenu: HTMLElement,
+    groups: Array<BattleGroup>
   ): BattleContext {
-    return new BattleContext(textPanel, orderPanel, actionMenu);
+    return new BattleContext(textPanel, orderPanel, actionMenu, groups);
   }
-  doTeams(
-    groups: Array<{
-      members: Array<Figure>;
-      teamName: string;
-      actionBehaviour: number;
-      relationships: Array<{ teamName: string; behaviour: number }>;
-    }>
-  ) {
+  doTeams() {
+    const groups: Array<BattleGroup> = this.groups;
+    const company = GameDataService.GAME_DATA.companyData;
+
+    groups
+      .filter((group) => group.relationships.length == 0)
+      .forEach((group) => {
+        group.relationships.push({
+          teamKey: BattleContext.TEAM_KEY_PLAYER,
+          behaviour: BattleContext.RELATIONSHIP_BEHAVIOUR.FOE,
+        });
+      });
+
+    const playerTeam: BattleGroup = {
+      members: company.members.map(
+        (member: { character: Figure; positions: COMPANY_POSITION[] }) => {
+          return member.character;
+        }
+      ),
+      teamName: company.title || 'company',
+      teamKey: BattleContext.TEAM_KEY_PLAYER,
+      actionBehaviour: BattleContext.ACTION_BEHAVIOUR.PLAYER,
+      relationships: groups
+        .filter(
+          (group) =>
+            group.relationships.filter(
+              (rel) => rel.teamKey == BattleContext.TEAM_KEY_PLAYER
+            ).length > 0
+        )
+        .map((group) => {
+          return {
+            teamKey: group.teamKey,
+            behaviour: group.relationships.filter(
+              (rel) => rel.teamKey == BattleContext.TEAM_KEY_PLAYER
+            )[0].behaviour,
+          };
+        }),
+    };
+    groups.unshift(playerTeam);
     this.battleTeams = groups.map((group) => {
       const isPlayer =
         group.actionBehaviour == BattleContext.ACTION_BEHAVIOUR.PLAYER;
+
       const battleTeam: BattleTeam = {
+        id: CalcUtil.genId(),
         name: group.teamName,
+        key: group.teamKey,
         actionBehaviour: group.actionBehaviour,
         isPlayer: isPlayer,
         actors: [],
@@ -114,7 +161,7 @@ export class BattleContext extends Context {
       const group = groups[index];
       team.relationships = group.relationships.map((rel) => {
         return {
-          team: this.getTeamByName(rel.teamName),
+          team: this.getTeamByKey(rel.teamKey),
           behaviour: rel.behaviour,
         };
       });
@@ -127,55 +174,17 @@ export class BattleContext extends Context {
   getTeamByName(teamName: string): BattleTeam {
     return this.battleTeams.filter((team) => team.name == teamName)[0];
   }
+  getTeamByKey(teamKey: string): BattleTeam {
+    return this.battleTeams.filter((team) => team.key == teamKey)[0];
+  }
+  getTeamByID(teamId: string): BattleTeam {
+    return this.battleTeams.filter((team) => team.id == teamId)[0];
+  }
   onEnd(callback: () => void) {
     this.onEndCallback = callback;
   }
   start() {
-    const company = GameDataService.GAME_DATA.companyData;
-
-    const friend = company.members[0].character;
-    const letters = 'ABC'.split('');
-    const slime = SLIME_BUILDER.getASlime(1);
-    slime.name = 'Slime A';
-    const friends = [friend];
-    const foes: Figure[] = [slime];
-    foes; /*
-    letters.forEach((letter) => {
-      const slime = SLIME_BUILDER.getASlime(1);
-      slime.name = 'Slime ' + letter;
-      foes.push(slime);
-    });
-    letters.forEach((letter) => {
-      const slime = SLIME_BUILDER.getASlime(1);
-      slime.name = 'Slome ' + letter;
-      friends.push(slime);
-    });
-*/
-
-    this.doTeams([
-      {
-        teamName: 'friends',
-        members: friends,
-        actionBehaviour: BattleContext.ACTION_BEHAVIOUR.PLAYER,
-        relationships: [
-          {
-            teamName: 'foes',
-            behaviour: BattleContext.RELATIONSHIP_BEHAVIOUR.FOE,
-          },
-        ],
-      },
-      {
-        teamName: 'foes',
-        members: foes,
-        actionBehaviour: BattleContext.ACTION_BEHAVIOUR.AUTO,
-        relationships: [
-          {
-            teamName: 'friends',
-            behaviour: BattleContext.RELATIONSHIP_BEHAVIOUR.FOE,
-          },
-        ],
-      },
-    ]);
+    this.doTeams();
 
     /**
      * Alterar pra mudar behaviour da batalha conforme desejado
@@ -192,7 +201,7 @@ export class BattleContext extends Context {
      * DO BATTLE
      */
 
-    this.textPanel.innerHTML = `<p>Foes attack ${friend.name}!</p>`;
+    this.textPanel.innerHTML = `<p>A battle starts!</p>`;
     BattleContext.delay().then(() => this.unravelBattle());
   }
   doActionList() {
@@ -303,6 +312,11 @@ export class BattleContext extends Context {
 
     this.turn++;
 
+    /*
+    
+    //transform this into a scheme event that is recived from parameter
+    //make pretty and shit, mwah mwah! xoxoxoxo
+
     if (this.turn == 3) {
       const slime = SLIME_BUILDER.getASlime(2);
       slime.name =
@@ -311,7 +325,7 @@ export class BattleContext extends Context {
       this.addNewBattleActor(
         actionSlot.timeStamp,
         slime,
-        this.getTeamByName('foes')
+        this.getTeamByKey('foes')
       );
 
       //this.actionSlots.map((slot)=>slot)
@@ -321,6 +335,7 @@ export class BattleContext extends Context {
         this.textPanel.insertBefore(newP, this.textPanel.childNodes[0]);
       });
     }
+    */
 
     this.doActionList();
 
@@ -365,7 +380,7 @@ export class BattleContext extends Context {
 
     if (aimedChar.isFainted()) {
       //gay xp and shit
-      BattleContext.delay().then(() => {
+      await BattleContext.delay().then(() => {
         const newP = document.createElement('p');
         newP.innerHTML += `${this.turn} - ${aimedChar.name} was felled.`;
         this.textPanel.insertBefore(newP, this.textPanel.childNodes[0]);
@@ -484,12 +499,12 @@ export class BattleContext extends Context {
       } else {
         message = `The battle ended. ${playerTeam.name} got dragged by the mist...`;
       }
-      BattleContext.delay().then(() => {
+      await BattleContext.delay().then(() => {
         const newP = document.createElement('p');
         newP.innerHTML = message;
         this.textPanel.insertBefore(newP, this.textPanel.childNodes[0]);
       });
-      BattleContext.delay().then(() => {
+      await BattleContext.delay().then(() => {
         this.onEndCallback();
       });
     } else if (isThereAnyAdversaryAlive) {
@@ -534,15 +549,13 @@ export class BattleContext extends Context {
         });
       }
 
-      BattleContext.delay().then(() => {
+      await BattleContext.delay().then(() => {
         const newP = document.createElement('p');
         newP.innerHTML = message;
         this.textPanel.insertBefore(newP, this.textPanel.childNodes[0]);
       });
 
-      BattleContext.delay().then(() => {
-        this.onEndCallback();
-      });
+      this.onEndCallback();
     }
   }
   static delay(ms?: number): Promise<any> {

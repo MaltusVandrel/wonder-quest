@@ -12,6 +12,7 @@ export enum COMPANY_POSITION {
   PRISIONER = 'PRISIONER',
 }
 export class Company {
+  title: string = 'Company';
   members: { character: Figure; positions: COMPANY_POSITION[] }[] = [];
   inventory: Item[] = [];
   stamina: Gauge = new Gauge(this);
@@ -25,7 +26,10 @@ export class Company {
   }
   static instantiate(data: any): Company {
     let obj = new Company();
+
     data.stamina.parent = obj;
+    obj.stamina = Gauge.instantiate(data.stamina);
+    obj.title = data.title;
     for (let member of data.members) {
       member.character = Figure.instantiate(member.character);
       obj.members.push(member);

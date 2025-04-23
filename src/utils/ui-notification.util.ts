@@ -1,4 +1,4 @@
-import { BattleContext } from 'src/core/battle-context';
+import { BattleContext, BattleGroup } from 'src/core/battle-context';
 import {
   Encounter,
   GameAction,
@@ -184,12 +184,12 @@ class HTMLEncounterDialogElement extends HTMLCustomDialogElement<Encounter> {
       actionResult: GameActionResult
     ) => {
       if (actionResult.customReturnBehaviour) {
-        actionResult.customReturnBehaviour(encounter.overalGameDataParamter);
+        actionResult.customReturnBehaviour(encounter.overallGameDataParamter);
         return;
       }
 
       if (actionResult.dialogType) {
-        showDialog(encounter.overalGameDataParamter, actionResult.dialogType);
+        showDialog(encounter.overallGameDataParamter, actionResult.dialogType);
       } else {
         showGameActionResultDialog(actionResult);
       }
@@ -198,7 +198,7 @@ class HTMLEncounterDialogElement extends HTMLCustomDialogElement<Encounter> {
     if (encounter.actions)
       this.setUpActions(
         encounter.actions,
-        encounter.overalGameDataParamter,
+        encounter.overallGameDataParamter,
         resultCallback
       );
     this.showModal();
@@ -455,7 +455,14 @@ class HTMLBattleDialogElement extends HTMLCustomDialogElement<any> {
     const orderPanel = document.createElement('div');
     textPanel.classList.add('text-panel');
     orderPanel.classList.add('order-panel');
-    const battContext = BattleContext.build(textPanel, orderPanel, this.menu);
+    const battleGroups: Array<BattleGroup> = data.groups;
+
+    const battContext = BattleContext.build(
+      textPanel,
+      orderPanel,
+      this.menu,
+      battleGroups
+    );
     battContext.onEnd(() => {
       console.log(this);
 
