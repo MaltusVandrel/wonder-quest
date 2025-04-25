@@ -6,6 +6,7 @@ import {
   GameActionResult,
 } from 'src/data/bank/encounter';
 import { SLIME_BUILDER } from 'src/data/builder/slime-builder';
+import { COMPANY_POSITION } from 'src/models/company';
 import { Figure } from 'src/models/figure';
 import { Gauge, GAUGE_INFOS, GAUGE_KEYS } from 'src/models/gauge';
 import { Stat, STAT_INFOS, STAT_KEY } from 'src/models/stats';
@@ -373,20 +374,19 @@ class HTMLCompanyDialogElement extends HTMLCustomDialogElement<any> {
     const memberButtonHolder = document.createElement('div');
     memberButtonHolder.classList.add('member-button-holder');
 
-    company.members.forEach((member) => {
-      const memberButton = document.createElement('button');
-      memberButton.classList.add('ui-game-button');
-      memberButton.innerText = member.character.name;
-      memberButton.addEventListener('click', () => {
-        memberName.innerHTML = `${member.character.name}, Level ${member.character.level}`;
-        xpPanel.innerHTML = '';
-        const xpGrowth = XPGrowth.get(member.character.xpGrowthPlan);
+    const showMember = (member: {
+      character: Figure;
+      positions: COMPANY_POSITION[];
+    }) => {
+      memberName.innerHTML = `${member.character.name}, Level ${member.character.level}`;
+      xpPanel.innerHTML = '';
+      const xpGrowth = XPGrowth.get(member.character.xpGrowthPlan);
 
-        fistColumnHolder.innerHTML = '';
-        const gaugeHolder = document.createElement('table');
-        gaugeHolder.classList.add('gauge-holder');
+      fistColumnHolder.innerHTML = '';
+      const gaugeHolder = document.createElement('table');
+      gaugeHolder.classList.add('gauge-holder');
 
-        gaugeHolder.innerHTML += `<tr><td title="xp"><strong>XP:</strong></td>
+      gaugeHolder.innerHTML += `<tr><td title="xp"><strong>XP:</strong></td>
         <td class='gauge-value' ><span><span
         class="${
           member.character.xp > xpGrowth.xpToUp(member.character.level)
@@ -394,57 +394,65 @@ class HTMLCompanyDialogElement extends HTMLCustomDialogElement<any> {
             : ''
         }"
         >${member.character.xp}</span>/${xpGrowth.xpToUp(
-          member.character.level
-        )} </span><progress  class='XP' value='${Math.min(
-          (member.character.xp / xpGrowth.xpToUp(member.character.level)) * 100,
-          100
-        )}' max='100'/></td></tr>`;
+        member.character.level
+      )} </span><progress  class='XP' value='${Math.min(
+        (member.character.xp / xpGrowth.xpToUp(member.character.level)) * 100,
+        100
+      )}' max='100'/></td></tr>`;
 
-        Object.keys(GAUGE_KEYS).forEach((key: string) => {
-          const gauge: Gauge = member.character.getGauge(key);
-          gaugeHolder.innerHTML += `<tr><td title="${
-            GAUGE_INFOS[key as GAUGE_KEYS]?.description
-          }"><strong>${gauge.title}:</strong></td>
+      Object.keys(GAUGE_KEYS).forEach((key: string) => {
+        const gauge: Gauge = member.character.getGauge(key);
+        gaugeHolder.innerHTML += `<tr><td title="${
+          GAUGE_INFOS[key as GAUGE_KEYS]?.description
+        }"><strong>${gauge.title}:</strong></td>
             <td class='gauge-value' ><span>${gauge
               .getCurrentValue()
               .toFixed(0)}/${gauge
-            .getModValue()
-            .toFixed(0)} </span><progress  class='${key}' value='${
-            (gauge.getCurrentValue() / gauge.getModValue()) * 100
-          }' max='100'/></td></tr>`;
-        });
-        fistColumnHolder.appendChild(gaugeHolder);
-        fistColumnHolder.innerHTML += '<hr/>';
-        const confAutobattleDiv = document.createElement('div');
-        const autoBattleInput = document.createElement('input');
-        autoBattleInput.type = 'checkbox';
-        autoBattleInput.name = 'auto-battle';
-        autoBattleInput.id = 'auto-battle';
-        autoBattleInput.checked = member.character.data.autoBattle;
-        autoBattleInput.addEventListener('change', () => {
-          member.character.data.autoBattle = autoBattleInput.checked;
-        });
-        const autoBattleLabel = document.createElement('label');
-        autoBattleLabel.setAttribute('for', 'auto-battle');
-        autoBattleLabel.innerText = 'Auto Battle?';
-        confAutobattleDiv.appendChild(autoBattleInput);
-        confAutobattleDiv.appendChild(autoBattleLabel);
-        fistColumnHolder.appendChild(confAutobattleDiv);
+          .getModValue()
+          .toFixed(0)} </span><progress  class='${key}' value='${
+          (gauge.getCurrentValue() / gauge.getModValue()) * 100
+        }' max='100'/></td></tr>`;
+      });
+      fistColumnHolder.appendChild(gaugeHolder);
+      fistColumnHolder.innerHTML += '<hr/>';
+      const confAutobattleDiv = document.createElement('div');
+      const autoBattleInput = document.createElement('input');
+      autoBattleInput.type = 'checkbox';
+      autoBattleInput.name = 'auto-battle';
+      autoBattleInput.id = 'auto-battle';
+      autoBattleInput.checked = member.character.data.autoBattle;
+      autoBattleInput.addEventListener('change', () => {
+        member.character.data.autoBattle = autoBattleInput.checked;
+      });
+      const autoBattleLabel = document.createElement('label');
+      autoBattleLabel.setAttribute('for', 'auto-battle');
+      autoBattleLabel.innerText = 'Auto Battle?';
+      confAutobattleDiv.appendChild(autoBattleInput);
+      confAutobattleDiv.appendChild(autoBattleLabel);
+      fistColumnHolder.appendChild(confAutobattleDiv);
 
-        statsHolder.innerHTML = '';
-        Object.keys(STAT_KEY).forEach((key: string) => {
-          const stat: Stat = member.character.getStat(key);
-          statsHolder.innerHTML += `<tr><td title="${
-            STAT_INFOS[key as STAT_KEY]?.description
-          }"><strong>${stat.title}:</strong></td>
+      statsHolder.innerHTML = '';
+      Object.keys(STAT_KEY).forEach((key: string) => {
+        const stat: Stat = member.character.getStat(key);
+        statsHolder.innerHTML += `<tr><td title="${
+          STAT_INFOS[key as STAT_KEY]?.description
+        }"><strong>${stat.title}:</strong></td>
             <td>${stat.getCurrentValue()} </td><td>
             (<span class='${
               stat.getInfluenceValue() < 0 ? 'negativo' : 'positivo'
             }' >${Math.abs(stat.getInfluenceValue())}</span>)</td></tr>`;
-        });
+      });
+    };
+    company.members.forEach((member) => {
+      const memberButton = document.createElement('button');
+      memberButton.classList.add('ui-game-button');
+      memberButton.innerText = member.character.name;
+      memberButton.addEventListener('click', () => {
+        showMember(member);
       });
       memberButtonHolder.appendChild(memberButton);
     });
+    showMember(company.members[0]);
 
     this.content.appendChild(memberButtonHolder);
     memberPanel.appendChild(memberName);
