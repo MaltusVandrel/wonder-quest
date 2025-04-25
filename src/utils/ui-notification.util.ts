@@ -1,4 +1,5 @@
 import { BattleContext, BattleGroup } from 'src/core/battle-context';
+import { XPGrowth } from 'src/core/xp-calc';
 import {
   Encounter,
   GameAction,
@@ -355,6 +356,7 @@ class HTMLCompanyDialogElement extends HTMLCustomDialogElement<any> {
     memberPanel.classList.add('member-panel');
 
     const memberName = document.createElement('h4');
+    const xpPanel = document.createElement('div');
 
     const infoMemberPanel = document.createElement('div');
     infoMemberPanel.classList.add('info-member-panel');
@@ -377,10 +379,26 @@ class HTMLCompanyDialogElement extends HTMLCustomDialogElement<any> {
       memberButton.innerText = member.character.name;
       memberButton.addEventListener('click', () => {
         memberName.innerHTML = `${member.character.name}, Level ${member.character.level}`;
+        xpPanel.innerHTML = '';
+        const xpGrowth = XPGrowth.get(member.character.xpGrowthPlan);
 
         fistColumnHolder.innerHTML = '';
         const gaugeHolder = document.createElement('table');
         gaugeHolder.classList.add('gauge-holder');
+
+        gaugeHolder.innerHTML += `<tr><td title="xp"><strong>XP:</strong></td>
+        <td class='gauge-value' ><span><span
+        class="${
+          member.character.xp > xpGrowth.xpToUp(member.character.level)
+            ? 'gold-text'
+            : ''
+        }"
+        >${member.character.xp}</span>/${xpGrowth.xpToUp(
+          member.character.level
+        )} </span><progress  class='XP' value='${Math.min(
+          (member.character.xp / xpGrowth.xpToUp(member.character.level)) * 100,
+          100
+        )}' max='100'/></td></tr>`;
 
         Object.keys(GAUGE_KEYS).forEach((key: string) => {
           const gauge: Gauge = member.character.getGauge(key);
@@ -430,6 +448,7 @@ class HTMLCompanyDialogElement extends HTMLCustomDialogElement<any> {
 
     this.content.appendChild(memberButtonHolder);
     memberPanel.appendChild(memberName);
+    memberPanel.appendChild(xpPanel);
     memberPanel.appendChild(infoMemberPanel);
 
     this.content.appendChild(memberPanel);

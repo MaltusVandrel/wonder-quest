@@ -10,6 +10,7 @@ import { GameDataService } from 'src/services/game-data.service';
 import { SLIME_BUILDER } from 'src/data/builder/slime-builder';
 import { COMPANY_POSITION } from 'src/models/company';
 import { group } from '@angular/animations';
+import { defaultXPGrowthPlan, XPGrowth } from './xp-calc';
 
 interface BattleTeam {
   id: string;
@@ -373,19 +374,38 @@ export class BattleContext extends Context {
       this.doAttack(char, aimedChar);
     } else {
       const res: any = await this.chooseAction(char);
-      console.log(res);
       this.doAttack(char, aimedChar);
     }
     this.removeActionFromUI(actionSlot);
 
     if (aimedChar.isFainted()) {
-      //gay xp and shit
+      this.removeActorFromBattle(aimedBattleActor);
+
       await BattleContext.delay().then(() => {
         const newP = document.createElement('p');
         newP.innerHTML += `${this.turn} - ${aimedChar.name} was felled.`;
         this.textPanel.insertBefore(newP, this.textPanel.childNodes[0]);
       });
-      this.removeActorFromBattle(aimedBattleActor);
+
+      //gay xp and shit
+      if (team.isPlayer) {
+        const xpGrowth = XPGrowth.get(char.xpGrowthPlan);
+        let earnedXp = xpGrowth.xpGain(char.level, aimedChar.level);
+        const xpToUp = xpGrowth.xpToUp(char.level);
+        if (char.xp + earnedXp > xpToUp) {
+          const remaingXP = char.xp + earnedXp - xpToUp;
+          const earnedRemainingXP = Math.ceil(remaingXP / 10);
+          char.xp = xpToUp + earnedRemainingXP;
+          earnedXp = earnedXp - remaingXP + earnedRemainingXP;
+        } else {
+          char.xp += earnedXp;
+        }
+        await BattleContext.delay().then(() => {
+          const newP = document.createElement('p');
+          newP.innerHTML += `${this.turn} - ${char.name} earned ${earnedXp}XP.`;
+          this.textPanel.insertBefore(newP, this.textPanel.childNodes[0]);
+        });
+      }
     }
 
     this.doEndOrNextTurn(team, enemyTeams, alliesTeam);
@@ -441,7 +461,7 @@ export class BattleContext extends Context {
 
     //do moves in the future, for now simple damage
     const stronk = char.getStat(STAT_KEY.STRENGTH).getInfluenceValue();
-    const damage = 10 * (1 + stronk / 10) * (1 + leveDiff / 10);
+    const damage = 30 * (1 + stronk / 10) * (1 + leveDiff / 10);
 
     const destronk = aimedChar.getStat(STAT_KEY.ENDURANCE).getInfluenceValue();
     const reduction = destronk * (1 + leveDiffOposing / 10);

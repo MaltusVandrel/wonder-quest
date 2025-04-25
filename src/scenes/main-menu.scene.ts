@@ -1,4 +1,5 @@
 import * as Phaser from 'phaser';
+import { defaultXPGrowthPlan, XPGrowth } from 'src/core/xp-calc';
 import { GameDataService } from 'src/services/game-data.service';
 import {
   setUpMainMenuUI,

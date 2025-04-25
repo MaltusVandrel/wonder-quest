@@ -373,6 +373,17 @@ div#toast-holder {
       border-radius: 16px;
       overflow: hidden;
       height: 8px;
+      &.XP {
+        border: 1px solid #eb3;
+        background-color: #eb3 !important;
+        &::-moz-progress-value {
+          background-color: #eb3 !important;
+        }
+
+        &::-webkit-progress-value {
+          background-color: #eb3 !important;
+        }
+      }
       &.VITALITY {
         border: 1px solid #d33;
         background-color: #d33 !important;

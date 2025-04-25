@@ -10,6 +10,7 @@ export let HERO_BUILDER = {
     being.level = level;
     setStats(being, 22);
     setGauges(being, 100);
+    console.log('HERO_BUILDER', being);
     return being;
   },
 };

@@ -4,6 +4,7 @@ import { Stat, STAT_KEY } from './stats';
 import { ChildComponent } from './child-component';
 import { Gauge, GAUGE_KEYS } from './gauge';
 import { CalcUtil } from 'src/utils/calc.utils';
+import { defaultXPGrowthPlan, XPGrowthPlan } from 'src/core/xp-calc';
 
 export class Figure {
   id: string = CalcUtil.genId();
@@ -21,7 +22,7 @@ export class Figure {
   stats: Stat[] = [];
   //takes usually 2+level monster of same level to level up
   //
-  xpForNextLevel: number = 9;
+  xpGrowthPlan: XPGrowthPlan = { ...defaultXPGrowthPlan };
   xp: number = 0;
 
   constructor() {}
@@ -42,7 +43,7 @@ export class Figure {
     obj.name = data.name;
     obj.level = data.level;
 
-    obj.xpForNextLevel = data.xpForNextLevel;
+    obj.xpGrowthPlan = data.xpGrowthPlan;
     obj.xp = data.xp;
     obj.gauges = [];
     obj.stats = [];
