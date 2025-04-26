@@ -1,4 +1,8 @@
-import { BattleContext, BattleGroup } from 'src/core/battle-context';
+import {
+  BattleContext,
+  BattleGroup,
+  BattleScheme,
+} from 'src/core/battle-context';
 import { XPGrowth } from 'src/core/xp-calc';
 import {
   Encounter,
@@ -13,7 +17,7 @@ import { Stat, STAT_INFOS, STAT_KEY } from 'src/models/stats';
 import { MapScene } from 'src/scenes/map.scene';
 import {
   GameDataService,
-  OveralGameDataParamter,
+  OverallGameDataParamter,
 } from 'src/services/game-data.service';
 
 class HTMLToastElement extends HTMLDivElement {
@@ -129,7 +133,7 @@ abstract class HTMLCustomDialogElement<T> extends HTMLDialogElement {
   }
   setUpActions(
     actions: Array<GameAction>,
-    overallGameDataParamter: OveralGameDataParamter,
+    overallGameDataParamter: OverallGameDataParamter,
     resultCallback?: (
       parentDialog: HTMLCustomDialogElement<any>,
       result: GameActionResult
@@ -474,7 +478,10 @@ class HTMLBattleDialogElement extends HTMLCustomDialogElement<any> {
     super();
     this.classList.add(HTMLBattleDialogElement.tagname);
   }
-  setData(data: any) {
+  setData(data: OverallGameDataParamter) {
+    if (data.battleScheme == undefined)
+      throw 'Define the battle scheme ya fucker!';
+
     this.dismissable = false;
     this.setUpDefaultStructure();
     this.menuTitle.innerText = 'Battle!!';
@@ -482,19 +489,21 @@ class HTMLBattleDialogElement extends HTMLCustomDialogElement<any> {
     const orderPanel = document.createElement('div');
     textPanel.classList.add('text-panel');
     orderPanel.classList.add('order-panel');
-    const battleGroups: Array<BattleGroup> = data.groups;
+    const battleScheme: BattleScheme = data.battleScheme;
 
     const battContext = BattleContext.build(
       textPanel,
       orderPanel,
       this.menu,
-      battleGroups
+      battleScheme
     );
     battContext.onEnd(() => {
-      console.log(this);
-
       this.dismissable = true;
       this.appendCloseButton();
+
+      this.addEventListener('close', () => {
+        BattleContext.ACTIVE_CONTEXTS['battle'] = undefined;
+      });
     });
     battContext.start();
 

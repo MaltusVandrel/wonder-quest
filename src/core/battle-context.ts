@@ -11,6 +11,7 @@ import { SLIME_BUILDER } from 'src/data/builder/slime-builder';
 import { COMPANY_POSITION } from 'src/models/company';
 import { group } from '@angular/animations';
 import { defaultXPGrowthPlan, XPGrowth } from './xp-calc';
+import { showStaminaGauge } from 'src/utils/ui-elements.util';
 
 interface BattleTeam {
   id: string;
@@ -20,6 +21,7 @@ interface BattleTeam {
   actionBehaviour: number;
   isPlayer: boolean;
   relationships: Array<TeamRelationship>;
+  disadvantage: boolean;
 }
 interface TeamRelationship {
   team: BattleTeam;
@@ -31,6 +33,7 @@ interface BattleActor {
   speed: number;
   progress: number;
   isAuto: boolean;
+  arrivalTurn: number;
 }
 interface BattleActionSlot {
   id: string;
@@ -45,9 +48,62 @@ export interface BattleGroup {
   teamKey: string;
   actionBehaviour: number;
   relationships: Array<{ teamKey: string; behaviour: number }>;
+  disavantage: boolean;
 }
+
+export enum BATTLE_EVENT_TYPE {
+  BEFORE_BATTLE_START,
+  TURN_START,
+  TURN_END,
+  BEFORE_ACTION,
+  AFTER_ACTION,
+  ON_ARRIVAL,
+  ON_AGGRESSION,
+  //ON_HEAL,
+  //ON_BUFF,
+  //ON_DEBUFF,
+  ON_SLAIN,
+  //ON_DEMISSE,
+  //ON_FLEE_FAIL,
+  AFTER_BATTLE_END,
+}
+export interface BattleEvent {
+  type: BATTLE_EVENT_TYPE;
+  startingTurn: number;
+  turnGapForRecurrence: number;
+  calculatedOccurence: boolean;
+  getNextTurnToOccur?: (battle: BattleContext) => number;
+  nextTurnToOccur?: number;
+  event: (
+    battle: BattleContext,
+    itself: BattleEvent
+  ) => {
+    stopBattle?: boolean;
+    stopAll?: boolean;
+    message?: string;
+  };
+}
+export interface BattleScheme {
+  groups: Array<BattleGroup>;
+  introductionText?: string;
+  endText?: string;
+  events: Array<BattleEvent>;
+  playerDisadvantage: boolean;
+}
+export interface BattleTurnInfo {
+  turn?: number;
+  activeSlot?: BattleActionSlot;
+  activeActor?: BattleActor;
+  activeMove?: any; //'delayed' move or action, interface to be defined
+  aimedActor?: BattleActor;
+  isPlayer?: boolean;
+  isMove?: boolean;
+  isHeal?: boolean;
+}
+
 export class BattleContext extends Context {
   static TEAM_KEY_PLAYER: string = 'player';
+  static DISADVANTAGE_INFLUENCE: number = 5;
 
   static RELATIONSHIP_BEHAVIOUR = {
     ALLY: -1,
@@ -70,13 +126,22 @@ export class BattleContext extends Context {
   sets: number = 0;
   turn: number = 0;
   turnDuration: number = 0;
-  groups: Array<BattleGroup> = [];
+  scheme: BattleScheme;
+  events: BattleEvent[] = [];
+  data: any = {};
+  //caso eventos sejam chamados fora do contexto
+  //do unravel
+  fallbackEndBattle: boolean = false;
+  turnInfo: BattleTurnInfo = {
+    turn: 0,
+  };
+
   onEndCallback: () => void = () => {};
   constructor(
     textPanel: HTMLElement,
     orderPanel: HTMLElement,
     actionMenu: HTMLElement,
-    groups: Array<BattleGroup>
+    scheme: BattleScheme
   ) {
     super('battle');
     Context.ACTIVE_CONTEXTS[this.type] = this;
@@ -84,18 +149,51 @@ export class BattleContext extends Context {
     this.textPanel = textPanel;
     this.orderPanel = orderPanel;
     this.actionMenu = actionMenu;
-    this.groups = groups;
+    this.scheme = scheme;
   }
   static build(
     textPanel: HTMLElement,
     orderPanel: HTMLElement,
     actionMenu: HTMLElement,
-    groups: Array<BattleGroup>
+    scheme: BattleScheme
   ): BattleContext {
-    return new BattleContext(textPanel, orderPanel, actionMenu, groups);
+    return new BattleContext(textPanel, orderPanel, actionMenu, scheme);
+  }
+  async triggerEvents(type: BATTLE_EVENT_TYPE) {
+    if (this.fallbackEndBattle) return this.fallbackEndBattle;
+
+    const eventsOfType = this.events.filter(
+      (event) => event.type == type && event.startingTurn <= this.turn
+    );
+    if (eventsOfType.length == 0) return;
+    eventsOfType
+      .filter((event) => event.calculatedOccurence == true)
+      .forEach((event) => {
+        if (event.getNextTurnToOccur)
+          event.nextTurnToOccur = event.getNextTurnToOccur(this);
+      });
+
+    const eventsToTrigger = eventsOfType.filter(
+      (event) =>
+        event.nextTurnToOccur == this.turn ||
+        event.startingTurn == this.turn ||
+        (this.turn - event.startingTurn) % event.turnGapForRecurrence == 0
+    );
+
+    let stop: boolean = false;
+    for (const event of eventsToTrigger) {
+      await BattleContext.delay(50);
+      const eventReturn = event.event(this, event);
+      stop =
+        stop || eventReturn.stopAll == true || eventReturn.stopBattle == true;
+      this.fallbackEndBattle = this.fallbackEndBattle || stop;
+      if (eventReturn.message) this.writeMessage(eventReturn.message);
+      if (eventReturn.stopAll) break;
+    }
+    return stop;
   }
   doTeams() {
-    const groups: Array<BattleGroup> = this.groups;
+    const groups: Array<BattleGroup> = this.scheme.groups;
     const company = GameDataService.GAME_DATA.companyData;
 
     groups
@@ -116,6 +214,7 @@ export class BattleContext extends Context {
       teamName: company.title || 'company',
       teamKey: BattleContext.TEAM_KEY_PLAYER,
       actionBehaviour: BattleContext.ACTION_BEHAVIOUR.PLAYER,
+      disavantage: this.scheme.playerDisadvantage,
       relationships: groups
         .filter(
           (group) =>
@@ -145,14 +244,19 @@ export class BattleContext extends Context {
         isPlayer: isPlayer,
         actors: [],
         relationships: [],
+        disadvantage: group.disavantage,
       };
+
       battleTeam.actors = group.members.map((character: Figure) => {
         const battleActor: BattleActor = {
           team: battleTeam,
           character: character,
-          progress: 0,
+          progress: battleTeam.disadvantage
+            ? BattleContext.DISADVANTAGE_INFLUENCE
+            : 0,
           speed: character.getNormalSpeed(),
           isAuto: isPlayer ? character.data.autoBattle == true : true,
+          arrivalTurn: this.turn,
         };
         return battleActor;
       });
@@ -184,9 +288,9 @@ export class BattleContext extends Context {
   onEnd(callback: () => void) {
     this.onEndCallback = callback;
   }
-  start() {
+  async start() {
     this.doTeams();
-
+    this.events = this.scheme.events;
     /**
      * Alterar pra mudar behaviour da batalha conforme desejado
      * e ou idealizado
@@ -202,7 +306,9 @@ export class BattleContext extends Context {
      * DO BATTLE
      */
 
-    this.textPanel.innerHTML = `<p>A battle starts!</p>`;
+    if (await this.triggerEvents(BATTLE_EVENT_TYPE.BEFORE_BATTLE_START)) return;
+    const message = this.scheme.introductionText || 'A battle starts!';
+    this.textPanel.innerHTML = `<p>${message}</p>`;
     BattleContext.delay().then(() => this.unravelBattle());
   }
   doActionList() {
@@ -260,9 +366,11 @@ export class BattleContext extends Context {
         actionSlot.battleActor.team.name
       )}-${this.toNameKey(actionSlot.battleActor.character.name)}`
     );
-    slotP.innerHTML = `${actionSlot.timeStamp.toFixed(0)} - ${
+    const message = `${actionSlot.timeStamp.toFixed(0)} - ${
       actionSlot.battleActor.character.name
     }`;
+    slotP.innerHTML = message;
+    console.log(message);
     slotP.id = actionSlot.id;
     this.orderPanel.appendChild(slotP);
   }
@@ -275,15 +383,23 @@ export class BattleContext extends Context {
       if (el) el.style.order = `${index}`;
     });
   }
-  addNewBattleActor(timeStamp: number, character: Figure, team: BattleTeam) {
+  async addNewBattleActor(
+    timeStamp: number,
+    character: Figure,
+    team: BattleTeam
+  ) {
     const actorProgress = this.turnDuration - character.getActionSpeed();
     const isPlayer = team.isPlayer;
     const actor: BattleActor = {
       team: team,
       character: character,
-      progress: timeStamp + actorProgress,
+      progress:
+        timeStamp +
+        actorProgress +
+        (team.disadvantage ? BattleContext.DISADVANTAGE_INFLUENCE : 1),
       speed: character.getNormalSpeed(),
       isAuto: isPlayer ? character.data.autoBattle == true : true,
+      arrivalTurn: this.turn,
     };
     team.actors.push(actor);
     this.battleActors.push(actor);
@@ -306,6 +422,8 @@ export class BattleContext extends Context {
     }
     this.actionSlots.sort((a, b) => a.timeStamp - b.timeStamp);
     this.setOrderActionListUI();
+
+    if (await this.triggerEvents(BATTLE_EVENT_TYPE.ON_ARRIVAL)) return;
   }
   async unravelBattle() {
     const actionSlot: BattleActionSlot | undefined = this.actionSlots.shift();
@@ -313,36 +431,19 @@ export class BattleContext extends Context {
 
     this.turn++;
 
-    /*
-    
-    //transform this into a scheme event that is recived from parameter
-    //make pretty and shit, mwah mwah! xoxoxoxo
-
-    if (this.turn == 3) {
-      const slime = SLIME_BUILDER.getASlime(2);
-      slime.name =
-        'XSlime ' +
-        'ABCDEFGHIJKLMNOPQRSTVUWXYZ'.split('')[Math.floor(Math.random() * 26)];
-      this.addNewBattleActor(
-        actionSlot.timeStamp,
-        slime,
-        this.getTeamByKey('foes')
-      );
-
-      //this.actionSlots.map((slot)=>slot)
-      BattleContext.delay().then(() => {
-        const newP = document.createElement('p');
-        newP.innerHTML += `${this.turn} - ${slime.name} arrived in the battle.`;
-        this.textPanel.insertBefore(newP, this.textPanel.childNodes[0]);
-      });
-    }
-    */
+    this.turnInfo.turn = this.turn;
 
     this.doActionList();
 
     const battleActor: BattleActor = actionSlot.battleActor;
     const char: Figure = actionSlot.battleActor.character;
     const team: BattleTeam = battleActor.team;
+
+    this.turnInfo.activeActor = battleActor;
+    this.turnInfo.isPlayer = team.isPlayer;
+    this.turnInfo.activeSlot = actionSlot;
+
+    if (await this.triggerEvents(BATTLE_EVENT_TYPE.TURN_START)) return;
 
     const alliesTeam: Array<BattleTeam> = team.relationships
       .filter(
@@ -368,25 +469,36 @@ export class BattleContext extends Context {
         Math.floor(aliveAimedBattleActors.length * Math.random())
       ];
 
+    this.turnInfo.aimedActor = aimedBattleActor;
+
     const aimedChar = aimedBattleActor.character;
 
+    if (await this.triggerEvents(BATTLE_EVENT_TYPE.BEFORE_ACTION)) return;
+    let isAggression = false;
     if (!team.isPlayer || battleActor.isAuto) {
+      this.turnInfo.isHeal = false;
       this.doAttack(char, aimedChar);
+      isAggression = true;
     } else {
+      this.turnInfo.isHeal = false;
       const res: any = await this.chooseAction(char);
       this.doAttack(char, aimedChar);
+      isAggression = true;
     }
     this.removeActionFromUI(actionSlot);
+
+    if (isAggression) {
+      if (await this.triggerEvents(BATTLE_EVENT_TYPE.ON_AGGRESSION)) return;
+    }
+    if (await this.triggerEvents(BATTLE_EVENT_TYPE.AFTER_ACTION)) return;
 
     if (aimedChar.isFainted()) {
       this.removeActorFromBattle(aimedBattleActor);
 
       await BattleContext.delay().then(() => {
-        const newP = document.createElement('p');
-        newP.innerHTML += `${this.turn} - ${aimedChar.name} was felled.`;
-        this.textPanel.insertBefore(newP, this.textPanel.childNodes[0]);
+        this.writeMessage(`${this.turn} - ${aimedChar.name} was felled.`);
       });
-
+      if (await this.triggerEvents(BATTLE_EVENT_TYPE.ON_SLAIN)) return;
       //gay xp and shit
       if (team.isPlayer) {
         const xpGrowth = XPGrowth.get(char.xpGrowthPlan);
@@ -396,21 +508,39 @@ export class BattleContext extends Context {
           const remaingXP = char.xp + earnedXp - xpToUp;
           const earnedRemainingXP = Math.ceil(remaingXP / 10);
           char.xp = xpToUp + earnedRemainingXP;
-          earnedXp = earnedXp - remaingXP + earnedRemainingXP;
+          earnedXp = Math.max(earnedXp - remaingXP + earnedRemainingXP, 1);
         } else {
           char.xp += earnedXp;
         }
         await BattleContext.delay().then(() => {
-          const newP = document.createElement('p');
-          newP.innerHTML += `${this.turn} - ${char.name} earned ${earnedXp}XP.`;
-          this.textPanel.insertBefore(newP, this.textPanel.childNodes[0]);
+          this.writeMessage(
+            `${this.turn} - ${char.name} earned ${earnedXp}XP.`
+          );
+        });
+      } else if (aimedTeam.isPlayer) {
+        const xpGrowth = XPGrowth.get(char.xpGrowthPlan);
+        //its reverse, so you lose less XP if the mosnter is stronger
+        //and a lot if it is weaker
+        let lostXp = Math.ceil(
+          xpGrowth.xpGain(char.level, aimedChar.level) / 10
+        );
+        aimedChar.xp -= lostXp;
+        await BattleContext.delay().then(() => {
+          this.writeMessage(
+            `${this.turn} - ${aimedChar.name} lost ${lostXp}XP.`
+          );
         });
       }
     }
+    if (await this.triggerEvents(BATTLE_EVENT_TYPE.TURN_END)) return;
 
     this.doEndOrNextTurn(team, enemyTeams, alliesTeam);
   }
-
+  writeMessage(message: string) {
+    const newP = document.createElement('p');
+    newP.innerHTML += message;
+    this.textPanel.insertBefore(newP, this.textPanel.childNodes[0]);
+  }
   isThereAnyAdversaryAlive(
     enemyTeams: BattleTeam[],
     alliesTeam: BattleTeam[]
@@ -455,7 +585,7 @@ export class BattleContext extends Context {
 
     return promise;
   }
-  doAttack(char: Figure, aimedChar: Figure) {
+  async doAttack(char: Figure, aimedChar: Figure) {
     const leveDiff = char.level - aimedChar.level;
     const leveDiffOposing = leveDiff * -1;
 
@@ -468,11 +598,10 @@ export class BattleContext extends Context {
     const calculedDamage = damage - reduction;
     const effectiveDamate = calculedDamage >= 1 ? calculedDamage : 1;
     aimedChar.getGauge(GAUGE_KEYS.VITALITY).consumed += effectiveDamate;
-    const newP = document.createElement('p');
-    newP.innerHTML += `${this.turn} - ${char.name} bonked ${
+    const message = `${this.turn} - ${char.name} bonked ${
       aimedChar.name
     } for ${effectiveDamate.toFixed(0)}dmg!`;
-    this.textPanel.insertBefore(newP, this.textPanel.childNodes[0]);
+    this.writeMessage(message);
   }
   async doEndOrNextTurn(
     currentTeam: BattleTeam,
@@ -519,11 +648,28 @@ export class BattleContext extends Context {
       } else {
         message = `The battle ended. ${playerTeam.name} got dragged by the mist...`;
       }
-      await BattleContext.delay().then(() => {
-        const newP = document.createElement('p');
-        newP.innerHTML = message;
-        this.textPanel.insertBefore(newP, this.textPanel.childNodes[0]);
+      //put them back up and tear down their mana and stamina
+      playerTeam.actors.forEach((actor) => {
+        actor.character.gauges.forEach((gauge) => {
+          gauge.consumed = Math.ceil(gauge.getModValue() * 0.975);
+        });
       });
+      //Set max consumed stamina for company
+      GameDataService.GAME_DATA.companyData.stamina.consumed =
+        GameDataService.GAME_DATA.companyData.stamina.getModValue();
+      GameDataService.GAME_DATA.time += 60 * 4;
+      const mapScene = window.game.scene.getScene('map-scene');
+      const mapUIScene = window.game.scene.getScene('map-ui-scene');
+      mapScene.doColorFilter();
+      showStaminaGauge();
+      mapUIScene.showCurrentTime();
+      if (this.scheme.endText) message += '<br/>' + this.scheme.endText;
+      await BattleContext.delay().then(() => {
+        this.writeMessage(message);
+      });
+
+      if (await this.triggerEvents(BATTLE_EVENT_TYPE.AFTER_BATTLE_END)) return;
+
       await BattleContext.delay().then(() => {
         this.onEndCallback();
       });
@@ -550,6 +696,7 @@ export class BattleContext extends Context {
         currentTeam.relationships.filter((rel) => rel.team.isPlayer).length == 0
       ) {
         message += ' They retreated from the battle.';
+        if (this.scheme.endText) message += '<br/>' + this.scheme.endText;
         BattleContext.delay().then(() => {
           this.battleActors = this.battleActors.filter(
             (actor) => actor.team.name != currentTeam.name
@@ -570,16 +717,13 @@ export class BattleContext extends Context {
       }
 
       await BattleContext.delay().then(() => {
-        const newP = document.createElement('p');
-        newP.innerHTML = message;
-        this.textPanel.insertBefore(newP, this.textPanel.childNodes[0]);
+        this.writeMessage(message);
       });
-
       this.onEndCallback();
     }
   }
   static delay(ms?: number): Promise<any> {
-    return new Promise((res) => setTimeout(res, BattleContext.WAIT_TIME));
+    return new Promise((res) => setTimeout(res, ms || BattleContext.WAIT_TIME));
   }
   toNameKey(name: string) {
     return name.trim().toLocaleLowerCase().replaceAll(' ', '-');

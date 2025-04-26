@@ -3,12 +3,18 @@ import { BIOME_TYPES } from './biome';
 import { Biome } from 'src/models/biome';
 import {
   GameDataService,
-  OveralGameDataParamter as OverallGameDataParamter,
+  OverallGameDataParamter as OverallGameDataParamter,
 } from 'src/services/game-data.service';
 import { getRegionSeed } from './map-region';
 import { MapGeneratorUtils } from 'src/utils/map-generator.utils';
 import { DIALOG_TYPES } from 'src/utils/ui-notification.util';
-import { BattleContext, BattleGroup } from 'src/core/battle-context';
+import {
+  BATTLE_EVENT_TYPE,
+  BattleContext,
+  BattleEvent,
+  BattleGroup,
+  BattleScheme,
+} from 'src/core/battle-context';
 import { SLIME_BUILDER } from '../builder/slime-builder';
 const TRIGGER_MULTIPLIER = 1;
 /*
@@ -173,20 +179,18 @@ export const ENCOUNTERS: { [key in BIOME_TYPES]: Array<EncounterScheme> } = {
           title: 'Fight',
           action: (data: OverallGameDataParamter) => {
             const groups: Array<BattleGroup> = [];
-            const numberOfEnemies = Math.ceil(Math.random() * 3);
-            const level = Math.ceil(Math.random() * 3);
-            const names = 'ABC'.split('');
-            const enemies = Array.from({ length: numberOfEnemies }).map(
-              (_, i) => {
-                const slime = SLIME_BUILDER.getASlime(level);
-                slime.name += ' ' + names[i];
-                return slime;
-              }
-            );
+            const level = 1;
+            const names = 'AB'.split('');
+            const enemies = names.map((_, i) => {
+              const slime = SLIME_BUILDER.getASlime(level);
+              slime.name += ' ' + names[i];
+              return slime;
+            });
             groups.push({
               members: enemies,
               teamName: 'Slimes',
               teamKey: 'slime',
+              disavantage: false,
               actionBehaviour: BattleContext.ACTION_BEHAVIOUR.AUTO,
               relationships: [
                 {
@@ -195,8 +199,39 @@ export const ENCOUNTERS: { [key in BIOME_TYPES]: Array<EncounterScheme> } = {
                 },
               ],
             });
+            const scheme: BattleScheme = {
+              groups: groups,
+              events: [],
+              introductionText: 'A horde of pathetic slimes attacks!',
+              playerDisadvantage: false,
+            };
+            const event: BattleEvent = {
+              type: BATTLE_EVENT_TYPE.BEFORE_ACTION,
+              startingTurn: 0,
+              turnGapForRecurrence: 5,
+              calculatedOccurence: false,
+              event: (battle: BattleContext, me: BattleEvent) => {
+                const numberOfSlimes = battle.battleActors.filter(
+                  (actor) => actor.team.key == 'slime'
+                ).length;
+                const interloperSlime = SLIME_BUILDER.getASlime(level);
+                interloperSlime.name = `Slime #${numberOfSlimes}`;
 
-            data.groups = groups;
+                battle.addNewBattleActor(
+                  battle.turnInfo.activeSlot?.timeStamp || 0,
+                  interloperSlime,
+                  battle.getTeamByKey('slime')
+                );
+                return {
+                  stopBattle: false,
+                  stopAll: false,
+                  message: `The very unique slime #${numberOfSlimes} appears!`,
+                };
+              },
+            };
+            scheme.events.push(event);
+
+            data.battleScheme = scheme;
 
             return {
               result: 'The battle begins!',

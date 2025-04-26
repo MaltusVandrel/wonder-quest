@@ -4,7 +4,7 @@ import { HERO_BUILDER } from 'src/data/builder/hero-builder';
 import { Biome } from 'src/models/biome';
 import { Figure } from 'src/models/figure';
 import { Company } from 'src/models/company';
-import { BattleGroup } from 'src/core/battle-context';
+import { BattleGroup, BattleScheme } from 'src/core/battle-context';
 export interface TimeData {
   years: number;
   months: number;
@@ -29,12 +29,12 @@ export interface GameData {
   registeredRegions: Array<MapRegion>;
   encounterData: { [key: string]: any };
 }
-export interface OveralGameDataParamter {
+export interface OverallGameDataParamter {
   biome?: Biome;
   pos?: { x: number; y: number };
   company?: Company;
   encounterTriggerType?: string;
-  groups?: Array<BattleGroup>;
+  battleScheme?: BattleScheme;
 }
 
 export class GameDataService {
