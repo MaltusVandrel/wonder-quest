@@ -370,7 +370,6 @@ export class BattleContext extends Context {
       actionSlot.battleActor.character.name
     }`;
     slotP.innerHTML = message;
-    console.log(message);
     slotP.id = actionSlot.id;
     this.orderPanel.appendChild(slotP);
   }
