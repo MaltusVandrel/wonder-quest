@@ -24,6 +24,7 @@ export class Figure {
   //
   xpGrowthPlan: XPGrowthPlan = { ...defaultXPGrowthPlan };
   xp: number = 0;
+  skillPoints: number = 0;
 
   constructor() {}
   static untieCircularReference(figure: Figure): any {
@@ -42,6 +43,8 @@ export class Figure {
     obj.data = data.data;
     obj.name = data.name;
     obj.level = data.level;
+
+    obj.skillPoints = data.skillPoints;
 
     obj.xpGrowthPlan = data.xpGrowthPlan;
     obj.xp = data.xp;

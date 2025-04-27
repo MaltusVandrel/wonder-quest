@@ -65,6 +65,7 @@ class HTMLToastElement extends HTMLDivElement {
     }, HTMLToastElement.MAX_TIME);
   }
 }
+
 abstract class HTMLCustomDialogElement<T> extends HTMLDialogElement {
   static readonly PARENT_TAGNAME = 'dialog-element';
   static readonly extends = 'dialog';
@@ -171,6 +172,7 @@ abstract class HTMLCustomDialogElement<T> extends HTMLDialogElement {
     }
   }
 }
+
 class HTMLEncounterDialogElement extends HTMLCustomDialogElement<Encounter> {
   static readonly tagname = 'dialog-element';
 
@@ -210,6 +212,7 @@ class HTMLEncounterDialogElement extends HTMLCustomDialogElement<Encounter> {
     this.showModal();
   }
 }
+
 class HTMLGameActionResultDialogElement extends HTMLCustomDialogElement<GameActionResult> {
   static readonly tagname = 'dialog-result-element';
 
@@ -390,7 +393,8 @@ class HTMLCompanyDialogElement extends HTMLCustomDialogElement<any> {
       const gaugeHolder = document.createElement('table');
       gaugeHolder.classList.add('gauge-holder');
 
-      gaugeHolder.innerHTML += `<tr><td title="xp"><strong>XP:</strong></td>
+      const xpGaugeRow = document.createElement('tr');
+      xpGaugeRow.innerHTML = `<td title="xp"><strong>XP:</strong></td>
         <td class='gauge-value' ><span><span
         class="${
           member.character.xp > xpGrowth.xpToUp(member.character.level)
@@ -402,11 +406,48 @@ class HTMLCompanyDialogElement extends HTMLCustomDialogElement<any> {
       )} </span><progress  class='XP' value='${Math.min(
         (member.character.xp / xpGrowth.xpToUp(member.character.level)) * 100,
         100
-      )}' max='100'/></td></tr>`;
+      )}' max='100'/></td>`;
+
+      gaugeHolder.appendChild(xpGaugeRow);
+
+      const levelUpButtonHolder = document.createElement('td');
+      levelUpButtonHolder.classList.add('level-up-button-holder');
+      xpGaugeRow.appendChild(levelUpButtonHolder);
+
+      if (xpGrowth.xpToUp(member.character.level) <= member.character.xp) {
+        const levelUpButton = document.createElement('button');
+        levelUpButton.classList.add('ui-game-button');
+        levelUpButton.classList.add('xsmall');
+        levelUpButton.id = 'level-up-button';
+
+        levelUpButton.innerHTML = '&nbsp;⇪&nbsp;';
+
+        levelUpButtonHolder.appendChild(levelUpButton);
+
+        levelUpButton.addEventListener('click', (event) => {
+          member.character.xp -= xpGrowth.xpToUp(member.character.level);
+          member.character.level++;
+          const karmaInfluence = member.character
+            .getStat(STAT_KEY.KARMA)
+            .getInfluenceValue();
+          const bonus = Math.max(
+            Math.ceil(
+              (((member.character.level + 1) / 4 + karmaInfluence) *
+                (1 + karmaInfluence * Math.random())) /
+                10
+            ),
+            1
+          );
+          member.character.skillPoints +=
+            member.character.xpGrowthPlan.skillPointsOnUp + bonus;
+          showMember(member);
+        });
+      }
 
       Object.keys(GAUGE_KEYS).forEach((key: string) => {
         const gauge: Gauge = member.character.getGauge(key);
-        gaugeHolder.innerHTML += `<tr><td title="${
+        const gaugeRow = document.createElement('tr');
+        gaugeRow.innerHTML = `<td title="${
           GAUGE_INFOS[key as GAUGE_KEYS]?.description
         }"><strong>${gauge.title}:</strong></td>
             <td class='gauge-value' ><span>${gauge
@@ -415,10 +456,15 @@ class HTMLCompanyDialogElement extends HTMLCustomDialogElement<any> {
           .getModValue()
           .toFixed(0)} </span><progress  class='${key}' value='${
           (gauge.getCurrentValue() / gauge.getModValue()) * 100
-        }' max='100'/></td></tr>`;
+        }' max='100'/></td>`;
+        gaugeHolder.appendChild(gaugeRow);
       });
       fistColumnHolder.appendChild(gaugeHolder);
-      fistColumnHolder.innerHTML += '<hr/>';
+      fistColumnHolder.appendChild(document.createElement('hr'));
+      const skillPoints = document.createElement('p');
+      skillPoints.innerHTML = `<strong>Skill Points:</strong> ${member.character.skillPoints}`;
+      fistColumnHolder.appendChild(skillPoints);
+      fistColumnHolder.appendChild(document.createElement('hr'));
       const confAutobattleDiv = document.createElement('div');
       const autoBattleInput = document.createElement('input');
       autoBattleInput.type = 'checkbox';
@@ -438,13 +484,36 @@ class HTMLCompanyDialogElement extends HTMLCustomDialogElement<any> {
       statsHolder.innerHTML = '';
       Object.keys(STAT_KEY).forEach((key: string) => {
         const stat: Stat = member.character.getStat(key);
-        statsHolder.innerHTML += `<tr><td title="${
+        const statRow = document.createElement('tr');
+        const statUPCell = document.createElement('td');
+
+        const upCost = Math.ceil(
+          2 + Math.floor((stat.getInfluenceValue() + 0.5) / 4)
+        );
+
+        statRow.innerHTML += `<td title="${
           STAT_INFOS[key as STAT_KEY]?.description
         }"><strong>${stat.title}:</strong></td>
             <td>${stat.getCurrentValue()} </td><td>
             (<span class='${
               stat.getInfluenceValue() < 0 ? 'negativo' : 'positivo'
-            }' >${Math.abs(stat.getInfluenceValue())}</span>)</td></tr>`;
+            }' >${Math.abs(stat.getInfluenceValue())}</span>)</td>`;
+        statsHolder.appendChild(statRow);
+        if (member.character.skillPoints > upCost) {
+          const statUPButton = document.createElement('button');
+          statUPButton.classList.add('ui-game-button');
+          statUPButton.classList.add('xsmall');
+          statUPButton.id = 'stat-up-button';
+          statUPButton.innerHTML = `&nbsp;⇪ (${upCost})`;
+          statUPCell.appendChild(statUPButton);
+          statRow.appendChild(statUPCell);
+          statUPCell.addEventListener('click', (event) => {
+            member.character.skillPoints -= upCost;
+            stat.value++;
+            stat.modValue++;
+            showMember(member);
+          });
+        }
       });
     };
     company.members.forEach((member) => {

@@ -127,6 +127,13 @@ div#phaser-example {
 }
 
 button.ui-game-button {
+  &.small {
+    padding: 4px;
+  }
+  &.xsmall {
+    padding: 2px;
+  }
+
   padding: 8px;
   border: none;
   border-radius: 3px;

@@ -6,6 +6,7 @@ export interface XPGrowthPlan {
   levelDifferenceInfluence: number;
   firstSoftLevelCap: number;
   recurringGoalPostSoftLevelCap: number;
+  skillPointsOnUp: number;
 }
 export const defaultXPGrowthPlan: XPGrowthPlan = {
   baseGoal: 100,
@@ -15,6 +16,7 @@ export const defaultXPGrowthPlan: XPGrowthPlan = {
   goalVisualMultiplierAdjustment: 5,
   firstSoftLevelCap: 50,
   recurringGoalPostSoftLevelCap: 25,
+  skillPointsOnUp: 16,
 };
 export enum ChallangeDificultyXPInfluence {
   COUGHING_BABY = 0.0000001,
