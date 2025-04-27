@@ -143,6 +143,7 @@ export class MapPathScene extends Phaser.Scene {
     this.pathGraphics?.clear();
     this.pathGraphics?.destroy();
     this.pathGraphics = this.add.graphics();
+    this.pathSteps = [];
   }
   pathPositionUpdate(incrementOnOffsetX: number, incrementOnOffsetY: number) {
     let pathX = this.pathGraphics?.x || 0;
