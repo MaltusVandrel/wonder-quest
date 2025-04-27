@@ -16,6 +16,13 @@ function setHoverBlocking(element: HTMLElement) {
   element.addEventListener('mouseleave', () => {
     MapScene.HOVER_UI_ELEMENT = false;
   });
+  element.addEventListener('touchstart', () => {
+    MapScene.HOVER_UI_ELEMENT = true;
+  });
+
+  element.addEventListener('touchend', () => {
+    MapScene.HOVER_UI_ELEMENT = false;
+  });
 }
 function doRestButton() {
   const mapScene = window.game.scene.getScene('map-scene');
