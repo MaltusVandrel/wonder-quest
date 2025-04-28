@@ -6,6 +6,11 @@ import { Gauge, GAUGE_KEYS } from './gauge';
 import { CalcUtil } from 'src/utils/calc.utils';
 import { defaultXPGrowthPlan, XPGrowthPlan } from 'src/core/xp-calc';
 
+export interface FigureData {
+  core: { xp: number; skillPoints: number; growthPlan: XPGrowthPlan };
+  configuration?: any;
+  extra?: any;
+}
 export class Figure {
   id: string = CalcUtil.genId();
   //gauge
@@ -16,15 +21,15 @@ export class Figure {
   */
   name: string = '';
   level: number = 1;
-  data: any = {};
+  data: FigureData = {
+    core: { xp: 0, skillPoints: 0, growthPlan: { ...defaultXPGrowthPlan } },
+    configuration: { autoBattle: false },
+  };
 
   gauges: Gauge[] = [];
   stats: Stat[] = [];
   //takes usually 2+level monster of same level to level up
   //
-  xpGrowthPlan: XPGrowthPlan = { ...defaultXPGrowthPlan };
-  xp: number = 0;
-  skillPoints: number = 0;
 
   constructor() {}
   static untieCircularReference(figure: Figure): any {
@@ -40,14 +45,10 @@ export class Figure {
   static instantiate(data: any): Figure {
     let obj = new Figure();
     obj.id = data.id;
-    obj.data = data.data;
+    obj.data = data.data as FigureData;
     obj.name = data.name;
     obj.level = data.level;
 
-    obj.skillPoints = data.skillPoints;
-
-    obj.xpGrowthPlan = data.xpGrowthPlan;
-    obj.xp = data.xp;
     obj.gauges = [];
     obj.stats = [];
     for (let gauge of data.gauges) {

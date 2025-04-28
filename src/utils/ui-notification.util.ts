@@ -19,7 +19,9 @@ import {
   GameDataService,
   OverallGameDataParamter,
 } from 'src/services/game-data.service';
-
+function make(el: string): HTMLElement {
+  return document.createElement(el);
+}
 class HTMLToastElement extends HTMLDivElement {
   static readonly tagname = 'toast-element';
   static readonly extends = 'div';
@@ -317,6 +319,7 @@ class HTMLAlertDialogElement extends HTMLCustomDialogElement<string> {
     );
 
     const progress = document.createElement('progress') as HTMLProgressElement;
+    progress.classList.add('dialog-closing-progress');
     progress.setAttribute('max', '100');
     progress.setAttribute('value', '0');
     this.interval = setInterval(() => {
@@ -387,7 +390,7 @@ class HTMLCompanyDialogElement extends HTMLCustomDialogElement<any> {
     }) => {
       memberName.innerHTML = `${member.character.name}, Level ${member.character.level}`;
       xpPanel.innerHTML = '';
-      const xpGrowth = XPGrowth.get(member.character.xpGrowthPlan);
+      const xpGrowth = XPGrowth.get(member.character.data.core.growthPlan);
 
       fistColumnHolder.innerHTML = '';
       const gaugeHolder = document.createElement('table');
@@ -397,14 +400,17 @@ class HTMLCompanyDialogElement extends HTMLCustomDialogElement<any> {
       xpGaugeRow.innerHTML = `<td title="xp"><strong>XP:</strong></td>
         <td class='gauge-value' ><span><span
         class="${
-          member.character.xp > xpGrowth.xpToUp(member.character.level)
+          member.character.data.core.xp >
+          xpGrowth.xpToUp(member.character.level)
             ? 'gold-text'
             : ''
         }"
-        >${member.character.xp}</span>/${xpGrowth.xpToUp(
+        >${member.character.data.core.xp}</span>/${xpGrowth.xpToUp(
         member.character.level
       )} </span><progress  class='XP' value='${Math.min(
-        (member.character.xp / xpGrowth.xpToUp(member.character.level)) * 100,
+        (member.character.data.core.xp /
+          xpGrowth.xpToUp(member.character.level)) *
+          100,
         100
       )}' max='100'/></td>`;
 
@@ -414,7 +420,9 @@ class HTMLCompanyDialogElement extends HTMLCustomDialogElement<any> {
       levelUpButtonHolder.classList.add('level-up-button-holder');
       xpGaugeRow.appendChild(levelUpButtonHolder);
 
-      if (xpGrowth.xpToUp(member.character.level) <= member.character.xp) {
+      if (
+        xpGrowth.xpToUp(member.character.level) <= member.character.data.core.xp
+      ) {
         const levelUpButton = document.createElement('button');
         levelUpButton.classList.add('ui-game-button');
         levelUpButton.classList.add('xsmall');
@@ -425,7 +433,9 @@ class HTMLCompanyDialogElement extends HTMLCustomDialogElement<any> {
         levelUpButtonHolder.appendChild(levelUpButton);
 
         levelUpButton.addEventListener('click', (event) => {
-          member.character.xp -= xpGrowth.xpToUp(member.character.level);
+          member.character.data.core.xp -= xpGrowth.xpToUp(
+            member.character.level
+          );
           member.character.level++;
           const karmaInfluence = member.character
             .getStat(STAT_KEY.KARMA)
@@ -438,8 +448,8 @@ class HTMLCompanyDialogElement extends HTMLCustomDialogElement<any> {
             ),
             1
           );
-          member.character.skillPoints +=
-            member.character.xpGrowthPlan.skillPointsOnUp + bonus;
+          member.character.data.core.skillPoints +=
+            member.character.data.core.growthPlan.skillPointsOnUp + bonus;
           showMember(member);
         });
       }
@@ -462,7 +472,7 @@ class HTMLCompanyDialogElement extends HTMLCustomDialogElement<any> {
       fistColumnHolder.appendChild(gaugeHolder);
       fistColumnHolder.appendChild(document.createElement('hr'));
       const skillPoints = document.createElement('p');
-      skillPoints.innerHTML = `<strong>Skill Points:</strong> ${member.character.skillPoints}`;
+      skillPoints.innerHTML = `<strong>Skill Points:</strong> ${member.character.data.core.skillPoints}`;
       fistColumnHolder.appendChild(skillPoints);
       fistColumnHolder.appendChild(document.createElement('hr'));
       const confAutobattleDiv = document.createElement('div');
@@ -470,9 +480,10 @@ class HTMLCompanyDialogElement extends HTMLCustomDialogElement<any> {
       autoBattleInput.type = 'checkbox';
       autoBattleInput.name = 'auto-battle';
       autoBattleInput.id = 'auto-battle';
-      autoBattleInput.checked = member.character.data.autoBattle;
+      autoBattleInput.checked = member.character.data.configuration.autoBattle;
       autoBattleInput.addEventListener('change', () => {
-        member.character.data.autoBattle = autoBattleInput.checked;
+        member.character.data.configuration.autoBattle =
+          autoBattleInput.checked;
       });
       const autoBattleLabel = document.createElement('label');
       autoBattleLabel.setAttribute('for', 'auto-battle');
@@ -499,7 +510,7 @@ class HTMLCompanyDialogElement extends HTMLCustomDialogElement<any> {
               stat.getInfluenceValue() < 0 ? 'negativo' : 'positivo'
             }' >${Math.abs(stat.getInfluenceValue())}</span>)</td>`;
         statsHolder.appendChild(statRow);
-        if (member.character.skillPoints > upCost) {
+        if (member.character.data.core.skillPoints > upCost) {
           const statUPButton = document.createElement('button');
           statUPButton.classList.add('ui-game-button');
           statUPButton.classList.add('xsmall');
@@ -508,7 +519,7 @@ class HTMLCompanyDialogElement extends HTMLCustomDialogElement<any> {
           statUPCell.appendChild(statUPButton);
           statRow.appendChild(statUPCell);
           statUPCell.addEventListener('click', (event) => {
-            member.character.skillPoints -= upCost;
+            member.character.data.core.skillPoints -= upCost;
             stat.value++;
             stat.modValue++;
             showMember(member);

@@ -2,14 +2,12 @@ import { Figure } from '../models/figure';
 import { Context } from './context';
 import { MessageHandler } from './message-handler';
 import { BehaviorSubject, first } from 'rxjs';
-import { Injectable } from '@angular/core';
 import { CalcUtil } from 'src/utils/calc.utils';
 import { STAT_KEY } from 'src/models/stats';
 import { GAUGE_KEYS } from 'src/models/gauge';
 import { GameDataService } from 'src/services/game-data.service';
 import { SLIME_BUILDER } from 'src/data/builder/slime-builder';
 import { COMPANY_POSITION } from 'src/models/company';
-import { group } from '@angular/animations';
 import { defaultXPGrowthPlan, XPGrowth } from './xp-calc';
 import { showStaminaGauge } from 'src/utils/ui-elements.util';
 
@@ -255,7 +253,9 @@ export class BattleContext extends Context {
             ? BattleContext.DISADVANTAGE_INFLUENCE
             : 0,
           speed: character.getNormalSpeed(),
-          isAuto: isPlayer ? character.data.autoBattle == true : true,
+          isAuto: isPlayer
+            ? character.data.configuration.autoBattle == true
+            : true,
           arrivalTurn: this.turn,
         };
         return battleActor;
@@ -397,7 +397,7 @@ export class BattleContext extends Context {
         actorProgress +
         (team.disadvantage ? BattleContext.DISADVANTAGE_INFLUENCE : 1),
       speed: character.getNormalSpeed(),
-      isAuto: isPlayer ? character.data.autoBattle == true : true,
+      isAuto: isPlayer ? character.data.configuration.autoBattle == true : true,
       arrivalTurn: this.turn,
     };
     team.actors.push(actor);
@@ -500,16 +500,16 @@ export class BattleContext extends Context {
       if (await this.triggerEvents(BATTLE_EVENT_TYPE.ON_SLAIN)) return;
       //gay xp and shit
       if (team.isPlayer) {
-        const xpGrowth = XPGrowth.get(char.xpGrowthPlan);
+        const xpGrowth = XPGrowth.get(char.data.core.growthPlan);
         let earnedXp = xpGrowth.xpGain(char.level, aimedChar.level);
         const xpToUp = xpGrowth.xpToUp(char.level);
-        if (char.xp + earnedXp > xpToUp) {
-          const remaingXP = char.xp + earnedXp - xpToUp;
+        if (char.data.core.xp + earnedXp > xpToUp) {
+          const remaingXP = char.data.core.xp + earnedXp - xpToUp;
           const earnedRemainingXP = Math.ceil(remaingXP / 10);
-          char.xp = xpToUp + earnedRemainingXP;
+          char.data.core.xp = xpToUp + earnedRemainingXP;
           earnedXp = Math.max(earnedXp - remaingXP + earnedRemainingXP, 1);
         } else {
-          char.xp += earnedXp;
+          char.data.core.xp += earnedXp;
         }
         await BattleContext.delay().then(() => {
           this.writeMessage(
@@ -517,13 +517,13 @@ export class BattleContext extends Context {
           );
         });
       } else if (aimedTeam.isPlayer) {
-        const xpGrowth = XPGrowth.get(char.xpGrowthPlan);
+        const xpGrowth = XPGrowth.get(char.data.core.growthPlan);
         //its reverse, so you lose less XP if the mosnter is stronger
         //and a lot if it is weaker
         let lostXp = Math.ceil(
           xpGrowth.xpGain(char.level, aimedChar.level) / 10
         );
-        aimedChar.xp -= lostXp;
+        aimedChar.data.core.xp -= lostXp;
         await BattleContext.delay().then(() => {
           this.writeMessage(
             `${this.turn} - ${aimedChar.name} lost ${lostXp}XP.`

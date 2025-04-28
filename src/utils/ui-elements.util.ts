@@ -1,7 +1,12 @@
 import { GAUGE_KEYS } from 'src/models/gauge';
 import { MapScene } from 'src/scenes/map.scene';
 import { GameDataService } from 'src/services/game-data.service';
-import { showAlertDialog, showCompanyDialog } from './ui-notification.util';
+import {
+  DIALOG_TYPES,
+  showAlertDialog,
+  showCompanyDialog,
+  showDialog,
+} from './ui-notification.util';
 import { FigureName, NAMES } from 'src/data/bank/names';
 import { HERO_BUILDER } from 'src/data/builder/hero-builder';
 import { Figure } from 'src/models/figure';
@@ -159,8 +164,9 @@ export function setUpMainMenuUI() {
   opcoesButton.classList.add('mainmenu-button');
   opcoesButton.innerHTML = 'OPTIONS';
   opcoesButton.addEventListener('click', () => {
-    showAlertDialog(
-      'Ask the tech lead to take his head out of his ass and do the options menu.'
+    showDialog(
+      'Ask the tech lead to take his head out of his ass and do the options menu.',
+      DIALOG_TYPES.ALERT
     );
   });
 
