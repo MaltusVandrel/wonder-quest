@@ -561,9 +561,22 @@ class HTMLBattleDialogElement extends HTMLCustomDialogElement<any> {
   setData(data: OverallGameDataParamter) {
     if (data.battleScheme == undefined)
       throw 'Define the battle scheme ya fucker!';
+    const sectionAdversarialTeams = document.createElement('section');
+    const sectionAllyTeams = document.createElement('section');
+    sectionAdversarialTeams.classList.add('teams');
+    sectionAllyTeams.classList.add('teams');
 
     this.dismissable = false;
-    this.setUpDefaultStructure();
+
+    this.appendCloseButton();
+
+    this.appendChild(this.header);
+    this.appendChild(sectionAdversarialTeams);
+    this.appendChild(this.content);
+    this.appendChild(sectionAllyTeams);
+    this.appendChild(this.menu);
+    this.header.appendChild(this.menuTitle);
+
     this.menuTitle.innerText = 'Battle!!';
     const textPanel = document.createElement('div');
     const orderPanel = document.createElement('div');
@@ -574,6 +587,8 @@ class HTMLBattleDialogElement extends HTMLCustomDialogElement<any> {
     const battContext = BattleContext.build(
       textPanel,
       orderPanel,
+      sectionAdversarialTeams,
+      sectionAllyTeams,
       this.menu,
       battleScheme
     );

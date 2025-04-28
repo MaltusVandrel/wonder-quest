@@ -117,6 +117,9 @@ export class BattleContext extends Context {
   textPanel: HTMLElement;
   orderPanel: HTMLElement;
   actionMenu: HTMLElement;
+  adversarialTeamsPanel: HTMLElement;
+  allyTeamsPanel: HTMLElement;
+
   actionSlots: Array<BattleActionSlot> = [];
   battleActors: Array<BattleActor> = [];
   battleTeams: Array<BattleTeam> = [];
@@ -138,6 +141,8 @@ export class BattleContext extends Context {
   constructor(
     textPanel: HTMLElement,
     orderPanel: HTMLElement,
+    adversarialTeamsPanel: HTMLElement,
+    allyTeamsPanel: HTMLElement,
     actionMenu: HTMLElement,
     scheme: BattleScheme
   ) {
@@ -146,6 +151,8 @@ export class BattleContext extends Context {
 
     this.textPanel = textPanel;
     this.orderPanel = orderPanel;
+    this.adversarialTeamsPanel = adversarialTeamsPanel;
+    this.allyTeamsPanel = allyTeamsPanel;
     this.actionMenu = actionMenu;
     this.scheme = scheme;
   }
@@ -153,9 +160,18 @@ export class BattleContext extends Context {
     textPanel: HTMLElement,
     orderPanel: HTMLElement,
     actionMenu: HTMLElement,
+    adversarialTeamsPanel: HTMLElement,
+    allyTeamsPanel: HTMLElement,
     scheme: BattleScheme
   ): BattleContext {
-    return new BattleContext(textPanel, orderPanel, actionMenu, scheme);
+    return new BattleContext(
+      textPanel,
+      orderPanel,
+      adversarialTeamsPanel,
+      allyTeamsPanel,
+      actionMenu,
+      scheme
+    );
   }
   async triggerEvents(type: BATTLE_EVENT_TYPE) {
     if (this.fallbackEndBattle) return this.fallbackEndBattle;

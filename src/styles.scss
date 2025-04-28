@@ -39,7 +39,44 @@ div#phaser-example {
   font-family: "Caviar Dreams", sans-serif;
   cursor: url("assets/cursor.png"), auto;
   box-sizing: border-box !important;
+  scrollbar-color: wheat rgba(0, 0, 0, 0);
+  scrollbar-width: thin;
 }
+input[type="checkbox"] {
+  -webkit-appearance: none;
+  appearance: none;
+  /* For iOS < 15 to remove gradient background */
+  background-color: #311;
+  /* Not removed via appearance */
+  margin: 0;
+  display: inline-block;
+  vertical-align: text-bottom;
+  width: 16px;
+  height: 16px;
+  margin: 0px 4px 1px 0;
+  border: 1px solid wheat;
+  border-radius: 2px;
+  outline: 0px;
+  place-content: center;
+  padding: 0px 0px 1px 1px;
+  &::before {
+    content: "";
+    width: 0.65em;
+    height: 0.65em;
+    transform: scale(0);
+    transition: 120ms transform ease-in-out;
+    box-shadow: inset 1em 1em #67eff7;
+    width: 12px;
+    height: 12px;
+    display: block;
+    border-radius: 3px;
+    border: 0px;
+  }
+  &:checked::before {
+    transform: scale(1);
+  }
+}
+
 .capitalize {
   text-transform: capitalize;
 }
@@ -215,8 +252,6 @@ button.rest-button {
   }
   section {
     overflow-y: auto;
-    scrollbar-color: wheat rgba(0, 0, 0, 0);
-    scrollbar-width: thin;
   }
   menu {
     align-self: flex-end;
@@ -486,6 +521,10 @@ div#toast-holder {
         margin-bottom: 8px;
       }
     }
+  }
+  section.teams {
+    padding: 8px 0px;
+    background-color: rgba(0, 0, 0, 0.1);
   }
   menu {
     padding: 8px 0;
