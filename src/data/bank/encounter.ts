@@ -191,6 +191,8 @@ export const ENCOUNTERS: { [key in BIOME_TYPES]: Array<EncounterScheme> } = {
               teamName: 'Slimes',
               teamKey: 'slime',
               disavantage: false,
+              adversarial: true,
+              supporter: false,
               actionBehaviour: BattleContext.ACTION_BEHAVIOUR.AUTO,
               relationships: [
                 {

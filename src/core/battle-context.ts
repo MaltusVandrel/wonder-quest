@@ -20,6 +20,8 @@ interface BattleTeam {
   isPlayer: boolean;
   relationships: Array<TeamRelationship>;
   disadvantage: boolean;
+  adversarial: boolean;
+  supporter: boolean;
 }
 interface TeamRelationship {
   team: BattleTeam;
@@ -47,6 +49,8 @@ export interface BattleGroup {
   actionBehaviour: number;
   relationships: Array<{ teamKey: string; behaviour: number }>;
   disavantage: boolean;
+  adversarial: boolean;
+  supporter: boolean;
 }
 
 export enum BATTLE_EVENT_TYPE {
@@ -159,9 +163,9 @@ export class BattleContext extends Context {
   static build(
     textPanel: HTMLElement,
     orderPanel: HTMLElement,
-    actionMenu: HTMLElement,
     adversarialTeamsPanel: HTMLElement,
     allyTeamsPanel: HTMLElement,
+    actionMenu: HTMLElement,
     scheme: BattleScheme
   ): BattleContext {
     return new BattleContext(
@@ -176,6 +180,7 @@ export class BattleContext extends Context {
   async triggerEvents(type: BATTLE_EVENT_TYPE) {
     if (this.fallbackEndBattle) return this.fallbackEndBattle;
 
+    if (type != BATTLE_EVENT_TYPE.AFTER_BATTLE_END) this.updateTeamInfoUI();
     const eventsOfType = this.events.filter(
       (event) => event.type == type && event.startingTurn <= this.turn
     );
@@ -204,6 +209,7 @@ export class BattleContext extends Context {
       if (eventReturn.message) this.writeMessage(eventReturn.message);
       if (eventReturn.stopAll) break;
     }
+
     return stop;
   }
   doTeams() {
@@ -229,6 +235,8 @@ export class BattleContext extends Context {
       teamKey: BattleContext.TEAM_KEY_PLAYER,
       actionBehaviour: BattleContext.ACTION_BEHAVIOUR.PLAYER,
       disavantage: this.scheme.playerDisadvantage,
+      supporter: true,
+      adversarial: false,
       relationships: groups
         .filter(
           (group) =>
@@ -258,6 +266,8 @@ export class BattleContext extends Context {
         isPlayer: isPlayer,
         actors: [],
         relationships: [],
+        supporter: group.supporter,
+        adversarial: group.adversarial,
         disadvantage: group.disavantage,
       };
 
@@ -303,6 +313,93 @@ export class BattleContext extends Context {
   }
   onEnd(callback: () => void) {
     this.onEndCallback = callback;
+  }
+  async updateTeamInfoUI() {
+    const adversarialTeams = this.battleTeams.filter(
+      (team) => team.adversarial == true
+    );
+    const supporterTeams = this.battleTeams.filter(
+      (team) => team.supporter == true
+    );
+
+    this.allyTeamsPanel.innerHTML = '';
+    this.adversarialTeamsPanel.innerHTML = '';
+    adversarialTeams.forEach((team) => {
+      const teamPanel = document.createElement('div');
+      teamPanel.classList.add('team');
+      teamPanel.classList.add('adversarial');
+      if (
+        team.relationships.filter(
+          (rel) =>
+            rel.team.isPlayer &&
+            rel.behaviour >= BattleContext.RELATIONSHIP_BEHAVIOUR.FOE
+        ).length > 0
+      ) {
+        teamPanel.classList.add('foe');
+      }
+      team.actors.forEach((actor) => {
+        console.log(actor.character.name);
+        const actorEl = document.createElement('div');
+        const actorText = document.createElement('p');
+        actorText.innerHTML = `<strong>${
+          actor.character.name
+        }</strong> ${actor.character
+          .getGauge(GAUGE_KEYS.VITALITY)
+          .getCurrentValue()
+          .toFixed(0)}/${actor.character
+          .getGauge(GAUGE_KEYS.VITALITY)
+          .getModValue()
+          .toFixed(0)}`;
+        actorEl.classList.add('actor');
+        if (
+          actor.character.getGauge(GAUGE_KEYS.VITALITY).getCurrentValue() <= 0
+        ) {
+          actorEl.classList.add('defeated');
+        }
+        actorEl.appendChild(actorText);
+        teamPanel.appendChild(actorEl);
+      });
+      this.adversarialTeamsPanel.appendChild(teamPanel);
+    });
+    supporterTeams.forEach((team) => {
+      const teamPanel = document.createElement('div');
+      teamPanel.classList.add('team');
+      teamPanel.classList.add('supporter');
+      if (
+        team.relationships.filter(
+          (rel) =>
+            rel.team.isPlayer &&
+            rel.behaviour == BattleContext.RELATIONSHIP_BEHAVIOUR.ALLY
+        ).length > 0
+      ) {
+        teamPanel.classList.add('ally');
+      }
+      if (team.isPlayer) {
+        teamPanel.classList.add('player');
+      }
+      team.actors.forEach((actor) => {
+        const actorEl = document.createElement('div');
+        const actorText = document.createElement('p');
+        actorText.innerHTML = `<strong>${
+          actor.character.name
+        }</strong> ${actor.character
+          .getGauge(GAUGE_KEYS.VITALITY)
+          .getCurrentValue()
+          .toFixed(0)}/${actor.character
+          .getGauge(GAUGE_KEYS.VITALITY)
+          .getModValue()
+          .toFixed(0)}`;
+        actorEl.classList.add('actor');
+        if (
+          actor.character.getGauge(GAUGE_KEYS.VITALITY).getCurrentValue() <= 0
+        ) {
+          actorEl.classList.add('defeated');
+        }
+        actorEl.appendChild(actorText);
+        teamPanel.appendChild(actorEl);
+      });
+      this.allyTeamsPanel.appendChild(teamPanel);
+    });
   }
   async start() {
     this.doTeams();
@@ -606,7 +703,7 @@ export class BattleContext extends Context {
 
     //do moves in the future, for now simple damage
     const stronk = char.getStat(STAT_KEY.STRENGTH).getInfluenceValue();
-    const damage = 30 * (1 + stronk / 10) * (1 + leveDiff / 10);
+    const damage = 10 * (1 + stronk / 10) * (1 + leveDiff / 10);
 
     const destronk = aimedChar.getStat(STAT_KEY.ENDURANCE).getInfluenceValue();
     const reduction = destronk * (1 + leveDiffOposing / 10);

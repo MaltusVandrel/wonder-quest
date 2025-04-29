@@ -19,9 +19,7 @@ import {
   GameDataService,
   OverallGameDataParamter,
 } from 'src/services/game-data.service';
-function make(el: string): HTMLElement {
-  return document.createElement(el);
-}
+
 class HTMLToastElement extends HTMLDivElement {
   static readonly tagname = 'toast-element';
   static readonly extends = 'div';
