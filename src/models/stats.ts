@@ -1,4 +1,3 @@
-import { EventEmitter } from '@angular/core';
 import { ChildComponent } from './child-component';
 import { Figure } from './figure';
 import { Company } from './company';
@@ -84,28 +83,24 @@ export const STAT_INFOS: { [key in STAT_KEY]: StatInfo } = Object.keys(
   };
   return acc;
 }, {} as { [key in STAT_KEY]: StatInfo });
-export class Stat extends ChildComponent {
-  title: string = '';
-  value: number = 10;
-  modValue: number = 10;
 
-  static instantiate(data: any): Stat {
-    let obj = new Stat(data.parent);
-
-    obj.key = data.key;
-    obj.title = data.title;
-    obj.value = data.value;
-    obj.modValue = data.modValue;
-
-    return obj;
+export interface Stat {
+  key: string;
+  title: string;
+  value: number;
+  modValue: number;
+}
+export const defaultStat: Stat = {
+  key: 'base',
+  title: 'base',
+  value: 10,
+  modValue: 10,
+};
+export class StatCalc {
+  static getCurrentValue(parent: Figure | Company, stat: Stat): number {
+    return stat.value;
   }
-  getCurrentValue(): number {
-    return this.value;
-  }
-  getInfluenceValue(): number {
-    return (this.value - 10) / 2;
-  }
-  constructor(parent: Figure | Company) {
-    super(parent);
+  static getInfluenceValue(parent: Figure | Company, stat: Stat): number {
+    return (stat.value - 10) / 2;
   }
 }

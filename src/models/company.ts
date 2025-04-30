@@ -1,5 +1,5 @@
 import { Figure } from './figure';
-import { Gauge } from './gauge';
+import { defaultGauge, Gauge } from './gauge';
 import { Item } from './item';
 
 export enum COMPANY_POSITION {
@@ -15,10 +15,9 @@ export class Company {
   title: string = 'Company';
   members: { character: Figure; positions: COMPANY_POSITION[] }[] = [];
   inventory: Item[] = [];
-  stamina: Gauge = new Gauge(this);
+  stamina: Gauge = { ...defaultGauge };
   static untieCircularReference(figure: Company): any {
     let data = { ...figure };
-    data.stamina.parent = undefined;
     for (let member of data.members) {
       member.character = Figure.untieCircularReference(member.character);
     }
@@ -26,9 +25,7 @@ export class Company {
   }
   static instantiate(data: any): Company {
     let obj = new Company();
-
-    data.stamina.parent = obj;
-    obj.stamina = Gauge.instantiate(data.stamina);
+    obj.stamina = data.stamina;
     obj.title = data.title;
     for (let member of data.members) {
       member.character = Figure.instantiate(member.character);

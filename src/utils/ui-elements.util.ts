@@ -1,4 +1,4 @@
-import { GAUGE_KEYS } from 'src/models/gauge';
+import { GAUGE_KEYS, GaugeCalc } from 'src/models/gauge';
 import { MapScene } from 'src/scenes/map.scene';
 import { GameDataService } from 'src/services/game-data.service';
 import {
@@ -10,7 +10,7 @@ import {
 import { FigureName, NAMES } from 'src/data/bank/names';
 import { HERO_BUILDER } from 'src/data/builder/hero-builder';
 import { Figure } from 'src/models/figure';
-import { Stat } from 'src/models/stats';
+import { Stat, StatCalc } from 'src/models/stats';
 import { COMPANY_POSITION } from 'src/models/company';
 
 function setHoverBlocking(element: HTMLElement) {
@@ -113,10 +113,10 @@ export function showStaminaGauge() {
 
   const stamina = GameDataService.GAME_DATA.companyData.stamina;
 
-  const percentualStatus = (
-    (stamina.getCurrentValue() / stamina.getModValue()) *
-    100
-  ).toFixed(2);
+  const percentualStatus = GaugeCalc.getPercentualValueString(
+    GameDataService.GAME_DATA.companyData,
+    stamina
+  );
 
   if (elValue) {
     elValue.innerHTML = percentualStatus + '%';
@@ -250,29 +250,40 @@ function showTextIntroductionUI() {
 
   let statMessage = hero.name + ' ';
   const stats = hero.stats.sort(
-    (a: Stat, b: Stat) => b.getInfluenceValue() - a.getInfluenceValue()
+    (a: Stat, b: Stat) =>
+      StatCalc.getInfluenceValue(hero, b) - StatCalc.getInfluenceValue(hero, a)
   );
   let unremarkable: boolean = true;
-  if (stats[0].getInfluenceValue() > 2) {
+  const best: number = StatCalc.getInfluenceValue(hero, stats[0]);
+  const best2: number = StatCalc.getInfluenceValue(hero, stats[1]);
+  const worst: number = StatCalc.getInfluenceValue(
+    hero,
+    stats[stats.length - 1]
+  );
+  const worst2: number = StatCalc.getInfluenceValue(
+    hero,
+    stats[stats.length - 2]
+  );
+  if (best > 2) {
     statMessage +=
       " shines at their <strong class='capitalize'>" +
       stats[0].title +
       '</strong>';
-    if (stats[1].getInfluenceValue() > 2) {
+    if (best2 > 2) {
       statMessage +=
         " and <strong class='capitalize'>" + stats[1].title + '</strong>';
     }
-    if (stats[stats.length - 1].getInfluenceValue() < 0) {
+    if (worst < 0) {
       statMessage += ' but ';
     }
     unremarkable = false;
   }
-  if (stats[stats.length - 1].getInfluenceValue() < 0) {
+  if (worst < 0) {
     statMessage +=
       " is dull at their <strong class='capitalize'>" +
       stats[stats.length - 1].title +
       '</strong>';
-    if (stats[stats.length - 2].getInfluenceValue() < 0) {
+    if (worst2 < 0) {
       statMessage +=
         " and <strong class='capitalize'>" +
         stats[stats.length - 2].title +
@@ -312,7 +323,7 @@ function showTextIntroductionUI() {
     introductionScene.fadeOutAndDestroy();
   });
   stats.forEach((stat) => {
-    console.log(stat.title + ':' + stat.getInfluenceValue());
+    console.log(stat.title + ':' + StatCalc.getInfluenceValue(hero, stat));
   });
   menu?.appendChild(arise);
   texts.forEach((text) => {

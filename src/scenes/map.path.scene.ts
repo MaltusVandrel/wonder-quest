@@ -8,7 +8,7 @@ import {
 } from 'src/data/bank/encounter';
 import { showEncounterDialog, showToast } from 'src/utils/ui-notification.util';
 import { showStaminaGauge } from 'src/utils/ui-elements.util';
-import { GAUGE_KEYS } from 'src/models/gauge';
+import { GAUGE_KEYS, GaugeCalc } from 'src/models/gauge';
 
 export class MapPathScene extends Phaser.Scene {
   mapScene: any;
@@ -78,7 +78,13 @@ export class MapPathScene extends Phaser.Scene {
       const lastStep = this.pathSteps[stepIndex - 1];
       let step = this.pathSteps[stepIndex++];
       const stamina = GameDataService.GAME_DATA.companyData.stamina;
-      if (!stamina.canHandleValue(step.cell.staminaCost)) {
+      if (
+        !GaugeCalc.canHandleValue(
+          step.cell.staminaCost,
+          GameDataService.GAME_DATA.companyData,
+          stamina
+        )
+      ) {
         this.lockPath = false;
         this.clearPath();
         return;

@@ -1,8 +1,8 @@
 import { BattleContext } from '../core/battle-context';
 
-import { Stat, STAT_KEY } from './stats';
+import { Stat, STAT_KEY, StatCalc } from './stats';
 import { ChildComponent } from './child-component';
-import { Gauge, GAUGE_KEYS } from './gauge';
+import { Gauge, GAUGE_KEYS, GaugeCalc } from './gauge';
 import { CalcUtil } from 'src/utils/calc.utils';
 import { defaultXPGrowthPlan, XPGrowthPlan } from 'src/core/xp-calc';
 
@@ -34,12 +34,7 @@ export class Figure {
   constructor() {}
   static untieCircularReference(figure: Figure): any {
     let data = { ...figure };
-    for (let gauge of data.gauges) {
-      gauge.parent = undefined;
-    }
-    for (let stat of data.stats) {
-      stat.parent = undefined;
-    }
+
     return data;
   }
   static instantiate(data: any): Figure {
@@ -49,14 +44,8 @@ export class Figure {
     obj.name = data.name;
     obj.level = data.level;
 
-    obj.gauges = [];
-    obj.stats = [];
-    for (let gauge of data.gauges) {
-      obj.gauges.push(Gauge.instantiate({ ...gauge, parent: obj }));
-    }
-    for (let stat of data.stats) {
-      obj.stats.push(Stat.instantiate({ ...stat, parent: obj }));
-    }
+    obj.gauges = data.gauges;
+    obj.stats = data.stats;
 
     return obj;
   }
@@ -71,7 +60,9 @@ export class Figure {
     return gauge;
   }
   isFainted(): boolean {
-    return this.getGauge(GAUGE_KEYS.VITALITY).getCurrentValue() <= 0;
+    return (
+      GaugeCalc.getCurrentValue(this, this.getGauge(GAUGE_KEYS.VITALITY)) <= 0
+    );
   }
   getInitiative(): number {
     return this.getActionSpeed();
@@ -83,10 +74,10 @@ export class Figure {
     const prc = this.getStat(STAT_KEY.PERCEPTION);
     const itt = this.getStat(STAT_KEY.INTUITION);
     const speed =
-      (agi.getInfluenceValue() * 2.5 +
-        (dex.getInfluenceValue() +
-          prc.getInfluenceValue() +
-          itt.getInfluenceValue())) /
+      (StatCalc.getInfluenceValue(this, agi) * 2.5 +
+        (StatCalc.getInfluenceValue(this, dex) +
+          StatCalc.getInfluenceValue(this, prc) +
+          StatCalc.getInfluenceValue(this, itt))) /
       2.5;
     return speed > 0 ? speed : 1;
   }
@@ -94,7 +85,9 @@ export class Figure {
   getActionSpeed(): number {
     const luk = this.getStat(STAT_KEY.LUCK);
     const normalSpeed = this.getNormalSpeed();
-    normalSpeed + CalcUtil.getRandom(luk.getInfluenceValue()) + this.level / 4;
+    normalSpeed +
+      CalcUtil.getRandom(StatCalc.getInfluenceValue(this, luk)) +
+      this.level / 4;
     return normalSpeed > 0 ? normalSpeed : 1;
   }
 }

@@ -1,4 +1,4 @@
-import { Stat, STAT_KEY, STAT_TITLES } from '../../models/stats';
+import { defaultStat, Stat, STAT_KEY, STAT_TITLES } from '../../models/stats';
 import { Figure } from '../../models/figure';
 
 let STATS: Stat[] = [];
@@ -9,7 +9,7 @@ export function setStats(being: Figure, maxValue: number) {
   const negativeVariance = Math.round(randomPart / 3);
 
   for (let key of Object.keys(STAT_KEY)) {
-    let attr = new Stat(being);
+    let attr = { ...defaultStat };
     attr.title = { ...STAT_TITLES }[key] || '';
     attr.key = key || '';
     attr.value =

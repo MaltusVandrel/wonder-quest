@@ -3,13 +3,14 @@ import { Context } from './context';
 import { MessageHandler } from './message-handler';
 import { BehaviorSubject, first } from 'rxjs';
 import { CalcUtil } from 'src/utils/calc.utils';
-import { STAT_KEY } from 'src/models/stats';
-import { GAUGE_KEYS } from 'src/models/gauge';
+import { STAT_KEY, StatCalc } from 'src/models/stats';
+import { GAUGE_KEYS, GaugeCalc } from 'src/models/gauge';
 import { GameDataService } from 'src/services/game-data.service';
 import { SLIME_BUILDER } from 'src/data/builder/slime-builder';
 import { COMPANY_POSITION } from 'src/models/company';
 import { defaultXPGrowthPlan, XPGrowth } from './xp-calc';
 import { showStaminaGauge } from 'src/utils/ui-elements.util';
+import { MoveBonk } from 'src/models/move';
 
 interface BattleTeam {
   id: string;
@@ -325,9 +326,17 @@ export class BattleContext extends Context {
     this.allyTeamsPanel.innerHTML = '';
     this.adversarialTeamsPanel.innerHTML = '';
     adversarialTeams.forEach((team) => {
+      doTeamHolder(team, this.adversarialTeamsPanel);
+    });
+    supporterTeams.forEach((team) => {
+      doTeamHolder(team, this.allyTeamsPanel);
+    });
+
+    function doTeamHolder(team: BattleTeam, teamHolderPanel: HTMLElement) {
       const teamPanel = document.createElement('div');
       teamPanel.classList.add('team');
-      teamPanel.classList.add('adversarial');
+      if (team.supporter) teamPanel.classList.add('supporter');
+      if (team.adversarial) teamPanel.classList.add('adversarial');
       if (
         team.relationships.filter(
           (rel) =>
@@ -337,34 +346,6 @@ export class BattleContext extends Context {
       ) {
         teamPanel.classList.add('foe');
       }
-      team.actors.forEach((actor) => {
-        console.log(actor.character.name);
-        const actorEl = document.createElement('div');
-        const actorText = document.createElement('p');
-        actorText.innerHTML = `<strong>${
-          actor.character.name
-        }</strong> ${actor.character
-          .getGauge(GAUGE_KEYS.VITALITY)
-          .getCurrentValue()
-          .toFixed(0)}/${actor.character
-          .getGauge(GAUGE_KEYS.VITALITY)
-          .getModValue()
-          .toFixed(0)}`;
-        actorEl.classList.add('actor');
-        if (
-          actor.character.getGauge(GAUGE_KEYS.VITALITY).getCurrentValue() <= 0
-        ) {
-          actorEl.classList.add('defeated');
-        }
-        actorEl.appendChild(actorText);
-        teamPanel.appendChild(actorEl);
-      });
-      this.adversarialTeamsPanel.appendChild(teamPanel);
-    });
-    supporterTeams.forEach((team) => {
-      const teamPanel = document.createElement('div');
-      teamPanel.classList.add('team');
-      teamPanel.classList.add('supporter');
       if (
         team.relationships.filter(
           (rel) =>
@@ -378,28 +359,24 @@ export class BattleContext extends Context {
         teamPanel.classList.add('player');
       }
       team.actors.forEach((actor) => {
+        const chara = actor.character;
         const actorEl = document.createElement('div');
         const actorText = document.createElement('p');
         actorText.innerHTML = `<strong>${
-          actor.character.name
-        }</strong> ${actor.character
-          .getGauge(GAUGE_KEYS.VITALITY)
-          .getCurrentValue()
-          .toFixed(0)}/${actor.character
-          .getGauge(GAUGE_KEYS.VITALITY)
-          .getModValue()
-          .toFixed(0)}`;
+          chara.name
+        }</strong> ${GaugeCalc.getCurrentValueString(
+          chara,
+          chara.getGauge(GAUGE_KEYS.VITALITY)
+        )}`;
         actorEl.classList.add('actor');
-        if (
-          actor.character.getGauge(GAUGE_KEYS.VITALITY).getCurrentValue() <= 0
-        ) {
+        if (chara.isFainted()) {
           actorEl.classList.add('defeated');
         }
         actorEl.appendChild(actorText);
         teamPanel.appendChild(actorEl);
       });
-      this.allyTeamsPanel.appendChild(teamPanel);
-    });
+      teamHolderPanel.appendChild(teamPanel);
+    }
   }
   async start() {
     this.doTeams();
@@ -621,9 +598,9 @@ export class BattleContext extends Context {
           const earnedRemainingXP = Math.ceil(remaingXP / 10);
           char.data.core.xp = xpToUp + earnedRemainingXP;
           earnedXp = Math.max(earnedXp - remaingXP + earnedRemainingXP, 1);
-        } else {
-          char.data.core.xp += earnedXp;
         }
+        char.data.core.xp += earnedXp;
+
         await BattleContext.delay().then(() => {
           this.writeMessage(
             `${this.turn} - ${char.name} earned ${earnedXp}XP.`
@@ -700,19 +677,89 @@ export class BattleContext extends Context {
   async doAttack(char: Figure, aimedChar: Figure) {
     const leveDiff = char.level - aimedChar.level;
     const leveDiffOposing = leveDiff * -1;
+    const actionMove = MoveBonk;
+    const moveExpression = MoveBonk.defaultExpression;
 
     //do moves in the future, for now simple damage
-    const stronk = char.getStat(STAT_KEY.STRENGTH).getInfluenceValue();
-    const damage = 10 * (1 + stronk / 10) * (1 + leveDiff / 10);
+    const stronk = moveExpression.statusInfluence
+      .map(
+        (influence) =>
+          StatCalc.getInfluenceValue(char, char.getStat(influence.stat)) *
+          influence.influence
+      )
+      .reduce((prev, current) => prev + current);
 
-    const destronk = aimedChar.getStat(STAT_KEY.ENDURANCE).getInfluenceValue();
-    const reduction = destronk * (1 + leveDiffOposing / 10);
+    const destronk = moveExpression.resistenceStatus
+      .map(
+        (influence) =>
+          StatCalc.getInfluenceValue(
+            aimedChar,
+            aimedChar.getStat(influence.stat)
+          ) * influence.influence
+      )
+      .reduce((prev, current) => prev + current);
+    const hittance = moveExpression.hitStatus
+      .map(
+        (influence) =>
+          StatCalc.getInfluenceValue(char, char.getStat(influence.stat)) *
+          influence.influence
+      )
+      .reduce((prev, current) => prev + current);
+    const dodgdance = moveExpression.dodgingStatus
+      .map(
+        (influence) =>
+          StatCalc.getInfluenceValue(
+            aimedChar,
+            aimedChar.getStat(influence.stat)
+          ) * influence.influence
+      )
+      .reduce((prev, current) => prev + current);
+
+    const damage = (moveExpression.power + stronk) * (1 + leveDiff / 25);
+    const reduction = destronk * (1 + leveDiffOposing / 25);
     const calculedDamage = damage - reduction;
-    const effectiveDamate = calculedDamage >= 1 ? calculedDamage : 1;
-    aimedChar.getGauge(GAUGE_KEYS.VITALITY).consumed += effectiveDamate;
-    const message = `${this.turn} - ${char.name} bonked ${
-      aimedChar.name
-    } for ${effectiveDamate.toFixed(0)}dmg!`;
+    let effectiveDamage = Math.max(calculedDamage, 1);
+
+    const hitChanceBase = moveExpression.hitChance + hittance / 100;
+    const hitChanceEffective = hitChanceBase - dodgdance / 100;
+    let isHit = false;
+    let isOverHit = false;
+    let isFumbled = false;
+    let dodgeGoal = Math.random();
+    if (dodgeGoal < hitChanceEffective) {
+      isHit = true;
+      if (hitChanceEffective > 1) {
+        effectiveDamage +=
+          effectiveDamage *
+          (hitChanceEffective - 1 + moveExpression.overHitInfluence);
+        isOverHit = true;
+      }
+    } else {
+      if (dodgeGoal < hitChanceBase) {
+        isFumbled = false;
+      } else {
+        isFumbled = true;
+      }
+    }
+
+    let message = `${this.turn} - ${char.name} used ${moveExpression.name} on ${aimedChar.name}`;
+    if (isHit) {
+      aimedChar.getGauge(GAUGE_KEYS.VITALITY).consumed += effectiveDamage;
+      if (isOverHit) {
+        message += ` causing <strong>${effectiveDamage.toFixed(
+          0
+        )}dmg</strong>!`;
+      } else {
+        message += ` causing ${effectiveDamage.toFixed(0)}dmg!`;
+      }
+    } else {
+      if (isFumbled) {
+        message += ` but ${char.name} fumbled.`;
+      } else {
+        message += ` but ${aimedChar.name} dodged.`;
+      }
+    }
+
     this.writeMessage(message);
   }
   async doEndOrNextTurn(
@@ -763,12 +810,17 @@ export class BattleContext extends Context {
       //put them back up and tear down their mana and stamina
       playerTeam.actors.forEach((actor) => {
         actor.character.gauges.forEach((gauge) => {
-          gauge.consumed = Math.ceil(gauge.getModValue() * 0.975);
+          gauge.consumed = Math.ceil(
+            GaugeCalc.getValue(actor.character, gauge) * 0.975
+          );
         });
       });
       //Set max consumed stamina for company
       GameDataService.GAME_DATA.companyData.stamina.consumed =
-        GameDataService.GAME_DATA.companyData.stamina.getModValue();
+        GaugeCalc.getValue(
+          GameDataService.GAME_DATA.companyData,
+          GameDataService.GAME_DATA.companyData.stamina
+        );
       GameDataService.GAME_DATA.time += 60 * 4;
       const mapScene = window.game.scene.getScene('map-scene');
       const mapUIScene = window.game.scene.getScene('map-ui-scene');
