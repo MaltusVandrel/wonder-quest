@@ -4,7 +4,7 @@ import { MessageHandler } from './message-handler';
 import { BehaviorSubject, first } from 'rxjs';
 import { CalcUtil } from 'src/utils/calc.utils';
 import { STAT_KEY, StatCalc } from 'src/models/stats';
-import { GAUGE_KEYS, GaugeCalc } from 'src/models/gauge';
+import { GAUGE_ABBREVIATION, GAUGE_KEYS, GaugeCalc } from 'src/models/gauge';
 import { GameDataService } from 'src/services/game-data.service';
 import { SLIME_BUILDER } from 'src/data/builder/slime-builder';
 import { COMPANY_POSITION } from 'src/models/company';
@@ -66,7 +66,7 @@ export enum BATTLE_EVENT_TYPE {
   //ON_BUFF,
   //ON_DEBUFF,
   ON_SLAIN,
-  //ON_DEMISSE,
+  ON_DEMISSE,
   //ON_FLEE_FAIL,
   AFTER_BATTLE_END,
 }
@@ -566,12 +566,12 @@ export class BattleContext extends Context {
     let isAggression = false;
     if (!team.isPlayer || battleActor.isAuto) {
       this.turnInfo.isHeal = false;
-      this.doAttack(char, aimedChar);
+      await this.doAttack(char, aimedChar);
       isAggression = true;
     } else {
       this.turnInfo.isHeal = false;
       const res: any = await this.chooseAction(char);
-      this.doAttack(char, aimedChar);
+      await this.doAttack(char, aimedChar);
       isAggression = true;
     }
     this.removeActionFromUI(actionSlot);
@@ -580,6 +580,14 @@ export class BattleContext extends Context {
       if (await this.triggerEvents(BATTLE_EVENT_TYPE.ON_AGGRESSION)) return;
     }
     if (await this.triggerEvents(BATTLE_EVENT_TYPE.AFTER_ACTION)) return;
+
+    if (char.isFainted()) {
+      this.removeActorFromBattle(battleActor);
+      await BattleContext.delay().then(() => {
+        this.writeMessage(`${this.turn} - ${char.name} met his demise.`);
+      });
+      if (await this.triggerEvents(BATTLE_EVENT_TYPE.ON_DEMISSE)) return;
+    }
 
     if (aimedChar.isFainted()) {
       this.removeActorFromBattle(aimedBattleActor);
@@ -630,6 +638,25 @@ export class BattleContext extends Context {
     newP.innerHTML += message;
     this.textPanel.insertBefore(newP, this.textPanel.childNodes[0]);
   }
+  isThereAnyAnimosity() {
+    let isThereAnimosity = false;
+    this.battleTeams
+      .filter(
+        (team) =>
+          team.actors.filter((actor) => !actor.character.isFainted()).length > 0
+      )
+      .forEach((team) => {
+        isThereAnimosity =
+          isThereAnimosity ||
+          team.relationships.filter(
+            (rel) =>
+              rel.behaviour >= BattleContext.RELATIONSHIP_BEHAVIOUR.FOE &&
+              rel.team.actors.filter((actor) => !actor.character.isFainted())
+                .length > 0
+          ).length > 0;
+      });
+    return isThereAnimosity;
+  }
   isThereAnyAdversaryAlive(
     enemyTeams: BattleTeam[],
     alliesTeam: BattleTeam[]
@@ -678,8 +705,11 @@ export class BattleContext extends Context {
     const leveDiff = char.level - aimedChar.level;
     const leveDiffOposing = leveDiff * -1;
     const actionMove = MoveBonk;
-    const moveExpression = MoveBonk.defaultExpression;
+    const moveExpression = actionMove.defaultExpression;
 
+    //add a lot of info in BattleTurnInfo
+    //so the event has enough data to work with
+    if (await this.triggerEvents(BATTLE_EVENT_TYPE.ON_DEMISSE)) return;
     //do moves in the future, for now simple damage
     const stronk = moveExpression.statusInfluence
       .map(
@@ -705,6 +735,13 @@ export class BattleContext extends Context {
           influence.influence
       )
       .reduce((prev, current) => prev + current);
+    const crittance = moveExpression.critStatus
+      .map(
+        (influence) =>
+          StatCalc.getInfluenceValue(char, char.getStat(influence.stat)) *
+          influence.influence
+      )
+      .reduce((prev, current) => prev + current);
     const dodgdance = moveExpression.dodgingStatus
       .map(
         (influence) =>
@@ -722,10 +759,91 @@ export class BattleContext extends Context {
 
     const hitChanceBase = moveExpression.hitChance + hittance / 100;
     const hitChanceEffective = hitChanceBase - dodgdance / 100;
+
+    let critChanceEffective = moveExpression.criticalChance + crittance / 100;
+
     let isHit = false;
     let isOverHit = false;
     let isFumbled = false;
+    let isDodged = false;
+    let isCrit = false;
     let dodgeGoal = Math.random();
+    let critGoal = Math.random();
+    let critTimes = 0;
+
+    let hasCostNotice = false;
+    let hasCost = false;
+    let hasRecoil = false;
+    let costText = '';
+
+    const costs = moveExpression.gaugeCosts;
+    hasCostNotice = costs.length > 0;
+    let costTaken: { [key in GAUGE_KEYS]: number } = {
+      MANA: 0,
+      STAMINA: 0,
+      VITALITY: 0,
+    };
+    let recoil = 0;
+
+    if (hasCostNotice) {
+      const costTextDMG: Array<string> = [];
+      costs.forEach((cost) => {
+        const costValue = cost.cost;
+        const gauge = char.getGauge(cost.gauge);
+        const costReduction = cost.costReduction
+          .map(
+            (influence) =>
+              StatCalc.getInfluenceValue(char, char.getStat(influence.stat)) *
+              influence.influence
+          )
+          .reduce((prev, current) => prev + current);
+        const simpleCost = costValue - costReduction / 10;
+        const fumbleDampening = isFumbled
+          ? moveExpression.gaugeCostDampeningOnFumble
+          : 1;
+        const dodgeDampening = isDodged
+          ? moveExpression.gaugeCostDampeningOnDodge
+          : 1;
+        const composedCost = simpleCost * fumbleDampening * dodgeDampening;
+        let effectiveCost = 0;
+        let recoilCost = 0;
+
+        if (GaugeCalc.canHandleValue(composedCost, char, gauge)) {
+          effectiveCost = Math.ceil(composedCost);
+        } else {
+          recoilCost = Math.abs(
+            GaugeCalc.getUnhandableValue(composedCost, char, gauge)
+          );
+          effectiveCost = Math.ceil(composedCost - recoilCost);
+        }
+        gauge.consumed += effectiveCost;
+        char.getGauge(GAUGE_KEYS.VITALITY).consumed += recoilCost;
+
+        costTaken[cost.gauge] += effectiveCost;
+        recoil += Math.ceil(recoilCost);
+        if (effectiveCost > 0 || recoilCost > 0) hasCost = true;
+        if (effectiveCost > 0) {
+          costTextDMG.push(`${effectiveCost}${GAUGE_ABBREVIATION[cost.gauge]}`);
+        }
+      });
+      if (recoil > 0) {
+        hasRecoil = true;
+        costTextDMG.push(
+          `${recoil} ${GAUGE_ABBREVIATION[GAUGE_KEYS.VITALITY]} recoil dmg`
+        );
+      }
+      if (costTextDMG.length > 0) {
+        costText += ` expending `;
+        if (costTextDMG.length == 1) {
+          costText += costTextDMG[0];
+        } else {
+          const lastOne = costTextDMG.pop();
+          let tempCostText = costTextDMG.join(', ');
+          costText += tempCostText + ' and ' + lastOne;
+        }
+      }
+    }
+
     if (dodgeGoal < hitChanceEffective) {
       isHit = true;
       if (hitChanceEffective > 1) {
@@ -734,28 +852,49 @@ export class BattleContext extends Context {
           (hitChanceEffective - 1 + moveExpression.overHitInfluence);
         isOverHit = true;
       }
+      if (critChanceEffective > 1) {
+        const difference = critChanceEffective % 1;
+        critTimes = critChanceEffective - difference;
+        critChanceEffective = difference;
+      }
+      if (critGoal < critChanceEffective) {
+        critTimes++;
+      }
+      if (critTimes > 0) {
+        isCrit = true;
+        const critMultiplier = moveExpression.criticalMultiplier * critTimes;
+        effectiveDamage *= critMultiplier;
+      }
     } else {
       if (dodgeGoal < hitChanceBase) {
-        isFumbled = false;
+        isDodged = true;
       } else {
         isFumbled = true;
       }
     }
 
     let message = `${this.turn} - ${char.name} used ${moveExpression.name} on ${aimedChar.name}`;
+    if (hasCost) {
+      message += costText;
+    }
     if (isHit) {
       aimedChar.getGauge(GAUGE_KEYS.VITALITY).consumed += effectiveDamage;
-      if (isOverHit) {
-        message += ` causing <strong>${effectiveDamage.toFixed(
-          0
-        )}dmg</strong>!`;
+      message += ` causing <${isOverHit ? 'strong' : 'span'} class='${
+        isCrit ? 'critical-text' : ''
+      }'> ${effectiveDamage.toFixed(0)}dmg`;
+      if (isCrit) {
+        message += Array.from({ length: critTimes })
+          .map((_) => '!')
+          .join('');
       } else {
-        message += ` causing ${effectiveDamage.toFixed(0)}dmg!`;
+        message += '.';
       }
+      message += `</${isOverHit ? 'strong' : 'span'}>`;
     } else {
       if (isFumbled) {
         message += ` but ${char.name} fumbled.`;
-      } else {
+      }
+      if (isDodged) {
         message += ` but ${aimedChar.name} dodged.`;
       }
     }
@@ -773,6 +912,7 @@ export class BattleContext extends Context {
       enemyTeams,
       alliesTeam
     );
+    const isThereAnimosity = this.isThereAnyAnimosity();
 
     const playerTeam = this.battleTeams.filter(
       (team) => team.actionBehaviour == BattleContext.ACTION_BEHAVIOUR.PLAYER
@@ -837,12 +977,13 @@ export class BattleContext extends Context {
       await BattleContext.delay().then(() => {
         this.onEndCallback();
       });
-    } else if (isThereAnyAdversaryAlive) {
+    } else if (isThereAnimosity) {
       //*
       // If battle to be had stuff continues
       // */
       await BattleContext.delay().then(() => this.unravelBattle());
     } else {
+      //do retreat before ending turn so it is easier to manage
       //*
       // If player wons OR unrelated team wins
       // */

@@ -598,3 +598,20 @@ div#toast-holder {
 .positivo {
   color: #67eff7;
 }
+.critical-text {
+  animation-name: criticalText;
+  animation-duration: 0.6s;
+  animation-iteration-count: infinite;
+}
+@keyframes criticalText {
+  0% {
+    text-shadow: 1px 1px 0px #ff8903, -1px -1px 0px #03ffff;
+  }
+  50% {
+    text-shadow: 0px 0px 1px #ff8903, 0px 0px 1px #03ffff;
+  }
+  100% {
+    text-shadow: 1px 1px 0px #ff8903, -1px -1px 0px #03ffff;
+  }
+}
+//;

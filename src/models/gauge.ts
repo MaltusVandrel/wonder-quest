@@ -30,6 +30,11 @@ export const GAUGE_TITLES: { [key in GAUGE_KEYS]: string } = {
   STAMINA: 'stamina',
   MANA: 'mana',
 };
+export const GAUGE_ABBREVIATION: { [key in GAUGE_KEYS]: string } = {
+  VITALITY: 'hp',
+  STAMINA: 'sp',
+  MANA: 'mp',
+};
 export const GAUGE_DESCRIPTIONS: { [key in GAUGE_KEYS]: string } = {
   VITALITY:
     'Represents the overall health and energy that keeps you awake and alive.',
@@ -154,8 +159,16 @@ export class GaugeCalc {
     parent: Figure | Company,
     gauge: Gauge
   ): boolean {
-    return GaugeCalc.getCurrentValue(parent, gauge) - value > 0;
+    return GaugeCalc.getUnhandableValue(value, parent, gauge) > 0;
   }
+  static getUnhandableValue(
+    value: number,
+    parent: Figure | Company,
+    gauge: Gauge
+  ): number {
+    return GaugeCalc.getCurrentValue(parent, gauge) - value;
+  }
+
   static getValue(parent: Figure | Company, gauge: Gauge): number {
     if (parent instanceof Figure) {
       const char = parent as Figure;
