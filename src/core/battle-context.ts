@@ -68,6 +68,7 @@ export enum BATTLE_EVENT_TYPE {
   ON_SLAIN,
   ON_DEMISSE,
   //ON_FLEE_FAIL,
+  ON_TEAM_RETREAT,
   AFTER_BATTLE_END,
 }
 export interface BattleEvent {
@@ -102,6 +103,7 @@ export interface BattleTurnInfo {
   isPlayer?: boolean;
   isMove?: boolean;
   isHeal?: boolean;
+  move?: any;
 }
 
 export class BattleContext extends Context {
@@ -141,6 +143,9 @@ export class BattleContext extends Context {
   turnInfo: BattleTurnInfo = {
     turn: 0,
   };
+  turnInfoHistory: Array<BattleTurnInfo> = [];
+  actionSlotHistory: Array<BattleActionSlot> = [];
+  retreatedTeams: Array<BattleTeam> = [];
 
   onEndCallback: () => void = () => {};
   constructor(
@@ -520,7 +525,7 @@ export class BattleContext extends Context {
 
     this.turn++;
 
-    this.turnInfo.turn = this.turn;
+    this.turnInfo = { turn: this.turn, move: {} };
 
     this.doActionList();
 
@@ -630,8 +635,12 @@ export class BattleContext extends Context {
       }
     }
     if (await this.triggerEvents(BATTLE_EVENT_TYPE.TURN_END)) return;
+    await this.retreatFoeLessTeams();
 
-    this.doEndOrNextTurn(team, enemyTeams, alliesTeam);
+    this.turnInfoHistory.push(this.turnInfo);
+    this.actionSlotHistory.push(actionSlot);
+
+    await this.doEndOrNextTurn(team, enemyTeams, alliesTeam);
   }
   writeMessage(message: string) {
     const newP = document.createElement('p');
@@ -706,10 +715,10 @@ export class BattleContext extends Context {
     const leveDiffOposing = leveDiff * -1;
     const actionMove = MoveBonk;
     const moveExpression = actionMove.defaultExpression;
+    const hits: Array<any> = [];
 
     //add a lot of info in BattleTurnInfo
     //so the event has enough data to work with
-    if (await this.triggerEvents(BATTLE_EVENT_TYPE.ON_DEMISSE)) return;
     //do moves in the future, for now simple damage
     const stronk = moveExpression.statusInfluence
       .map(
@@ -752,25 +761,122 @@ export class BattleContext extends Context {
       )
       .reduce((prev, current) => prev + current);
 
-    const damage = (moveExpression.power + stronk) * (1 + leveDiff / 25);
-    const reduction = destronk * (1 + leveDiffOposing / 25);
-    const calculedDamage = damage - reduction;
-    let effectiveDamage = Math.max(calculedDamage, 1);
+    let isTotalFumbled = true;
+    let isTotalDodged = true;
 
-    const hitChanceBase = moveExpression.hitChance + hittance / 100;
-    const hitChanceEffective = hitChanceBase - dodgdance / 100;
+    let breakLoopOnHitFail = false;
+    let successHits = 0;
+    let totalEffectiveDamage = 0;
+    let isMultiAttack = moveExpression.isMultiAttack;
 
-    let critChanceEffective = moveExpression.criticalChance + crittance / 100;
+    Array.from({
+      length: isMultiAttack ? moveExpression.multiAttackMaxHits : 1,
+    }).forEach((_, index) => {
+      if (breakLoopOnHitFail) return;
 
-    let isHit = false;
-    let isOverHit = false;
-    let isFumbled = false;
-    let isDodged = false;
-    let isCrit = false;
-    let dodgeGoal = Math.random();
-    let critGoal = Math.random();
-    let critTimes = 0;
+      const isMultiHit = isMultiAttack && successHits > 0;
+      const multiAttackPowerOnHitInfluence = isMultiHit
+        ? moveExpression.multiAttackPowerOnHitInfluence ** successHits
+        : 1;
 
+      const damage =
+        (moveExpression.power * multiAttackPowerOnHitInfluence + stronk) *
+        (1 + leveDiff / 25) *
+        (1 + (25 * Math.random() - 12.5) / 100);
+      const reduction = destronk * (1 + leveDiffOposing / 25);
+      const calculedDamage = damage - reduction;
+      let effectiveDamage = Math.max(calculedDamage, 1);
+
+      const hitChanceBase = moveExpression.hitChance + hittance / 100;
+      const multiHitChanceInfluence = isMultiHit
+        ? moveExpression.multiAttackHitChanceOnHitInfluence ** successHits
+        : 1;
+      const hitChanceEffective =
+        hitChanceBase * multiHitChanceInfluence - dodgdance / 100;
+
+      const multiHitCriticalChanceInfluence = isMultiHit
+        ? moveExpression.multiAttackCriticalChanceOnHitInfluence ** successHits
+        : 1;
+      let critChanceEffective =
+        moveExpression.criticalChance * multiHitCriticalChanceInfluence +
+        crittance / 100;
+      let isHit = false;
+      let isOverHit = false;
+
+      let isCrit = false;
+      let dodgeGoal = Math.random();
+      let critGoal = Math.random();
+      let critTimes = 0;
+      let isFumbled = false;
+      let isDodged = false;
+      if (dodgeGoal < hitChanceEffective) {
+        isHit = true;
+        if (hitChanceEffective > 1) {
+          const multiHitOverHit = isMultiHit
+            ? moveExpression.multiAttackOverHitOnHitInfluence ** successHits
+            : 1;
+
+          effectiveDamage +=
+            effectiveDamage *
+            (moveExpression.overHitInfluence * multiHitOverHit);
+          isOverHit = true;
+        }
+        if (critChanceEffective > 1) {
+          const difference = critChanceEffective % 1;
+          critTimes = critChanceEffective - difference;
+          critChanceEffective = difference;
+        }
+        if (critGoal < critChanceEffective) {
+          critTimes++;
+        }
+        if (critTimes > 0) {
+          isCrit = true;
+          const multiHitCrit = isMultiHit
+            ? moveExpression.multiAttackCriticalOnHitInfluence ** successHits
+            : 1;
+
+          const critMultiplier =
+            moveExpression.criticalMultiplier * multiHitCrit * critTimes;
+          effectiveDamage *= critMultiplier;
+        }
+        isTotalFumbled = false;
+        isTotalDodged = false;
+        successHits++;
+        totalEffectiveDamage += effectiveDamage;
+      } else {
+        if (dodgeGoal < hitChanceBase) {
+          isTotalFumbled = false;
+          isDodged = true;
+        } else {
+          isTotalDodged = false;
+          isFumbled = true;
+        }
+      }
+
+      hits.push({
+        character: char,
+        aimedCharacter: aimedChar,
+        leveDiff: leveDiff,
+        leveDiffOposing: leveDiffOposing,
+        actionMove: actionMove,
+        defaultExpression: actionMove.defaultExpression,
+        isHit: isHit,
+        isOverHit: isOverHit,
+        isDodged: isDodged,
+        isFumbled: isFumbled,
+        isCrit: isCrit,
+        critTimes: critTimes,
+        critChanceEffective: critChanceEffective,
+        effectiveDamage: effectiveDamage,
+        dodgeGoal: dodgeGoal,
+        critGoal: critGoal,
+      });
+      if (moveExpression.multiAttackEndOnMiss && (isDodged || isFumbled)) {
+        breakLoopOnHitFail = true;
+      }
+    });
+
+    // GET COST
     let hasCostNotice = false;
     let hasCost = false;
     let hasRecoil = false;
@@ -798,11 +904,11 @@ export class BattleContext extends Context {
           )
           .reduce((prev, current) => prev + current);
         const simpleCost = costValue - costReduction / 10;
-        const fumbleDampening = isFumbled
-          ? moveExpression.gaugeCostDampeningOnFumble
+        const fumbleDampening = isTotalFumbled
+          ? moveExpression.gaugeCostInfluenceOnFumble
           : 1;
-        const dodgeDampening = isDodged
-          ? moveExpression.gaugeCostDampeningOnDodge
+        const dodgeDampening = isTotalDodged
+          ? moveExpression.gaugeCostInfluenceOnDodge
           : 1;
         const composedCost = simpleCost * fumbleDampening * dodgeDampening;
         let effectiveCost = 0;
@@ -844,62 +950,125 @@ export class BattleContext extends Context {
       }
     }
 
-    if (dodgeGoal < hitChanceEffective) {
-      isHit = true;
-      if (hitChanceEffective > 1) {
-        effectiveDamage +=
-          effectiveDamage *
-          (hitChanceEffective - 1 + moveExpression.overHitInfluence);
-        isOverHit = true;
-      }
-      if (critChanceEffective > 1) {
-        const difference = critChanceEffective % 1;
-        critTimes = critChanceEffective - difference;
-        critChanceEffective = difference;
-      }
-      if (critGoal < critChanceEffective) {
-        critTimes++;
-      }
-      if (critTimes > 0) {
-        isCrit = true;
-        const critMultiplier = moveExpression.criticalMultiplier * critTimes;
-        effectiveDamage *= critMultiplier;
-      }
-    } else {
-      if (dodgeGoal < hitChanceBase) {
-        isDodged = true;
-      } else {
-        isFumbled = true;
-      }
-    }
+    this.turnInfo.move = {
+      hasCostNotice: hasCostNotice,
+      hasCost: hasCost,
+      costTaken: costTaken,
+      hasRecoil: hasRecoil,
+      recoil: recoil,
+      hits: hits,
+    };
 
     let message = `${this.turn} - ${char.name} used ${moveExpression.name} on ${aimedChar.name}`;
     if (hasCost) {
       message += costText;
     }
-    if (isHit) {
-      aimedChar.getGauge(GAUGE_KEYS.VITALITY).consumed += effectiveDamage;
-      message += ` causing <${isOverHit ? 'strong' : 'span'} class='${
-        isCrit ? 'critical-text' : ''
-      }'> ${effectiveDamage.toFixed(0)}dmg`;
-      if (isCrit) {
-        message += Array.from({ length: critTimes })
+    if (isTotalFumbled) {
+      message += ` but ${char.name} fumbled.`;
+    } else if (isTotalDodged) {
+      message += ` but ${aimedChar.name} dodged.`;
+    } else if (hits.length == 1) {
+      const hit = hits[0];
+      aimedChar.getGauge(GAUGE_KEYS.VITALITY).consumed += totalEffectiveDamage;
+      message += ` causing <${hit.isOverHit ? 'strong' : 'span'} class='${
+        hit.isCrit ? 'critical-text' : ''
+      }'> ${totalEffectiveDamage.toFixed(0)}dmg`;
+      if (hit.isCrit) {
+        message += Array.from({ length: hit.critTimes })
           .map((_) => '!')
           .join('');
       } else {
         message += '.';
       }
-      message += `</${isOverHit ? 'strong' : 'span'}>`;
+      message += `</${hit.isOverHit ? 'strong' : 'span'}>`;
     } else {
-      if (isFumbled) {
-        message += ` but ${char.name} fumbled.`;
+      message += ` causing `;
+
+      const landedHits = hits.filter((hit) => hit.isHit);
+      const fumbles = hits.filter((hit) => hit.isFumbled).length;
+      const dodges = hits.filter((hit) => hit.isDodged).length;
+      const lastItem = landedHits.length - 1;
+      landedHits.forEach((hit, index) => {
+        message += `<${hit.isOverHit ? 'strong' : 'span'} class='${
+          hit.isCrit ? 'critical-text' : ''
+        }'> ${hit.effectiveDamage.toFixed(0)}dmg`;
+        if (hit.isCrit) {
+          message += Array.from({ length: hit.critTimes })
+            .map((_) => '!')
+            .join('');
+        }
+        message += `</${hit.isOverHit ? 'strong' : 'span'}>`;
+        if (lastItem != index) message += ', ';
+      });
+      message += ` Causinga a total of ${totalEffectiveDamage.toFixed(
+        0
+      )}dmg, landing ${landedHits.length}x`;
+      if (fumbles > 0) {
+        message += `${dodges > 0 ? ', ' : ' and'} missing ${fumbles}x`;
       }
-      if (isDodged) {
-        message += ` but ${aimedChar.name} dodged.`;
+      if (dodges > 0) {
+        message += ` and being avoided ${dodges}x`;
       }
+      message += '.';
+      aimedChar.getGauge(GAUGE_KEYS.VITALITY).consumed += totalEffectiveDamage;
     }
 
     this.writeMessage(message);
+  }
+  async retreatFoeLessTeams() {
+    let wasTeamRemoved = false;
+    let teamsRemoved: Array<BattleTeam> = [];
+    let actorRemoved: Array<BattleActor> = [];
+    do {
+      wasTeamRemoved = false;
+      let teamsToRemove: Array<BattleTeam> = [];
+      this.battleTeams
+        .filter((team) => !team.isPlayer)
+        .forEach((currentTeam) => {
+          const alliesTeam: Array<BattleTeam> = currentTeam.relationships
+            .filter(
+              (rel) =>
+                rel.behaviour == BattleContext.RELATIONSHIP_BEHAVIOUR.ALLY
+            )
+            .map((rel) => rel.team);
+
+          const enemyTeams: Array<BattleTeam> = currentTeam.relationships
+            .filter(
+              (rel) => rel.behaviour >= BattleContext.RELATIONSHIP_BEHAVIOUR.FOE
+            )
+            .sort((relA, relB) => relB.behaviour - relA.behaviour)
+            .map((rel) => rel.team);
+
+          const isThereAnyAdversaryAlive = this.isThereAnyAdversaryAlive(
+            enemyTeams,
+            alliesTeam
+          );
+          if (!isThereAnyAdversaryAlive) teamsToRemove.push(currentTeam);
+        });
+      teamsToRemove.forEach((currentTeam) => {
+        //If not player then reatreat team
+        if (
+          currentTeam.relationships.filter((rel) => rel.team.isPlayer).length ==
+          0
+        ) {
+          teamsRemoved.push(currentTeam);
+          actorRemoved = actorRemoved.concat(currentTeam.actors);
+          this.battleTeams = this.battleTeams.filter(
+            (team) => team.id != currentTeam.id
+          );
+          this.battleActors = this.battleActors.filter(
+            (actor) => actor.team.id != currentTeam.name
+          );
+          wasTeamRemoved = true;
+        }
+      });
+    } while (wasTeamRemoved);
+    for (const team of teamsRemoved) {
+      this.retreatedTeams.push(team);
+      await BattleContext.delay(50);
+      this.writeMessage(`${this.turn} - ${team.name} retreated from battle...`);
+      await this.triggerEvents(BATTLE_EVENT_TYPE.ON_TEAM_RETREAT);
+    }
   }
   async doEndOrNextTurn(
     currentTeam: BattleTeam,
@@ -908,10 +1077,6 @@ export class BattleContext extends Context {
   ) {
     //check if theres any foe alive
 
-    const isThereAnyAdversaryAlive = this.isThereAnyAdversaryAlive(
-      enemyTeams,
-      alliesTeam
-    );
     const isThereAnimosity = this.isThereAnyAnimosity();
 
     const playerTeam = this.battleTeams.filter(
@@ -994,31 +1159,6 @@ export class BattleContext extends Context {
         message = `${currentTeam.name} and the allies ${allies} won!`;
       } else {
         message = `${currentTeam.name} won!`;
-      }
-      //If not player then reatreat team
-      if (
-        !currentTeam.isPlayer &&
-        currentTeam.relationships.filter((rel) => rel.team.isPlayer).length == 0
-      ) {
-        message += ' They retreated from the battle.';
-        if (this.scheme.endText) message += '<br/>' + this.scheme.endText;
-        BattleContext.delay().then(() => {
-          this.battleActors = this.battleActors.filter(
-            (actor) => actor.team.name != currentTeam.name
-          );
-          this.battleTeams = this.battleTeams.filter(
-            (battleTeam) => battleTeam.name != currentTeam.name
-          );
-          alliesTeam.forEach((allyTeam) => {
-            this.battleActors = this.battleActors.filter(
-              (actor) => actor.team.name != allyTeam.name
-            );
-            this.battleTeams = this.battleTeams.filter(
-              (battleTeam) => battleTeam.name != allyTeam.name
-            );
-          });
-          this.doActionList();
-        });
       }
 
       await BattleContext.delay().then(() => {

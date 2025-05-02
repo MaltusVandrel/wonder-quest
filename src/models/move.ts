@@ -49,14 +49,25 @@ export interface MoveExpression {
   criticalChance: number;
   criticalMultiplier: number;
 
-  gaugeCostDampeningOnFumble: number;
-  gaugeCostDampeningOnDodge: number;
+  isMultiAttack: boolean;
+  multiAttackMaxHits: number;
+  multiAttackEndOnMiss: boolean;
+  multiAttackHitChanceOnHitInfluence: number;
+  multiAttackOverHitOnHitInfluence: number;
+  multiAttackPowerOnHitInfluence: number;
+  multiAttackCriticalChanceOnHitInfluence: number;
+  multiAttackCriticalOnHitInfluence: number;
+
+  gaugeCostInfluenceOnFumble: number;
+  gaugeCostInfluenceOnDodge: number;
   gaugeCosts: Array<{
     gauge: GAUGE_KEYS;
     cost: number;
     costReduction: Array<StatInfluence>;
   }>;
-  //targetFilter [number|random|maxmin?][team|position|enemy|numberOfEnemies|position|adversarial|support|ally|foe|property|anemyType|item|move]
+  //nao deixar morrer de dano de recoil ???!
+  //fazer
+  //targetFilter [number|random|maxmin?][all|any|self|team|position|enemy|numberOfEnemies|position|adversarial|support|ally|foe|property|anemyType|item|move]
 
   //windup // set atack to happen fowards, pushing the progress order
   //recover // push the progress order after the
@@ -70,14 +81,6 @@ export interface MoveExpression {
 
   //creationActionAttack?
   //endNextActionsAttackOnMiss?
-
-  //isMultiAttack?
-  //multiAttackMaxHits
-  //multiAttackEndOnMiss?
-  //multiAttackHitChanceOnHitProgression
-  //multiAttackPowerOnHitProgression
-  //multiAttackCriticalChanceOnHitProgression
-  //multiAttackCriticalMultiplierOnHitProgression
 
   statusInfluence: Array<StatInfluence>;
   hitStatus: Array<StatInfluence>;
@@ -99,8 +102,8 @@ export interface Move {
   defaultExpression: MoveExpression;
 }
 
-export const StruggleAttack: Move = {
-  key: 'aggression.struggle-attack',
+export const MoveBonk: Move = {
+  key: 'aggression.bonk',
   name: 'Bonk',
   defaultExpression: {
     moveKey: 'aggression.bonk',
@@ -114,49 +117,20 @@ export const StruggleAttack: Move = {
     power: 1,
     criticalChance: 0.25,
     criticalMultiplier: 2,
-    hitChance: 0.99,
-    overHitInfluence: 0.25,
+    hitChance: 0.75,
+    overHitInfluence: 0.15,
 
-    gaugeCostDampeningOnFumble: 0,
-    gaugeCostDampeningOnDodge: 0,
-    gaugeCosts: [
-      {
-        gauge: GAUGE_KEYS.VITALITY,
-        cost: 15,
-        costReduction: [],
-      },
-    ],
+    gaugeCostInfluenceOnFumble: 0,
+    gaugeCostInfluenceOnDodge: 0.5,
 
-    statusInfluence: [{ stat: STAT_KEY.STRENGTH, influence: 5 }],
-    hitStatus: [{ stat: STAT_KEY.DEXTERITY, influence: 1 }],
-    critStatus: [{ stat: STAT_KEY.LUCK, influence: 1 }],
-
-    dodgingStatus: [{ stat: STAT_KEY.AGILITY, influence: 1 }],
-    resistenceStatus: [{ stat: STAT_KEY.ENDURANCE, influence: 1 }],
-    characteristics: [PROPERTY_LIST['damage_type_impact']],
-  },
-};
-
-export const MoveBonk: Move = {
-  key: 'aggression.bonk',
-  name: 'Bonk',
-  defaultExpression: {
-    moveKey: 'aggression.bonk',
-    type: MoveType.MOVE,
-    name: 'bonk',
-    description: '',
-    level: 1,
-    xp: 0,
-    learned: MoveLearningStatus.LEARNED,
-
-    power: 25,
-    criticalChance: 0.25,
-    criticalMultiplier: 2,
-    hitChance: 0.99,
-    overHitInfluence: 0.25,
-
-    gaugeCostDampeningOnFumble: 0,
-    gaugeCostDampeningOnDodge: 0.5,
+    isMultiAttack: true,
+    multiAttackMaxHits: 15,
+    multiAttackEndOnMiss: false,
+    multiAttackHitChanceOnHitInfluence: 0.975,
+    multiAttackOverHitOnHitInfluence: 1.05,
+    multiAttackPowerOnHitInfluence: 1,
+    multiAttackCriticalChanceOnHitInfluence: 1,
+    multiAttackCriticalOnHitInfluence: 1,
 
     gaugeCosts: [
       {
