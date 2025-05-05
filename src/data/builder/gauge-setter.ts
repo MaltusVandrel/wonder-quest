@@ -4,11 +4,11 @@ import {
   GAUGE_KEYS,
   GAUGE_TITLES,
 } from '../../models/gauge';
-import { Figure } from '../../models/figure';
+import { Actor } from '../../models/actor';
 
 let GAUGES: Gauge[] = [];
 
-export function setGauges(being: Figure, value?: number) {
+export function setGauges(being: Actor, value?: number) {
   for (let key of Object.keys(GAUGE_KEYS)) {
     let gauge = { ...defaultGauge };
     gauge.title = { ...GAUGE_TITLES }[key] || '';

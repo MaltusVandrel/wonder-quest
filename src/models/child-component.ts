@@ -1,15 +1,15 @@
 import { EventEmitter } from '@angular/core';
-import { Figure } from './figure';
+import { Actor } from './actor';
 import { Company } from './company';
 
 export class ChildComponent extends EventEmitter {
-  parent: Figure | Company | undefined;
+  parent: Actor | Company | undefined;
   key: any;
-  constructor(parent: Figure | Company) {
+  constructor(parent: Actor | Company) {
     super();
     this.parent = parent;
   }
-  init(parent: Figure | Company) {
+  init(parent: Actor | Company) {
     this.parent = parent;
   }
 }

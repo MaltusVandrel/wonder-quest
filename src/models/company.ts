@@ -1,4 +1,4 @@
-import { Figure } from './figure';
+import { Actor } from './actor';
 import { defaultGauge, Gauge } from './gauge';
 import { Item } from './item';
 
@@ -13,13 +13,13 @@ export enum COMPANY_POSITION {
 }
 export class Company {
   title: string = 'Company';
-  members: { character: Figure; positions: COMPANY_POSITION[] }[] = [];
+  members: { character: Actor; positions: COMPANY_POSITION[] }[] = [];
   inventory: Item[] = [];
   stamina: Gauge = { ...defaultGauge };
   static untieCircularReference(figure: Company): any {
     let data = { ...figure };
     for (let member of data.members) {
-      member.character = Figure.untieCircularReference(member.character);
+      member.character = Actor.untieCircularReference(member.character);
     }
     return data;
   }
@@ -28,7 +28,7 @@ export class Company {
     obj.stamina = data.stamina;
     obj.title = data.title;
     for (let member of data.members) {
-      member.character = Figure.instantiate(member.character);
+      member.character = Actor.instantiate(member.character);
       obj.members.push(member);
     }
     for (let item of data.inventory) {
@@ -39,6 +39,6 @@ export class Company {
   }
 }
 export interface CompanyTeam {
-  members: Figure[];
+  members: Actor[];
   type: COMPANY_POSITION;
 }

@@ -1,2 +1,2 @@
 import { MapRegion } from 'src/data/bank/map-region';
-import { Figure } from 'src/models/figure';
+import { Actor } from 'src/models/actor';

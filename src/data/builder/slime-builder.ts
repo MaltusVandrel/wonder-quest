@@ -1,10 +1,10 @@
-import { Figure } from '../../models/figure';
+import { Actor } from '../../models/actor';
 import { setGauges } from './gauge-setter';
 import { setStats } from './stats-setter';
 
 export let SLIME_BUILDER = {
-  getASlime(level: number): Figure {
-    let being: Figure = new Figure();
+  getASlime(level: number): Actor {
+    let being: Actor = new Actor();
     being.name = 'Slime';
     being.level = level;
     setStats(being, 9 + level);

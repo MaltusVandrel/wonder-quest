@@ -16,6 +16,8 @@ import {
   BattleScheme,
 } from 'src/core/battle-context';
 import { SLIME_BUILDER } from '../builder/slime-builder';
+import { ChallangeDificultyXPInfluence } from 'src/core/xp-calc';
+import { BATTLE_INSTRUCTIONS } from 'src/core/battle-instructions';
 const TRIGGER_MULTIPLIER = 1;
 /*
 interface EncounterScheme {
@@ -184,8 +186,16 @@ export const ENCOUNTERS: { [key in BIOME_TYPES]: Array<EncounterScheme> } = {
             const enemies = names.map((_, i) => {
               const slime = SLIME_BUILDER.getASlime(level);
               slime.name += ' ' + names[i];
-              return slime;
+              return {
+                character: slime,
+                fainted: false,
+                legendaryActions: 0,
+                dificulty: ChallangeDificultyXPInfluence.EASY,
+                battleInstructions:
+                  BATTLE_INSTRUCTIONS.GET_RANDOM_ALIVE_ADVERSARY,
+              };
             });
+
             groups.push({
               members: enemies,
               teamName: 'Slimes',
@@ -221,7 +231,14 @@ export const ENCOUNTERS: { [key in BIOME_TYPES]: Array<EncounterScheme> } = {
 
                 battle.addNewBattleActor(
                   battle.turnInfo.activeSlot?.timeStamp || 0,
-                  interloperSlime,
+                  {
+                    character: interloperSlime,
+                    fainted: false,
+                    legendaryActions: 0,
+                    dificulty: ChallangeDificultyXPInfluence.EASY,
+                    battleInstructions:
+                      BATTLE_INSTRUCTIONS.GET_RANDOM_ALIVE_ADVERSARY,
+                  },
                   battle.getTeamByKey('slime')
                 );
                 return {

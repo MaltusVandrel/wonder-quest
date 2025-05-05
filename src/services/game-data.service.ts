@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { MapRegion } from 'src/data/bank/map-region';
 import { HERO_BUILDER } from 'src/data/builder/hero-builder';
 import { Biome } from 'src/models/biome';
-import { Figure } from 'src/models/figure';
+import { Actor } from 'src/models/actor';
 import { Company } from 'src/models/company';
 import { BattleGroup, BattleScheme } from 'src/core/battle-context';
 export interface TimeData {

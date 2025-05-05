@@ -69,6 +69,24 @@ export interface MoveExpression {
   //fazer
   //targetFilter [number|random|maxmin?][all|any|self|team|position|enemy|numberOfEnemies|position|adversarial|support|ally|foe|property|anemyType|item|move]
 
+  //unbloodiedPowerInfluence
+  //unbloodiedCriticalChanceInfluence
+  //unbloodiedCriticalInfluence
+  //unbloodiedHitChanceInfluence
+  //unbloodiedOverHitInfluence
+
+  //bloodiedPowerInfluence
+  //bloodiedCriticalChanceInfluence
+  //bloodiedCriticalInfluence
+  //bloodiedHitChanceInfluence
+  //bloodiedOverHitInfluence
+
+  //unbloodiedPowerInfluence
+  //unbloodiedCriticalChanceInfluence
+  //unbloodiedCriticalInfluence
+  //unbloodiedHitChanceInfluence
+  //unbloodiedOverHitInfluence
+
   //windup // set atack to happen fowards, pushing the progress order
   //recover // push the progress order after the
 
@@ -91,7 +109,9 @@ export interface MoveExpression {
   characteristics: Array<Property>;
 
   //secondaryEffect:MoveExpression
-
+  //i think the one down is a good idea to put one after another and like
+  //-20% mana cost on targeting water property, then 50% stronger against warriors
+  //conditionalTransformer:[ ](battleContext,MoveExpression)=>{detail:{msg:string,data:any},transformedExpression:MoveExpression}// action
   //conditionalBehaviour:boolean // action(battleContext,MoveExpression):MoveExpression
   //specialBehaviour:boolean // action(battleContext,MoveExpression)
 }

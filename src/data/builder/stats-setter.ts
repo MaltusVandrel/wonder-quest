@@ -1,9 +1,9 @@
 import { defaultStat, Stat, STAT_KEY, STAT_TITLES } from '../../models/stats';
-import { Figure } from '../../models/figure';
+import { Actor } from '../../models/actor';
 
 let STATS: Stat[] = [];
 
-export function setStats(being: Figure, maxValue: number) {
+export function setStats(being: Actor, maxValue: number) {
   const randomPart = maxValue - 10;
   const positiveVariance = Math.round(randomPart * (1 + 1 / 3));
   const negativeVariance = Math.round(randomPart / 3);

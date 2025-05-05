@@ -1,6 +1,6 @@
 import { ChildComponent } from './child-component';
 import { Company, COMPANY_POSITION } from './company';
-import { Figure } from './figure';
+import { Actor } from './actor';
 import { STAT_KEY, StatCalc } from './stats';
 
 export const STATUS_MODFIERS_INTENSITY = 1;
@@ -132,46 +132,46 @@ export const defaultGauge: Gauge = {
 
 export class GaugeCalc {
   static getPercentualValueString(
-    parent: Figure | Company,
+    parent: Actor | Company,
     gauge: Gauge
   ): string {
     return GaugeCalc.getPercentualValue(parent, gauge).toFixed(2);
   }
-  static getPercentualValue(parent: Figure | Company, gauge: Gauge): number {
+  static getPercentualValue(parent: Actor | Company, gauge: Gauge): number {
     return (
       (GaugeCalc.getCurrentValue(parent, gauge) /
         GaugeCalc.getValue(parent, gauge)) *
       100
     );
   }
-  static getCurrentValueString(parent: Figure | Company, gauge: Gauge): string {
+  static getCurrentValueString(parent: Actor | Company, gauge: Gauge): string {
     return (
       GaugeCalc.getCurrentValue(parent, gauge).toFixed(0) +
       '/' +
       GaugeCalc.getValue(parent, gauge).toFixed(0)
     );
   }
-  static getCurrentValue(parent: Figure | Company, gauge: Gauge) {
+  static getCurrentValue(parent: Actor | Company, gauge: Gauge) {
     return GaugeCalc.getValue(parent, gauge) - gauge.consumed;
   }
   static canHandleValue(
     value: number,
-    parent: Figure | Company,
+    parent: Actor | Company,
     gauge: Gauge
   ): boolean {
     return GaugeCalc.getUnhandableValue(value, parent, gauge) > 0;
   }
   static getUnhandableValue(
     value: number,
-    parent: Figure | Company,
+    parent: Actor | Company,
     gauge: Gauge
   ): number {
     return GaugeCalc.getCurrentValue(parent, gauge) - value;
   }
 
-  static getValue(parent: Figure | Company, gauge: Gauge): number {
-    if (parent instanceof Figure) {
-      const char = parent as Figure;
+  static getValue(parent: Actor | Company, gauge: Gauge): number {
+    if (parent instanceof Actor) {
+      const char = parent as Actor;
       const mods = GAUGE_MODFIERS[gauge.key as GAUGE_KEYS];
       let value = gauge.value;
       for (let mod of Object.keys(mods)) {

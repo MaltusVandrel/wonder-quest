@@ -11,7 +11,7 @@ import {
 } from 'src/data/bank/encounter';
 import { SLIME_BUILDER } from 'src/data/builder/slime-builder';
 import { COMPANY_POSITION } from 'src/models/company';
-import { Figure } from 'src/models/figure';
+import { Actor } from 'src/models/actor';
 import { Gauge, GAUGE_INFOS, GAUGE_KEYS, GaugeCalc } from 'src/models/gauge';
 import { Stat, STAT_INFOS, STAT_KEY, StatCalc } from 'src/models/stats';
 import { MapScene } from 'src/scenes/map.scene';
@@ -383,7 +383,7 @@ class HTMLCompanyDialogElement extends HTMLCustomDialogElement<any> {
     memberButtonHolder.classList.add('member-button-holder');
 
     const showMember = (member: {
-      character: Figure;
+      character: Actor;
       positions: COMPANY_POSITION[];
     }) => {
       const char = member.character;
@@ -485,7 +485,7 @@ class HTMLCompanyDialogElement extends HTMLCustomDialogElement<any> {
 
       statsHolder.innerHTML = '';
       Object.keys(STAT_KEY).forEach((key: string) => {
-        const char: Figure = member.character;
+        const char: Actor = member.character;
         const stat: Stat = char.getStat(key);
         const statRow = document.createElement('tr');
         const statUPCell = document.createElement('td');

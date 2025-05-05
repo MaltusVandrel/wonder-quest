@@ -9,7 +9,7 @@ import {
 } from './ui-notification.util';
 import { FigureName, NAMES } from 'src/data/bank/names';
 import { HERO_BUILDER } from 'src/data/builder/hero-builder';
-import { Figure } from 'src/models/figure';
+import { Actor } from 'src/models/actor';
 import { Stat, StatCalc } from 'src/models/stats';
 import { COMPANY_POSITION } from 'src/models/company';
 
@@ -42,7 +42,7 @@ function doRestButton() {
     stamina.consumed = 0;
     GameDataService.GAME_DATA.time += 8 * 60;
     GameDataService.GAME_DATA.companyData.members.forEach(
-      (member: { character: Figure; positions: COMPANY_POSITION[] }) => {
+      (member: { character: Actor; positions: COMPANY_POSITION[] }) => {
         member.character.gauges.forEach((gauge) => (gauge.consumed = 0));
       }
     );
@@ -240,7 +240,7 @@ export function setUpIntroductionUI() {
 }
 function showTextIntroductionUI() {
   const introductionScene = window.game.scene.getScene('introduction-scene');
-  const hero: Figure = HERO_BUILDER.getAHero(1, {
+  const hero: Actor = HERO_BUILDER.getAHero(1, {
     name: characterCreationData.figureName.name,
     data: {
       genderQualifier: characterCreationData.figureName.qualifier,

@@ -1,11 +1,11 @@
-import { Figure } from '../../models/figure';
+import { Actor } from '../../models/actor';
 
 import { setGauges } from './gauge-setter';
 import { setStats } from './stats-setter';
 
 export let HERO_BUILDER = {
-  getAHero(level: number, data: any): Figure {
-    let being: Figure = new Figure();
+  getAHero(level: number, data: any): Actor {
+    let being: Actor = new Actor();
     being.name = data.name;
     being.level = level;
     setStats(being, 22);

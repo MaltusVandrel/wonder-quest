@@ -1,5 +1,5 @@
 import { ChildComponent } from './child-component';
-import { Figure } from './figure';
+import { Actor } from './actor';
 import { Company } from './company';
 export enum STAT_KEY {
   STRENGTH = 'STRENGTH',
@@ -97,10 +97,10 @@ export const defaultStat: Stat = {
   modValue: 10,
 };
 export class StatCalc {
-  static getCurrentValue(parent: Figure | Company, stat: Stat): number {
+  static getCurrentValue(parent: Actor | Company, stat: Stat): number {
     return stat.value;
   }
-  static getInfluenceValue(parent: Figure | Company, stat: Stat): number {
+  static getInfluenceValue(parent: Actor | Company, stat: Stat): number {
     return (stat.value - 10) / 2;
   }
 }

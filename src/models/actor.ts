@@ -11,7 +11,7 @@ export interface FigureData {
   configuration?: any;
   extra?: any;
 }
-export class Figure {
+export class Actor {
   id: string = CalcUtil.genId();
   //gauge
   //stats
@@ -32,13 +32,13 @@ export class Figure {
   //
 
   constructor() {}
-  static untieCircularReference(figure: Figure): any {
+  static untieCircularReference(figure: Actor): any {
     let data = { ...figure };
 
     return data;
   }
-  static instantiate(data: any): Figure {
-    let obj = new Figure();
+  static instantiate(data: any): Actor {
+    let obj = new Actor();
     obj.id = data.id;
     obj.data = data.data as FigureData;
     obj.name = data.name;
