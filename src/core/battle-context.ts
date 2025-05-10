@@ -495,7 +495,7 @@ export class BattleContext extends Context {
   async unravelBattle() {
     const actionSlot: BattleActionSlot | undefined = this.actionSlots.shift();
     if (actionSlot == undefined) throw 'Populate the battle slots ya fucker';
-
+    await this.retreatFoeLessTeams();
     this.turn++;
 
     this.turnInfo = { turn: this.turn, moves: [] };
@@ -572,34 +572,39 @@ export class BattleContext extends Context {
       });
     return isThereAnimosity;
   }
-  isThereAnyAdversaryAlive(
-    enemyTeams: BattleTeam[],
-    alliesTeam: BattleTeam[]
-  ): boolean {
+  isThereAnyAdversaryAlive(team: BattleTeam): boolean {
     //Unilateral behaviour cannot ever happen, it may be assimetric but never unilateral
-    const adversarialTeams: BattleTeam[] = enemyTeams.concat([]);
-    alliesTeam.forEach((allyTeam) => {
-      adversarialTeams.concat(
-        allyTeam.relationships
-          .filter(
-            (rel) => rel.behaviour >= BattleContext.RELATIONSHIP_BEHAVIOUR.FOE
-          )
-          .map((rel) => rel.team)
-      );
-    });
+    const enemyTeams: Array<BattleTeam> = this.getEnemyTeams(team);
 
-    const adversarialTeamsString = adversarialTeams
-      .map((battleTeam) => battleTeam.name)
-      .join('|');
+    const adversarialTeams: BattleTeam[] = this.getAdversarialTeams(team);
+
+    const detrimentalTeams: BattleTeam[] = this.getDetrimentalTeams(team);
+
+    const allAdvTeams = [
+      ...enemyTeams,
+      ...adversarialTeams,
+      ...detrimentalTeams,
+    ];
+
+    const allBitches: Array<BattleActor> = allAdvTeams
+      .map((team) => {
+        return team.actors;
+      })
+      .reduce((previous: BattleActor[], current: BattleActor[]) => {
+        return previous.concat(current);
+      });
 
     return (
-      this.battleActors.filter((battleActor) => {
-        return (
-          adversarialTeamsString.indexOf(battleActor.team.name) > -1 &&
-          !battleActor.character.isFainted()
-        );
+      allBitches.filter((battleActor) => {
+        return !battleActor.character.isFainted();
       }).length > 0
     );
+  }
+  getTeamsWithAliveActors(teamCluster: Array<BattleTeam>): Array<BattleTeam> {
+    return teamCluster.filter((team) => this.doTeamHasAliveActors(team));
+  }
+  doTeamHasAliveActors(team: BattleTeam): boolean {
+    return team.actors.filter((a) => !a.character.isFainted()).length > 0;
   }
   chooseAction(char: Actor): Promise<BattleInstructionExpression> {
     const promise = new Promise<BattleInstructionExpression>((resolve) => {
@@ -1054,32 +1059,24 @@ export class BattleContext extends Context {
       this.battleTeams
         .filter((team) => !team.isPlayer)
         .forEach((currentTeam) => {
-          const alliesTeam: Array<BattleTeam> = currentTeam.relationships
-            .filter(
-              (rel) =>
-                rel.behaviour == BattleContext.RELATIONSHIP_BEHAVIOUR.ALLY
-            )
-            .map((rel) => rel.team);
-
-          const enemyTeams: Array<BattleTeam> = currentTeam.relationships
-            .filter(
-              (rel) => rel.behaviour >= BattleContext.RELATIONSHIP_BEHAVIOUR.FOE
-            )
-            .sort((relA, relB) => relB.behaviour - relA.behaviour)
-            .map((rel) => rel.team);
-
-          const isThereAnyAdversaryAlive = this.isThereAnyAdversaryAlive(
-            enemyTeams,
-            alliesTeam
-          );
+          const isThereAnyAdversaryAlive =
+            this.isThereAnyAdversaryAlive(currentTeam);
+          if (!isThereAnyAdversaryAlive) {
+            console.log(
+              `retreatFoeLessTeams().isThereAnyAdversaryAlive??${isThereAnyAdversaryAlive}`
+            );
+          }
           if (!isThereAnyAdversaryAlive) teamsToRemove.push(currentTeam);
         });
       teamsToRemove.forEach((currentTeam) => {
         //If not player then reatreat team
-        if (
-          currentTeam.relationships.filter((rel) => rel.team.isPlayer).length ==
-          0
-        ) {
+        const hasRelationshipWithPlayer =
+          currentTeam.relationships.filter((rel) => rel.team.isPlayer).length >
+          0;
+        console.log(
+          `retreatFoeLessTeams().hasRelationshipWithPlayer??${hasRelationshipWithPlayer}`
+        );
+        if (!hasRelationshipWithPlayer) {
           teamsRemoved.push(currentTeam);
           actorRemoved = actorRemoved.concat(currentTeam.actors);
           this.battleTeams = this.battleTeams.filter(
@@ -1212,6 +1209,114 @@ export class BattleContext extends Context {
   getTeamByID(teamId: string): BattleTeam {
     return this.battleTeams.filter((team) => team.id == teamId)[0];
   }
+  getAllyTeams(team: BattleTeam): Array<BattleTeam> {
+    const alliesTeam: Array<BattleTeam> = team.relationships
+      .filter(
+        (rel) => rel.behaviour == BattleContext.RELATIONSHIP_BEHAVIOUR.ALLY
+      )
+      .map((rel) => rel.team);
+    return alliesTeam;
+  }
+  //supportive are allies of allies
+  getSupportiveTeams(team: BattleTeam): Array<BattleTeam> {
+    const alliesTeam: Array<BattleTeam> = this.getAllyTeams(team);
+    let searchedIdsTeam: Array<string> = alliesTeam.map((a) => a.id);
+    let searchedTeams: Array<BattleTeam> = alliesTeam;
+    let wasTeamAdded = false;
+    let supportiveTeams: Array<BattleTeam> = [];
+    do {
+      wasTeamAdded = false;
+      let teamsToAdd: Array<BattleTeam> = [];
+      for (let allyToSearch of searchedTeams) {
+        teamsToAdd = teamsToAdd.concat(
+          this.getAllyTeams(allyToSearch).filter(
+            (b) => searchedIdsTeam.indexOf(b.id) == -1
+          )
+        );
+      }
+      if (teamsToAdd && teamsToAdd.length > 0) {
+        wasTeamAdded = true;
+        searchedTeams = teamsToAdd;
+        supportiveTeams = supportiveTeams.concat(teamsToAdd);
+        searchedIdsTeam = searchedIdsTeam.concat(teamsToAdd.map((a) => a.id));
+      }
+    } while (wasTeamAdded);
+    return supportiveTeams;
+  }
+  //Enemies of Foes
+  getBeneficialTeams(team: BattleTeam): Array<BattleTeam> {
+    const enemiesTeam: Array<BattleTeam> = this.getEnemyTeams(team);
+    const alliesTeam: Array<BattleTeam> = this.getAllyTeams(team);
+    const supportivesTeam: Array<BattleTeam> = this.getSupportiveTeams(team);
+    let searchedIdsTeam: Array<string> = enemiesTeam.map((a) => a.id);
+    searchedIdsTeam = searchedIdsTeam.concat(alliesTeam.map((a) => a.id));
+    searchedIdsTeam = searchedIdsTeam.concat(supportivesTeam.map((a) => a.id));
+    let beneficialTeams: Array<BattleTeam> = [];
+    let teamsToAdd: Array<BattleTeam> = [];
+    for (let enemyToSearch of enemiesTeam) {
+      teamsToAdd = teamsToAdd.concat(
+        this.getEnemyTeams(enemyToSearch).filter(
+          (b) => searchedIdsTeam.indexOf(b.id) == -1
+        )
+      );
+    }
+    beneficialTeams = beneficialTeams.concat(teamsToAdd);
+    return beneficialTeams;
+  }
+  getEnemyTeams(team: BattleTeam): Array<BattleTeam> {
+    const enemiesTeam: Array<BattleTeam> = team.relationships
+      .filter(
+        (rel) => rel.behaviour == BattleContext.RELATIONSHIP_BEHAVIOUR.FOE
+      )
+      .map((rel) => rel.team);
+    return enemiesTeam;
+  }
+  //adversarial are allies of foes
+  getAdversarialTeams(team: BattleTeam): Array<BattleTeam> {
+    const enemiesTeam: Array<BattleTeam> = this.getEnemyTeams(team);
+    let searchedIdsTeam: Array<string> = enemiesTeam.map((a) => a.id);
+    let searchedTeams: Array<BattleTeam> = enemiesTeam;
+    let wasTeamAdded = false;
+    let adversarialTeams: Array<BattleTeam> = [];
+    do {
+      wasTeamAdded = false;
+      let teamsToAdd: Array<BattleTeam> = [];
+      for (let allyToSearch of searchedTeams) {
+        teamsToAdd = teamsToAdd.concat(
+          this.getAllyTeams(allyToSearch).filter(
+            (b) => searchedIdsTeam.indexOf(b.id) == -1
+          )
+        );
+      }
+      if (teamsToAdd && teamsToAdd.length > 0) {
+        wasTeamAdded = true;
+        searchedTeams = teamsToAdd;
+        adversarialTeams = adversarialTeams.concat(teamsToAdd);
+        searchedIdsTeam = searchedIdsTeam.concat(teamsToAdd.map((a) => a.id));
+      }
+    } while (wasTeamAdded);
+    return adversarialTeams;
+  }
+  //Enemies of allies
+  getDetrimentalTeams(team: BattleTeam): Array<BattleTeam> {
+    const enemiesTeam: Array<BattleTeam> = this.getEnemyTeams(team);
+    const alliesTeam: Array<BattleTeam> = this.getAllyTeams(team);
+    const adversarialTeam: Array<BattleTeam> = this.getAdversarialTeams(team);
+    let searchedIdsTeam: Array<string> = enemiesTeam.map((a) => a.id);
+    searchedIdsTeam = searchedIdsTeam.concat(alliesTeam.map((a) => a.id));
+    searchedIdsTeam = searchedIdsTeam.concat(adversarialTeam.map((a) => a.id));
+    let detrimentalTeams: Array<BattleTeam> = [];
+    let teamsToAdd: Array<BattleTeam> = [];
+    for (let allyToSearch of alliesTeam) {
+      teamsToAdd = teamsToAdd.concat(
+        this.getEnemyTeams(allyToSearch).filter(
+          (b) => searchedIdsTeam.indexOf(b.id) == -1
+        )
+      );
+    }
+    detrimentalTeams = detrimentalTeams.concat(teamsToAdd);
+    return detrimentalTeams;
+  }
   async removeActionFromUI(action: BattleActionSlot) {
     this.removeElFromUI(document.getElementById(action.id));
   }
@@ -1228,9 +1333,7 @@ export class BattleContext extends Context {
     this.orderPanel.appendChild(slotP);
   }
   async updateTeamInfoUI() {
-    const adversarialTeams = this.battleTeams.filter(
-      (team) => team.adversarial == true
-    );
+    const adversarialTeams = this.battleTeams.filter((team) => !team.supporter);
     const supporterTeams = this.battleTeams.filter(
       (team) => team.supporter == true
     );

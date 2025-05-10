@@ -274,6 +274,192 @@ export const ENCOUNTERS: { [key in BIOME_TYPES]: Array<EncounterScheme> } = {
         },
       ],
     },
+    {
+      key: 'monster.fight.confused_sabos',
+      title: 'A weirdly big number of Sabos Appeared',
+      description: 'A weirdly big number of Sabos Appeared!',
+      chance: 0.5 * TRIGGER_MULTIPLIER,
+      demandsAttention: true,
+      blocksOtherEncounters: true,
+      canDismiss: false,
+      priority: 0,
+      actions: [
+        {
+          title: 'Fight',
+          action: (data: OverallGameDataParamter) => {
+            const groups: Array<BattleGroup> = [];
+            const level = 1;
+            const names = [
+              'Alva',
+              'Bleu',
+              'Cyaa',
+              'Dow',
+              'Eron',
+              'Frian',
+              'Grax',
+              'Helin',
+              'Ica',
+              'Jaiu',
+              'Kairo',
+              'Leu',
+              'Mow',
+              'Netro',
+              'Oro',
+              'Pyra',
+              'Quiin',
+              'Roj',
+              'Suon',
+              'Tren',
+              'Uco',
+              'Veli',
+              'Wulv',
+              'Xil',
+              'Yva',
+              'Zerin',
+            ];
+            const numberOfTeams = Math.ceil(Math.random() * 15) + 5;
+
+            Array.from({ length: numberOfTeams }).map((_, teamIndex) => {
+              const name = names[teamIndex];
+              const numberOfEnemies = Math.ceil(Math.random() * 6) + 1;
+
+              const enemies = Array.from({ length: numberOfEnemies }).map(
+                (_, charIndex) => {
+                  const sabo = SLIME_BUILDER.getASlime(level);
+                  sabo.name = name + ' Sabo  #' + (charIndex + 1);
+                  return {
+                    character: sabo,
+                    fainted: false,
+                    legendaryActions: 0,
+                    dificulty: ChallangeDificultyXPInfluence.EASY,
+                    battleInstructions:
+                      BATTLE_INSTRUCTIONS.GET_RANDOM_ALIVE_ADVERSARY,
+                  };
+                }
+              );
+
+              let adversarial = Math.random() > 0.5999;
+              let supporter = Math.random() > 0.3999 && !adversarial;
+
+              groups.push({
+                members: enemies,
+                teamName: name + ' Sabo',
+                teamKey: 'sabo_' + name.toLocaleLowerCase(),
+                disavantage: true,
+                adversarial: adversarial,
+                supporter: supporter,
+                actionBehaviour: BattleContext.ACTION_BEHAVIOUR.AUTO,
+                relationships: [],
+              });
+            });
+            groups.forEach((group) => {
+              const noMes = groups.filter(
+                (oGroup) => oGroup.teamKey != group.teamKey
+              );
+              const adversarial = group.adversarial;
+              const supporter = group.supporter;
+              const neutral = !(supporter || adversarial);
+              let groupsToHelp: BattleGroup[] = [];
+              let groupsToHarm: BattleGroup[] = [];
+
+              if (adversarial) {
+                groupsToHelp = noMes.filter((oGroup) => oGroup.adversarial);
+                groupsToHarm = noMes.filter((oGroup) => !oGroup.adversarial);
+                if (Math.random() > 0.4) {
+                  group.relationships.push({
+                    teamKey: BattleContext.TEAM_KEY_PLAYER,
+                    behaviour: BattleContext.RELATIONSHIP_BEHAVIOUR.FOE,
+                  });
+                }
+              } else if (supporter) {
+                groupsToHelp = noMes.filter((oGroup) => oGroup.supporter);
+                groupsToHarm = noMes.filter((oGroup) => !oGroup.supporter);
+                if (Math.random() > 0.4) {
+                  group.relationships.push({
+                    teamKey: BattleContext.TEAM_KEY_PLAYER,
+                    behaviour: BattleContext.RELATIONSHIP_BEHAVIOUR.ALLY,
+                  });
+                }
+              } else {
+                groupsToHelp = noMes.filter(
+                  (oGroup) => !(oGroup.supporter || oGroup.adversarial)
+                );
+                groupsToHarm = noMes.filter(
+                  (oGroup) => oGroup.supporter || oGroup.adversarial
+                );
+              }
+              groupsToHelp
+                .filter((g) => Math.random() > 0.5)
+                .forEach((g) => {
+                  group.relationships.push({
+                    teamKey: g.teamKey,
+                    behaviour: BattleContext.RELATIONSHIP_BEHAVIOUR.ALLY,
+                  });
+                  g.relationships.push({
+                    teamKey: group.teamKey,
+                    behaviour: BattleContext.RELATIONSHIP_BEHAVIOUR.ALLY,
+                  });
+                });
+              groupsToHarm
+                .filter((g) => Math.random() > 0.5)
+                .forEach((g) => {
+                  group.relationships.push({
+                    teamKey: g.teamKey,
+                    behaviour: BattleContext.RELATIONSHIP_BEHAVIOUR.FOE,
+                  });
+                  g.relationships.push({
+                    teamKey: group.teamKey,
+                    behaviour: BattleContext.RELATIONSHIP_BEHAVIOUR.FOE,
+                  });
+                });
+            });
+
+            const scheme: BattleScheme = {
+              groups: groups,
+              events: [],
+              introductionText:
+                'A surprisingly large amount of snake faced giant frogs attacks... some of them do, most are just confused.',
+              playerDisadvantage: false,
+            };
+            const event: BattleEvent = {
+              type: BATTLE_EVENT_TYPE.ON_TEAM_RETREAT,
+              startingTurn: 0,
+              turnGapForRecurrence: 1,
+              calculatedOccurence: false,
+              event: (battle: BattleContext, me: BattleEvent) => {
+                console.log('somebody got out');
+                return {
+                  stopBattle: false,
+                  stopAll: false,
+                };
+              },
+            };
+            scheme.events.push(event);
+
+            data.battleScheme = scheme;
+
+            return {
+              result: 'The battle begins!',
+              dialogType: DIALOG_TYPES.BATTLE,
+            };
+          },
+          isAble: (data: OverallGameDataParamter) => {
+            return { able: true };
+          },
+        },
+        {
+          title: 'Run',
+          action: (data: OverallGameDataParamter) => {
+            return {
+              result: 'You fleed!',
+            };
+          },
+          isAble: (data: OverallGameDataParamter) => {
+            return { able: true };
+          },
+        },
+      ],
+    },
   ],
   [BIOME_TYPES.WOODS]: [],
   [BIOME_TYPES.SWAMP]: [],

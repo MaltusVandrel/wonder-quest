@@ -134,7 +134,7 @@ export const MoveBonk: Move = {
     xp: 0,
     learned: MoveLearningStatus.LEARNED,
 
-    power: 1,
+    power: 15,
     criticalChance: 0.25,
     criticalMultiplier: 2,
     hitChance: 0.75,
@@ -144,7 +144,7 @@ export const MoveBonk: Move = {
     gaugeCostInfluenceOnDodge: 0.5,
 
     isMultiAttack: true,
-    multiAttackMaxHits: 15,
+    multiAttackMaxHits: 3,
     multiAttackEndOnMiss: false,
     multiAttackHitChanceOnHitInfluence: 0.975,
     multiAttackOverHitOnHitInfluence: 1.05,
