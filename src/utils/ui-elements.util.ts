@@ -1,4 +1,4 @@
-import { GAUGE_KEYS, GaugeCalc } from 'src/models/gauge';
+import { GAUGE_KEYS, GaugeCalc, GaugeKey } from 'src/models/gauge';
 import { MapScene } from 'src/scenes/map.scene';
 import { GameDataService } from 'src/services/game-data.service';
 import {
@@ -10,7 +10,7 @@ import {
 import { FigureName, NAMES } from 'src/data/bank/names';
 import { HERO_BUILDER } from 'src/data/builder/hero-builder';
 import { Actor } from 'src/models/actor';
-import { Stat, StatCalc } from 'src/models/stats';
+import { Stat, StatCalc, StatKey } from 'src/models/stats';
 import { COMPANY_POSITION } from 'src/models/company';
 
 function setHoverBlocking(element: HTMLElement) {
@@ -43,7 +43,10 @@ function doRestButton() {
     GameDataService.GAME_DATA.time += 8 * 60;
     GameDataService.GAME_DATA.companyData.members.forEach(
       (member: { character: Actor; positions: COMPANY_POSITION[] }) => {
-        member.character.gauges.forEach((gauge) => (gauge.consumed = 0));
+        Object.keys(member.character.gauges).forEach(
+          (gaugeKey) =>
+            (member.character.gauges[gaugeKey as GaugeKey].consumed = 0)
+        );
       }
     );
     mapScene.doColorFilter();
@@ -249,10 +252,13 @@ function showTextIntroductionUI() {
   });
 
   let statMessage = hero.name + ' ';
-  const stats = hero.stats.sort(
-    (a: Stat, b: Stat) =>
-      StatCalc.getInfluenceValue(hero, b) - StatCalc.getInfluenceValue(hero, a)
-  );
+  const stats = (Object.keys(hero.stats) as StatKey[])
+    .map((key) => hero.stats[key])
+    .sort(
+      (a: Stat, b: Stat) =>
+        StatCalc.getInfluenceValue(hero, b) -
+        StatCalc.getInfluenceValue(hero, a)
+    );
   let unremarkable: boolean = true;
   const best: number = StatCalc.getInfluenceValue(hero, stats[0]);
   const best2: number = StatCalc.getInfluenceValue(hero, stats[1]);
@@ -322,6 +328,7 @@ function showTextIntroductionUI() {
     introductionPanel?.remove();
     introductionScene.fadeOutAndDestroy();
   });
+
   stats.forEach((stat) => {
     console.log(stat.title + ':' + StatCalc.getInfluenceValue(hero, stat));
   });

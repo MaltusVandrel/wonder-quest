@@ -1,4 +1,10 @@
-import { defaultStat, Stat, STAT_KEY, STAT_TITLES } from '../../models/stats';
+import {
+  defaultStat,
+  Stat,
+  STAT_KEY,
+  STAT_TITLES,
+  StatKey,
+} from '../../models/stats';
 import { Actor } from '../../models/actor';
 
 let STATS: Stat[] = [];
@@ -15,6 +21,6 @@ export function setStats(being: Actor, maxValue: number) {
     attr.value =
       10 + (Math.ceil(Math.random() * positiveVariance) - negativeVariance);
     attr.modValue = attr.value;
-    being.stats.push(attr);
+    being.stats[key as StatKey] = attr;
   }
 }

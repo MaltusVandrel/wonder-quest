@@ -3,6 +3,7 @@ import {
   Gauge,
   GAUGE_KEYS,
   GAUGE_TITLES,
+  GaugeKey,
 } from '../../models/gauge';
 import { Actor } from '../../models/actor';
 
@@ -14,6 +15,6 @@ export function setGauges(being: Actor, value?: number) {
     gauge.title = { ...GAUGE_TITLES }[key] || '';
     gauge.key = key || '';
     if (value) gauge.value = value;
-    being.gauges.push(gauge);
+    being.gauges[key as GaugeKey] = gauge;
   }
 }

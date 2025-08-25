@@ -12,8 +12,20 @@ import {
 import { SLIME_BUILDER } from 'src/data/builder/slime-builder';
 import { COMPANY_POSITION } from 'src/models/company';
 import { Actor } from 'src/models/actor';
-import { Gauge, GAUGE_INFOS, GAUGE_KEYS, GaugeCalc } from 'src/models/gauge';
-import { Stat, STAT_INFOS, STAT_KEY, StatCalc } from 'src/models/stats';
+import {
+  Gauge,
+  GAUGE_INFOS,
+  GAUGE_KEYS,
+  GaugeCalc,
+  GaugeKey,
+} from 'src/models/gauge';
+import {
+  Stat,
+  STAT_INFOS,
+  STAT_KEY,
+  StatCalc,
+  StatKey,
+} from 'src/models/stats';
 import { MapScene } from 'src/scenes/map.scene';
 import {
   GameDataService,
@@ -429,7 +441,7 @@ class HTMLCompanyDialogElement extends HTMLCustomDialogElement<any> {
           char.level++;
           const karmaInfluence = StatCalc.getInfluenceValue(
             char,
-            char.getStat(STAT_KEY.KARMA)
+            char.stats[STAT_KEY.KARMA]
           );
           const bonus = Math.max(
             Math.ceil(
@@ -447,10 +459,10 @@ class HTMLCompanyDialogElement extends HTMLCustomDialogElement<any> {
 
       Object.keys(GAUGE_KEYS).forEach((key: string) => {
         const char = member.character;
-        const gauge: Gauge = char.getGauge(key);
+        const gauge: Gauge = char.gauges[key as GaugeKey];
         const gaugeRow = document.createElement('tr');
         gaugeRow.innerHTML = `<td title="${
-          GAUGE_INFOS[key as GAUGE_KEYS]?.description
+          GAUGE_INFOS[key as GaugeKey]?.description
         }"><strong>${gauge.title}:</strong></td>
             <td class='gauge-value' ><span>${GaugeCalc.getCurrentValueString(
               char,
@@ -486,7 +498,7 @@ class HTMLCompanyDialogElement extends HTMLCustomDialogElement<any> {
       statsHolder.innerHTML = '';
       Object.keys(STAT_KEY).forEach((key: string) => {
         const char: Actor = member.character;
-        const stat: Stat = char.getStat(key);
+        const stat: Stat = char.stats[key as StatKey];
         const statRow = document.createElement('tr');
         const statUPCell = document.createElement('td');
 
@@ -495,7 +507,7 @@ class HTMLCompanyDialogElement extends HTMLCustomDialogElement<any> {
         );
 
         statRow.innerHTML += `<td title="${
-          STAT_INFOS[key as STAT_KEY]?.description
+          STAT_INFOS[key as StatKey]?.description
         }"><strong>${stat.title}:</strong></td>
             <td>${StatCalc.getCurrentValue(char, stat)} </td><td>
             (<span class='${

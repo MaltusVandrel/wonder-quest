@@ -1,8 +1,8 @@
 import { BattleContext } from '../core/battle-context';
 
-import { Stat, STAT_KEY, StatCalc } from './stats';
+import { Stat, STAT_KEY, StatCalc, StatKey } from './stats';
 import { ChildComponent } from './child-component';
-import { Gauge, GAUGE_KEYS, GaugeCalc } from './gauge';
+import { Gauge, GAUGE_KEYS, GaugeCalc, GaugeKey } from './gauge';
 import { CalcUtil } from 'src/utils/calc.utils';
 import { defaultXPGrowthPlan, XPGrowthPlan } from 'src/core/xp-calc';
 
@@ -25,9 +25,20 @@ export class Actor {
     core: { xp: 0, skillPoints: 0, growthPlan: { ...defaultXPGrowthPlan } },
     configuration: { autoBattle: false },
   };
+  gauges: Record<GaugeKey, Gauge> = (
+    Object.values(GAUGE_KEYS) as GaugeKey[]
+  ).reduce((acc, key) => {
+    acc[key] = { key, title: key.toLowerCase(), value: 1, consumed: 1 };
+    return acc;
+  }, {} as Record<GaugeKey, Gauge>);
 
-  gauges: Gauge[] = [];
-  stats: Stat[] = [];
+  stats: Record<StatKey, Stat> = (Object.values(STAT_KEY) as StatKey[]).reduce(
+    (acc, key) => {
+      acc[key] = { key, title: key.toLowerCase(), value: 1, modValue: 1 };
+      return acc;
+    },
+    {} as Record<StatKey, Stat>
+  );
   //takes usually 2+level monster of same level to level up
   //
 
@@ -49,19 +60,10 @@ export class Actor {
 
     return obj;
   }
-  getStat(key: string): Stat {
-    let att = this.stats.find((a) => a.key == key);
-    if (!att) throw 'Stat not present.';
-    return att;
-  }
-  getGauge(key: string): Gauge {
-    let gauge = this.gauges.find((a) => a.key == key);
-    if (!gauge) throw 'Gauge not present.';
-    return gauge;
-  }
+
   isFainted(): boolean {
     return (
-      GaugeCalc.getCurrentValue(this, this.getGauge(GAUGE_KEYS.VITALITY)) <= 0
+      GaugeCalc.getCurrentValue(this, this.gauges[GAUGE_KEYS.VITALITY]) <= 0
     );
   }
   getInitiative(): number {
@@ -69,10 +71,10 @@ export class Actor {
   }
 
   getNormalSpeed(): number {
-    const agi = this.getStat(STAT_KEY.AGILITY);
-    const dex = this.getStat(STAT_KEY.DEXTERITY);
-    const prc = this.getStat(STAT_KEY.PERCEPTION);
-    const itt = this.getStat(STAT_KEY.INTUITION);
+    const agi = this.stats[STAT_KEY.AGILITY];
+    const dex = this.stats[STAT_KEY.DEXTERITY];
+    const prc = this.stats[STAT_KEY.PERCEPTION];
+    const itt = this.stats[STAT_KEY.INTUITION];
     const speed =
       (StatCalc.getInfluenceValue(this, agi) * 2.5 +
         (StatCalc.getInfluenceValue(this, dex) +
@@ -83,7 +85,7 @@ export class Actor {
   }
 
   getActionSpeed(): number {
-    const luk = this.getStat(STAT_KEY.LUCK);
+    const luk = this.stats[STAT_KEY.LUCK];
     const normalSpeed = this.getNormalSpeed();
     normalSpeed +
       CalcUtil.getRandom(StatCalc.getInfluenceValue(this, luk)) +

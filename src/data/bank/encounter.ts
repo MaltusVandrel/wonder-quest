@@ -18,7 +18,7 @@ import {
 import { SLIME_BUILDER } from '../builder/slime-builder';
 import { ChallangeDificultyXPInfluence } from 'src/core/xp-calc';
 import { BATTLE_INSTRUCTIONS } from 'src/core/battle-instructions';
-const TRIGGER_MULTIPLIER = 1;
+const TRIGGER_MULTIPLIER = 0.1;
 /*
 interface EncounterScheme {
   key: string;

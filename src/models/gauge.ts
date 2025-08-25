@@ -1,7 +1,7 @@
 import { ChildComponent } from './child-component';
 import { Company, COMPANY_POSITION } from './company';
 import { Actor } from './actor';
-import { STAT_KEY, StatCalc } from './stats';
+import { STAT_KEY, StatCalc, StatKey } from './stats';
 
 export const STATUS_MODFIERS_INTENSITY = 1;
 export const STATUS_MODFIERS_INFLUENCE = {
@@ -15,44 +15,46 @@ export const STATUS_MODFIERS_INFLUENCE = {
   NEGATIVE: 0.25,
   IMPEDITIVE: 0.05,
 };
-export enum GAUGE_KEYS {
-  VITALITY = 'VITALITY',
-  STAMINA = 'STAMINA',
-  MANA = 'MANA',
-}
+export const GAUGE_KEYS = {
+  VITALITY: 'VITALITY',
+  STAMINA: 'STAMINA',
+  MANA: 'MANA',
+} as const;
+export type GaugeKey = keyof typeof GAUGE_KEYS;
+
 interface GaugeInfo {
   title: string;
   description: string;
 }
 
-export const GAUGE_TITLES: { [key in GAUGE_KEYS]: string } = {
+export const GAUGE_TITLES: { [key in GaugeKey]: string } = {
   VITALITY: 'vitality',
   STAMINA: 'stamina',
   MANA: 'mana',
 };
-export const GAUGE_ABBREVIATION: { [key in GAUGE_KEYS]: string } = {
+export const GAUGE_ABBREVIATION: { [key in GaugeKey]: string } = {
   VITALITY: 'hp',
   STAMINA: 'sp',
   MANA: 'mp',
 };
-export const GAUGE_DESCRIPTIONS: { [key in GAUGE_KEYS]: string } = {
+export const GAUGE_DESCRIPTIONS: { [key in GaugeKey]: string } = {
   VITALITY:
     'Represents the overall health and energy that keeps you awake and alive.',
   STAMINA:
     'Represents the energy reserve that allows you to do task and an extra boost in actions. ',
   MANA: 'Represents the allowance to manipulate the supernatural powers.',
 };
-export const GAUGE_INFOS: { [key in GAUGE_KEYS]: GaugeInfo } = Object.keys(
+export const GAUGE_INFOS: { [key in GaugeKey]: GaugeInfo } = Object.keys(
   GAUGE_KEYS
 ).reduce((acc, key) => {
-  acc[key as GAUGE_KEYS] = {
-    title: GAUGE_TITLES[key as GAUGE_KEYS],
-    description: GAUGE_DESCRIPTIONS[key as GAUGE_KEYS],
+  acc[key as GaugeKey] = {
+    title: GAUGE_TITLES[key as GaugeKey],
+    description: GAUGE_DESCRIPTIONS[key as GaugeKey],
   };
   return acc;
-}, {} as { [key in GAUGE_KEYS]: GaugeInfo });
+}, {} as { [key in GaugeKey]: GaugeInfo });
 export const GAUGE_MODFIERS: {
-  [key in GAUGE_KEYS]: { [key in STAT_KEY]: number };
+  [key in GaugeKey]: { [key in StatKey]: number };
 } = {
   VITALITY: {
     VIGOR: STATUS_MODFIERS_INFLUENCE.MAX * STATUS_MODFIERS_INTENSITY,
@@ -172,12 +174,12 @@ export class GaugeCalc {
   static getValue(parent: Actor | Company, gauge: Gauge): number {
     if (parent instanceof Actor) {
       const char = parent as Actor;
-      const mods = GAUGE_MODFIERS[gauge.key as GAUGE_KEYS];
+      const mods = GAUGE_MODFIERS[gauge.key as GaugeKey];
       let value = gauge.value;
       for (let mod of Object.keys(mods)) {
         value +=
-          StatCalc.getInfluenceValue(char, char.getStat(mod)) *
-          (mods[mod as STAT_KEY] || 1);
+          StatCalc.getInfluenceValue(char, char.stats[mod as StatKey]) *
+          (mods[mod as StatKey] || 1);
       }
 
       return value * (1 + parent.level / 15);
@@ -188,7 +190,7 @@ export class GaugeCalc {
       for (let member of parent.members) {
         const localValue = GaugeCalc.getValue(
           member.character,
-          member.character.getGauge(GAUGE_KEYS.STAMINA)
+          member.character.gauges[GAUGE_KEYS.STAMINA]
         );
         if (
           member.positions.some(

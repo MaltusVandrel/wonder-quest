@@ -1,30 +1,31 @@
 import { ChildComponent } from './child-component';
 import { Actor } from './actor';
 import { Company } from './company';
-export enum STAT_KEY {
-  STRENGTH = 'STRENGTH',
-  ENDURANCE = 'ENDURANCE',
-  VIGOR = 'VIGOR',
-  AGILITY = 'AGILITY',
-  DEXTERITY = 'DEXTERITY',
-  PERCEPTION = 'PERCEPTION',
-  INTELLIGENCE = 'INTELLIGENCE',
-  CUNNING = 'CUNNING',
-  RESOLVE = 'RESOLVE',
-  CHARISMA = 'CHARISMA',
-  INTUITION = 'INTUITION',
-  LUCK = 'LUCK',
-  POTENCY = 'POTENCY',
-  RESISTENCE = 'RESISTENCE',
-  ESOTERISM = 'ESOTERISM',
-  KARMA = 'KARMA',
-}
+export const STAT_KEY = {
+  STRENGTH: 'STRENGTH',
+  ENDURANCE: 'ENDURANCE',
+  VIGOR: 'VIGOR',
+  AGILITY: 'AGILITY',
+  DEXTERITY: 'DEXTERITY',
+  PERCEPTION: 'PERCEPTION',
+  INTELLIGENCE: 'INTELLIGENCE',
+  CUNNING: 'CUNNING',
+  RESOLVE: 'RESOLVE',
+  CHARISMA: 'CHARISMA',
+  INTUITION: 'INTUITION',
+  LUCK: 'LUCK',
+  POTENCY: 'POTENCY',
+  RESISTENCE: 'RESISTENCE',
+  ESOTERISM: 'ESOTERISM',
+  KARMA: 'KARMA',
+} as const;
+export type StatKey = keyof typeof STAT_KEY;
 interface StatInfo {
   title: string;
   description: string;
 }
 
-export const STAT_TITLES: { [key in STAT_KEY]: string } = {
+export const STAT_TITLES: { [key in StatKey]: string } = {
   STRENGTH: 'strength', //how phisically powerful the body is, good for regular damage,
   ENDURANCE: 'endurace', //bodly strenght to reduce and sustain damage, good for defense and stamina
   VIGOR: 'vigor', //how lively the body is, good for vitality and stamina and a little for mana
@@ -42,7 +43,7 @@ export const STAT_TITLES: { [key in STAT_KEY]: string } = {
   ESOTERISM: 'esoterism', //familiarity with magic vibes, good for items and entity/god granted spells,  good for mana
   KARMA: 'karma', //useful in gathering randomnes of favor of entity/gods
 };
-export const STAT_DESCRIPTIONS: { [key in STAT_KEY]: string } = {
+export const STAT_DESCRIPTIONS: { [key in StatKey]: string } = {
   STRENGTH:
     "Represents how phisically powerful the body is;\n it's good for phisical damage",
   ENDURANCE:
@@ -74,15 +75,15 @@ export const STAT_DESCRIPTIONS: { [key in STAT_KEY]: string } = {
   KARMA:
     'Represents the intensity of your impression on entities and gods, good for interaction with otherwordly, good for granted spells and mana',
 };
-export const STAT_INFOS: { [key in STAT_KEY]: StatInfo } = Object.keys(
+export const STAT_INFOS: { [key in StatKey]: StatInfo } = Object.keys(
   STAT_KEY
 ).reduce((acc, key) => {
-  acc[key as STAT_KEY] = {
-    title: STAT_TITLES[key as STAT_KEY],
-    description: STAT_DESCRIPTIONS[key as STAT_KEY],
+  acc[key as StatKey] = {
+    title: STAT_TITLES[key as StatKey],
+    description: STAT_DESCRIPTIONS[key as StatKey],
   };
   return acc;
-}, {} as { [key in STAT_KEY]: StatInfo });
+}, {} as { [key in StatKey]: StatInfo });
 
 export interface Stat {
   key: string;

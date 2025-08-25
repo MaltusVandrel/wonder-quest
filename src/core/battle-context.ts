@@ -4,7 +4,12 @@ import { MessageHandler } from './message-handler';
 import { BehaviorSubject, first } from 'rxjs';
 import { CalcUtil } from 'src/utils/calc.utils';
 import { STAT_KEY, StatCalc } from 'src/models/stats';
-import { GAUGE_ABBREVIATION, GAUGE_KEYS, GaugeCalc } from 'src/models/gauge';
+import {
+  GAUGE_ABBREVIATION,
+  GAUGE_KEYS,
+  GaugeCalc,
+  GaugeKey,
+} from 'src/models/gauge';
 import { GameDataService } from 'src/services/game-data.service';
 import { SLIME_BUILDER } from 'src/data/builder/slime-builder';
 import { COMPANY_POSITION } from 'src/models/company';
@@ -16,6 +21,7 @@ import {
 import { showStaminaGauge } from 'src/utils/ui-elements.util';
 import { MoveBonk, MoveExpression } from 'src/models/move';
 import { BATTLE_INSTRUCTIONS } from './battle-instructions';
+import { doAttack } from './battle-context.attack';
 
 export interface BattleTeam {
   id: string;
@@ -151,7 +157,7 @@ export class BattleContext extends Context {
     PLAYER: 0,
     AUTO: 1,
   };
-  static WAIT_TIME = 300;
+  static WAIT_TIME = 1; //300;
   self: BattleContext = this;
   textPanel: HTMLElement;
   orderPanel: HTMLElement;
@@ -495,7 +501,7 @@ export class BattleContext extends Context {
   async unravelBattle() {
     const actionSlot: BattleActionSlot | undefined = this.actionSlots.shift();
     if (actionSlot == undefined) throw 'Populate the battle slots ya fucker';
-    await this.retreatFoeLessTeams();
+    await this.retreatFoelessTeams();
     this.turn++;
 
     this.turnInfo = { turn: this.turn, moves: [] };
@@ -517,7 +523,8 @@ export class BattleContext extends Context {
 
     if (!team.isPlayer || battleActor.isAuto) {
       this.turnInfo.isHeal = false;
-      await this.doAttack(
+      await doAttack(
+        this,
         char,
         BATTLE_INSTRUCTIONS.GET_RANDOM_ALIVE_ADVERSARY(
           this,
@@ -529,19 +536,19 @@ export class BattleContext extends Context {
       this.turnInfo.isHeal = false;
       const battleInstructionExpression: BattleInstructionExpression =
         await this.chooseAction(char);
-      await this.doAttack(char, battleInstructionExpression);
+      await doAttack(this, char, battleInstructionExpression);
       isAggression = true;
     }
 
     this.removeActionFromUI(actionSlot);
-    await this.markFaitedActors();
+    await this.markFaintedActors();
     if (isAggression) {
       if (await this.triggerEvents(BATTLE_EVENT_TYPE.ON_AGGRESSION)) return;
     }
     if (await this.triggerEvents(BATTLE_EVENT_TYPE.AFTER_ACTION)) return;
 
     if (await this.triggerEvents(BATTLE_EVENT_TYPE.TURN_END)) return;
-    await this.retreatFoeLessTeams();
+    await this.retreatFoelessTeams();
 
     this.turnInfoHistory.push(this.turnInfo);
     this.actionSlotHistory.push(actionSlot);
@@ -629,364 +636,8 @@ export class BattleContext extends Context {
 
     return promise;
   }
-  async doAttack(
-    char: Actor,
-    battleInstructionExpression: BattleInstructionExpression
-  ) {
-    let moveDept = 0;
-    if (battleInstructionExpression.move) {
-      //const battleActionTargets: BattleActionSlot = battleInstructionExpression.battleActionTargets
-      const move: MoveExpression = battleInstructionExpression.move;
-      let targets: Array<BattleActor> = [];
-      let teamTargets: Array<BattleTeam> = [];
 
-      const actorTargetsInstruction = battleInstructionExpression.actorTargets;
-      const teamTargetsInstruction = battleInstructionExpression.teamTargets;
-      if (
-        actorTargetsInstruction &&
-        actorTargetsInstruction[moveDept] &&
-        actorTargetsInstruction[moveDept].length > 0
-      ) {
-        targets = targets.concat(actorTargetsInstruction[moveDept]);
-      }
-      if (
-        teamTargetsInstruction &&
-        teamTargetsInstruction[moveDept] &&
-        teamTargetsInstruction[moveDept].length > 0
-      ) {
-        teamTargets = teamTargets.concat(teamTargetsInstruction[moveDept]);
-        teamTargetsInstruction[moveDept].forEach((targetTeam) => {
-          targets = targets.concat(targetTeam.actors);
-        });
-      }
-      let moveTargets: Array<any> = [];
-      let moveInfo = {
-        actor: char,
-        targets: moveTargets,
-      };
-      targets.forEach((aimedBattleActor: BattleActor) => {
-        const aimedChar = aimedBattleActor.character;
-        const leveDiff = char.level - aimedChar.level;
-        const leveDiffOposing = leveDiff * -1;
-        const actionMove = MoveBonk;
-        const moveExpression = actionMove.defaultExpression;
-        const hits: Array<any> = [];
-
-        //add a lot of info in BattleTurnInfo
-        //so the event has enough data to work with
-        //do moves in the future, for now simple damage
-        const stronk = moveExpression.statusInfluence
-          .map(
-            (influence) =>
-              StatCalc.getInfluenceValue(char, char.getStat(influence.stat)) *
-              influence.influence
-          )
-          .reduce((prev, current) => prev + current);
-
-        const destronk = moveExpression.resistenceStatus
-          .map(
-            (influence) =>
-              StatCalc.getInfluenceValue(
-                aimedChar,
-                aimedChar.getStat(influence.stat)
-              ) * influence.influence
-          )
-          .reduce((prev, current) => prev + current);
-        const hittance = moveExpression.hitStatus
-          .map(
-            (influence) =>
-              StatCalc.getInfluenceValue(char, char.getStat(influence.stat)) *
-              influence.influence
-          )
-          .reduce((prev, current) => prev + current);
-        const crittance = moveExpression.critStatus
-          .map(
-            (influence) =>
-              StatCalc.getInfluenceValue(char, char.getStat(influence.stat)) *
-              influence.influence
-          )
-          .reduce((prev, current) => prev + current);
-        const dodgdance = moveExpression.dodgingStatus
-          .map(
-            (influence) =>
-              StatCalc.getInfluenceValue(
-                aimedChar,
-                aimedChar.getStat(influence.stat)
-              ) * influence.influence
-          )
-          .reduce((prev, current) => prev + current);
-
-        let isTotalFumbled = true;
-        let isTotalDodged = true;
-
-        let breakLoopOnHitFail = false;
-        let successHits = 0;
-        let totalEffectiveDamage = 0;
-        let isMultiAttack = moveExpression.isMultiAttack;
-
-        //DO HITS
-        Array.from({
-          length: isMultiAttack ? moveExpression.multiAttackMaxHits : 1,
-        }).forEach((_, index) => {
-          if (breakLoopOnHitFail) return;
-
-          const isMultiHit = isMultiAttack && successHits > 0;
-          const multiAttackPowerOnHitInfluence = isMultiHit
-            ? moveExpression.multiAttackPowerOnHitInfluence ** successHits
-            : 1;
-
-          const damage =
-            (moveExpression.power * multiAttackPowerOnHitInfluence + stronk) *
-            (1 + leveDiff / 25) *
-            (1 + (25 * Math.random() - 12.5) / 100);
-          const reduction = destronk * (1 + leveDiffOposing / 25);
-          const calculedDamage = damage - reduction;
-          let effectiveDamage = Math.max(calculedDamage, 1);
-
-          const hitChanceBase = moveExpression.hitChance + hittance / 100;
-          const multiHitChanceInfluence = isMultiHit
-            ? moveExpression.multiAttackHitChanceOnHitInfluence ** successHits
-            : 1;
-          const hitChanceEffective =
-            hitChanceBase * multiHitChanceInfluence - dodgdance / 100;
-
-          const multiHitCriticalChanceInfluence = isMultiHit
-            ? moveExpression.multiAttackCriticalChanceOnHitInfluence **
-              successHits
-            : 1;
-          let critChanceEffective =
-            moveExpression.criticalChance * multiHitCriticalChanceInfluence +
-            crittance / 100;
-          let isHit = false;
-          let isOverHit = false;
-
-          let isCrit = false;
-          let dodgeGoal = Math.random();
-          let critGoal = Math.random();
-          let critTimes = 0;
-          let isFumbled = false;
-          let isDodged = false;
-          if (dodgeGoal < hitChanceEffective) {
-            isHit = true;
-            if (hitChanceEffective > 1) {
-              const multiHitOverHit = isMultiHit
-                ? moveExpression.multiAttackOverHitOnHitInfluence ** successHits
-                : 1;
-
-              effectiveDamage +=
-                effectiveDamage *
-                (moveExpression.overHitInfluence * multiHitOverHit);
-              isOverHit = true;
-            }
-            if (critChanceEffective > 1) {
-              const difference = critChanceEffective % 1;
-              critTimes = critChanceEffective - difference;
-              critChanceEffective = difference;
-            }
-            if (critGoal < critChanceEffective) {
-              critTimes++;
-            }
-            if (critTimes > 0) {
-              isCrit = true;
-              const multiHitCrit = isMultiHit
-                ? moveExpression.multiAttackCriticalOnHitInfluence **
-                  successHits
-                : 1;
-
-              const critMultiplier =
-                moveExpression.criticalMultiplier * multiHitCrit * critTimes;
-              effectiveDamage *= critMultiplier;
-            }
-            isTotalFumbled = false;
-            isTotalDodged = false;
-            successHits++;
-            totalEffectiveDamage += effectiveDamage;
-          } else {
-            if (dodgeGoal < hitChanceBase) {
-              isTotalFumbled = false;
-              isDodged = true;
-            } else {
-              isTotalDodged = false;
-              isFumbled = true;
-            }
-          }
-
-          hits.push({
-            character: char,
-            aimedCharacter: aimedChar,
-            leveDiff: leveDiff,
-            leveDiffOposing: leveDiffOposing,
-            actionMove: actionMove,
-            defaultExpression: actionMove.defaultExpression,
-            isHit: isHit,
-            isOverHit: isOverHit,
-            isDodged: isDodged,
-            isFumbled: isFumbled,
-            isCrit: isCrit,
-            critTimes: critTimes,
-            critChanceEffective: critChanceEffective,
-            effectiveDamage: effectiveDamage,
-            dodgeGoal: dodgeGoal,
-            critGoal: critGoal,
-          });
-          if (moveExpression.multiAttackEndOnMiss && (isDodged || isFumbled)) {
-            breakLoopOnHitFail = true;
-          }
-        });
-
-        // GET COST
-        let hasCostNotice = false;
-        let hasCost = false;
-        let hasRecoil = false;
-        let costText = '';
-
-        const costs = moveExpression.gaugeCosts;
-        hasCostNotice = costs.length > 0;
-        let costTaken: { [key in GAUGE_KEYS]: number } = {
-          MANA: 0,
-          STAMINA: 0,
-          VITALITY: 0,
-        };
-        let recoil = 0;
-
-        //DO COST
-        if (hasCostNotice) {
-          const costTextDMG: Array<string> = [];
-          costs.forEach((cost) => {
-            const costValue = cost.cost;
-            const gauge = char.getGauge(cost.gauge);
-            const costReduction = cost.costReduction
-              .map(
-                (influence) =>
-                  StatCalc.getInfluenceValue(
-                    char,
-                    char.getStat(influence.stat)
-                  ) * influence.influence
-              )
-              .reduce((prev, current) => prev + current);
-            const simpleCost = costValue - costReduction / 10;
-            const fumbleDampening = isTotalFumbled
-              ? moveExpression.gaugeCostInfluenceOnFumble
-              : 1;
-            const dodgeDampening = isTotalDodged
-              ? moveExpression.gaugeCostInfluenceOnDodge
-              : 1;
-            const composedCost = simpleCost * fumbleDampening * dodgeDampening;
-            let effectiveCost = 0;
-            let recoilCost = 0;
-
-            if (GaugeCalc.canHandleValue(composedCost, char, gauge)) {
-              effectiveCost = Math.ceil(composedCost);
-            } else {
-              recoilCost = Math.abs(
-                GaugeCalc.getUnhandableValue(composedCost, char, gauge)
-              );
-              effectiveCost = Math.ceil(composedCost - recoilCost);
-            }
-            gauge.consumed += effectiveCost;
-            char.getGauge(GAUGE_KEYS.VITALITY).consumed += recoilCost;
-
-            costTaken[cost.gauge] += effectiveCost;
-            recoil += Math.ceil(recoilCost);
-            if (effectiveCost > 0 || recoilCost > 0) hasCost = true;
-            if (effectiveCost > 0) {
-              costTextDMG.push(
-                `${effectiveCost}${GAUGE_ABBREVIATION[cost.gauge]}`
-              );
-            }
-          });
-          if (recoil > 0) {
-            hasRecoil = true;
-            costTextDMG.push(
-              `${recoil} ${GAUGE_ABBREVIATION[GAUGE_KEYS.VITALITY]} recoil dmg`
-            );
-          }
-          if (costTextDMG.length > 0) {
-            costText += ` expending `;
-            if (costTextDMG.length == 1) {
-              costText += costTextDMG[0];
-            } else {
-              const lastOne = costTextDMG.pop();
-              let tempCostText = costTextDMG.join(', ');
-              costText += tempCostText + ' and ' + lastOne;
-            }
-          }
-        }
-        //DOCUMENT TURN
-        moveInfo.targets.push({
-          actor: char,
-          aimedChar: aimedChar,
-          hasCostNotice: hasCostNotice,
-          hasCost: hasCost,
-          costTaken: costTaken,
-          hasRecoil: hasRecoil,
-          recoil: recoil,
-          hits: hits,
-        });
-
-        let message = `${this.turn} - ${char.name} used ${moveExpression.name} on ${aimedChar.name}`;
-        if (hasCost) {
-          message += costText;
-        }
-        if (isTotalFumbled) {
-          message += ` but ${char.name} fumbled.`;
-        } else if (isTotalDodged) {
-          message += ` but ${aimedChar.name} dodged.`;
-        } else if (hits.length == 1) {
-          const hit = hits[0];
-          aimedChar.getGauge(GAUGE_KEYS.VITALITY).consumed +=
-            totalEffectiveDamage;
-          message += ` causing <${hit.isOverHit ? 'strong' : 'span'} class='${
-            hit.isCrit ? 'critical-text' : ''
-          }'> ${totalEffectiveDamage.toFixed(0)}dmg`;
-          if (hit.isCrit) {
-            message += Array.from({ length: hit.critTimes })
-              .map((_) => '!')
-              .join('');
-          } else {
-            message += '.';
-          }
-          message += `</${hit.isOverHit ? 'strong' : 'span'}>`;
-        } else {
-          message += ` causing `;
-
-          const landedHits = hits.filter((hit) => hit.isHit);
-          const fumbles = hits.filter((hit) => hit.isFumbled).length;
-          const dodges = hits.filter((hit) => hit.isDodged).length;
-          const lastItem = landedHits.length - 1;
-          landedHits.forEach((hit, index) => {
-            message += `<${hit.isOverHit ? 'strong' : 'span'} class='${
-              hit.isCrit ? 'critical-text' : ''
-            }'> ${hit.effectiveDamage.toFixed(0)}dmg`;
-            if (hit.isCrit) {
-              message += Array.from({ length: hit.critTimes })
-                .map((_) => '!')
-                .join('');
-            }
-            message += `</${hit.isOverHit ? 'strong' : 'span'}>`;
-            if (lastItem != index) message += ', ';
-          });
-          message += ` Causinga a total of ${totalEffectiveDamage.toFixed(
-            0
-          )}dmg, landing ${landedHits.length}x`;
-          if (fumbles > 0) {
-            message += `${dodges > 0 ? ', ' : ' and'} missing ${fumbles}x`;
-          }
-          if (dodges > 0) {
-            message += ` and being avoided ${dodges}x`;
-          }
-          message += '.';
-          aimedChar.getGauge(GAUGE_KEYS.VITALITY).consumed +=
-            totalEffectiveDamage;
-        }
-
-        this.showHitTakenOnTargetUI();
-        this.writeMessage(message);
-      });
-      this.turnInfo.moves.push(moveInfo);
-    }
-  }
-  async markFaitedActors() {
+  async markFaintedActors() {
     const activeActor = this.turnInfo.activeActor;
 
     const toFell = this.battleActors.filter((actor) => {
@@ -1049,7 +700,7 @@ export class BattleContext extends Context {
       }
     }
   }
-  async retreatFoeLessTeams() {
+  async retreatFoelessTeams() {
     let wasTeamRemoved = false;
     let teamsRemoved: Array<BattleTeam> = [];
     let actorRemoved: Array<BattleActor> = [];
@@ -1136,7 +787,8 @@ export class BattleContext extends Context {
       }
       //put them back up and tear down their mana and stamina
       playerTeam.actors.forEach((actor) => {
-        actor.character.gauges.forEach((gauge) => {
+        Object.keys(GAUGE_KEYS).forEach((gaugeKey) => {
+          var gauge = actor.character.gauges[gaugeKey as GaugeKey];
           gauge.consumed = Math.ceil(
             GaugeCalc.getValue(actor.character, gauge) * 0.975
           );
@@ -1395,7 +1047,7 @@ export class BattleContext extends Context {
           chara.name
         }</strong> ${GaugeCalc.getCurrentValueString(
           chara,
-          chara.getGauge(GAUGE_KEYS.VITALITY)
+          chara.gauges.VITALITY
         )}`;
 
         actorEl.classList.add('actor');
