@@ -2,35 +2,35 @@ import {
   BattleContext,
   BattleGroup,
   BattleScheme,
-} from 'src/core/battle-context';
-import { XPGrowth } from 'src/core/xp-calc';
+} from '@/core/battle-context';
+import { XPGrowth } from '@/core/xp-calc';
 import {
   Encounter,
   GameAction,
   GameActionResult,
-} from 'src/data/bank/encounter';
-import { SLIME_BUILDER } from 'src/data/builder/slime-builder';
-import { COMPANY_POSITION } from 'src/models/company';
-import { Actor } from 'src/models/actor';
+} from '@/data/bank/encounter';
+import { SLIME_BUILDER } from '@/data/builder/slime-builder';
+import { COMPANY_POSITION } from '@/models/company';
+import { Actor } from '@/models/actor';
 import {
   Gauge,
   GAUGE_INFOS,
   GAUGE_KEYS,
   GaugeCalc,
   GaugeKey,
-} from 'src/models/gauge';
+} from '@/models/gauge';
 import {
   Stat,
   STAT_INFOS,
   STAT_KEY,
   StatCalc,
   StatKey,
-} from 'src/models/stats';
-import { MapScene } from 'src/scenes/map.scene';
+} from '@/models/stats';
+import { MapScene } from '@/scenes/map.scene';
 import {
   GameDataService,
   OverallGameDataParamter,
-} from 'src/services/game-data.service';
+} from '@/services/game-data.service';
 
 class HTMLToastElement extends HTMLDivElement {
   static readonly tagname = 'toast-element';

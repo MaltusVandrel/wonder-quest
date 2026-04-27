@@ -1,9 +1,9 @@
 import * as Phaser from 'phaser';
-import { GameDataService } from 'src/services/game-data.service';
-import { ColorUtils } from 'src/utils/color.utils';
-import { MapGeneratorUtils } from 'src/utils/map-generator.utils';
+import { GameDataService } from '@/services/game-data.service';
+import { ColorUtils } from '@/utils/color.utils';
+import { MapGeneratorUtils } from '@/utils/map-generator.utils';
 import { MapUIScene } from './map.ui.scene';
-import { setMapUpUI } from 'src/utils/ui-elements.util';
+import { setMapUpUI } from '@/utils/ui-elements.util';
 
 export class MapScene extends Phaser.Scene {
   static DIALOG_OPEN_COUNT = 0;

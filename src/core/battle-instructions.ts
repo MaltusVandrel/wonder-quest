@@ -1,4 +1,4 @@
-import { MoveBonk } from 'src/models/move';
+import { MoveBonk } from '@/models/move';
 import {
   BattleActionSlot,
   BattleActionType,

@@ -1,10 +1,9 @@
 import { BattleContext } from '../core/battle-context';
 
 import { Stat, STAT_KEY, StatCalc, StatKey } from './stats';
-import { ChildComponent } from './child-component';
 import { Gauge, GAUGE_KEYS, GaugeCalc, GaugeKey } from './gauge';
-import { CalcUtil } from 'src/utils/calc.utils';
-import { defaultXPGrowthPlan, XPGrowthPlan } from 'src/core/xp-calc';
+import { CalcUtil } from '@/utils/calc.utils';
+import { defaultXPGrowthPlan, XPGrowthPlan } from '@/core/xp-calc';
 
 export interface FigureData {
   core: { xp: number; skillPoints: number; growthPlan: XPGrowthPlan };

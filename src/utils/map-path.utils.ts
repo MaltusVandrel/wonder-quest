@@ -1,4 +1,4 @@
-import { BIOME_DEFAULTS } from 'src/data/bank/biome';
+import { BIOME_DEFAULTS } from '@/data/bank/biome';
 import { MapGeneratorUtils } from './map-generator.utils';
 
 interface Step {

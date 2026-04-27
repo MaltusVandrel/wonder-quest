@@ -7,13 +7,6 @@ import i18n from './i18n';
 import App from './App';
 import './styles.scss';
 
-declare global {
-  interface Window {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    game: any;
-  }
-}
-
 window.game = window.game || ({} as Record<string, unknown>);
 
 ReactDOM.createRoot(document.getElementById('root')!).render(

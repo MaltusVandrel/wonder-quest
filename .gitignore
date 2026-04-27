@@ -6,6 +6,9 @@
 /out-tsc
 /bazel-out
 
+# Vite
+.vite/
+
 # Node
 /node_modules
 npm-debug.log
@@ -36,6 +39,11 @@ yarn-error.log
 /libpeerconnection.log
 testem.log
 /typings
+
+# Environment
+.env
+.env.local
+.env.*.local
 
 # System files
 .DS_Store

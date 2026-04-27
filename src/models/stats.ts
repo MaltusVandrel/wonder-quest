@@ -1,4 +1,3 @@
-import { ChildComponent } from './child-component';
 import { Actor } from './actor';
 import { Company } from './company';
 export const STAT_KEY = {

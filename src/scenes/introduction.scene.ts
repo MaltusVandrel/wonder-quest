@@ -1,6 +1,6 @@
 import * as Phaser from 'phaser';
-import { GameDataService } from 'src/services/game-data.service';
-import { setUpIntroductionUI } from 'src/utils/ui-elements.util';
+import { GameDataService } from '@/services/game-data.service';
+import { setUpIntroductionUI } from '@/utils/ui-elements.util';
 
 const READING_TIME = 5000;
 const EASE_IN_TWEEN_DURATION = 1500;

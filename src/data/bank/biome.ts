@@ -1,6 +1,6 @@
-import { Biome } from 'src/models/biome';
-import { MapGeneratorUtils } from 'src/utils/map-generator.utils';
-import { MapPathUtils } from 'src/utils/map-path.utils';
+import { Biome } from '@/models/biome';
+import { MapGeneratorUtils } from '@/utils/map-generator.utils';
+import { MapPathUtils } from '@/utils/map-path.utils';
 
 export function inRange(value: number, min: number, max: number): boolean {
   return value >= min && value < max;

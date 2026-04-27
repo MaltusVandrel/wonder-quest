@@ -1,23 +1,23 @@
-import { Company } from 'src/models/company';
+import { Company } from '@/models/company';
 import { BIOME_TYPES } from './biome';
-import { Biome } from 'src/models/biome';
+import { Biome } from '@/models/biome';
 import {
   GameDataService,
   OverallGameDataParamter as OverallGameDataParamter,
-} from 'src/services/game-data.service';
+} from '@/services/game-data.service';
 import { getRegionSeed } from './map-region';
-import { MapGeneratorUtils } from 'src/utils/map-generator.utils';
-import { DIALOG_TYPES } from 'src/utils/ui-notification.util';
+import { MapGeneratorUtils } from '@/utils/map-generator.utils';
+import { DIALOG_TYPES } from '@/utils/ui-notification.util';
 import {
   BATTLE_EVENT_TYPE,
   BattleContext,
   BattleEvent,
   BattleGroup,
   BattleScheme,
-} from 'src/core/battle-context';
+} from '@/core/battle-context';
 import { SLIME_BUILDER } from '../builder/slime-builder';
-import { ChallangeDificultyXPInfluence } from 'src/core/xp-calc';
-import { BATTLE_INSTRUCTIONS } from 'src/core/battle-instructions';
+import { ChallangeDificultyXPInfluence } from '@/core/xp-calc';
+import { BATTLE_INSTRUCTIONS } from '@/core/battle-instructions';
 const TRIGGER_MULTIPLIER = 0.1;
 /*
 interface EncounterScheme {

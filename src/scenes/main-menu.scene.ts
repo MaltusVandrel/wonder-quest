@@ -1,10 +1,10 @@
 import * as Phaser from 'phaser';
-import { defaultXPGrowthPlan, XPGrowth } from 'src/core/xp-calc';
-import { GameDataService } from 'src/services/game-data.service';
+import { defaultXPGrowthPlan, XPGrowth } from '@/core/xp-calc';
+import { GameDataService } from '@/services/game-data.service';
 import {
   setUpMainMenuUI,
   tearDownMainMenuUI,
-} from 'src/utils/ui-elements.util';
+} from '@/utils/ui-elements.util';
 
 export class MainMenuScene extends Phaser.Scene {
   textStyle: Phaser.Types.GameObjects.Text.TextStyle = {

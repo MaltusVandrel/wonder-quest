@@ -1,9 +1,9 @@
 import * as Phaser from 'phaser';
-import { UIElement } from 'src/core/ui-element';
-import { MapGeneratorUtils } from 'src/utils/map-generator.utils';
-import { GameDataService } from 'src/services/game-data.service';
+import { UIElement } from '@/core/ui-element';
+import { MapGeneratorUtils } from '@/utils/map-generator.utils';
+import { GameDataService } from '@/services/game-data.service';
 
-import { getRegionName } from 'src/data/bank/map-region';
+import { getRegionName } from '@/data/bank/map-region';
 import { MapScene } from './map.scene';
 
 export class MapUIScene extends Phaser.Scene {

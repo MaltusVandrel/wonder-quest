@@ -1,17 +1,17 @@
-import { GAUGE_KEYS, GaugeCalc, GaugeKey } from 'src/models/gauge';
-import { MapScene } from 'src/scenes/map.scene';
-import { GameDataService } from 'src/services/game-data.service';
+import { GAUGE_KEYS, GaugeCalc, GaugeKey } from '@/models/gauge';
+import { MapScene } from '@/scenes/map.scene';
+import { GameDataService } from '@/services/game-data.service';
 import {
   DIALOG_TYPES,
   showAlertDialog,
   showCompanyDialog,
   showDialog,
 } from './ui-notification.util';
-import { FigureName, NAMES } from 'src/data/bank/names';
-import { HERO_BUILDER } from 'src/data/builder/hero-builder';
-import { Actor } from 'src/models/actor';
-import { Stat, StatCalc, StatKey } from 'src/models/stats';
-import { COMPANY_POSITION } from 'src/models/company';
+import { FigureName, NAMES } from '@/data/bank/names';
+import { HERO_BUILDER } from '@/data/builder/hero-builder';
+import { Actor } from '@/models/actor';
+import { Stat, StatCalc, StatKey } from '@/models/stats';
+import { COMPANY_POSITION } from '@/models/company';
 
 function setHoverBlocking(element: HTMLElement) {
   element.addEventListener('mouseenter', () => {

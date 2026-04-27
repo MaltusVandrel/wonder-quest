@@ -1,14 +1,14 @@
 import * as Phaser from 'phaser';
-import { MapPathUtils } from 'src/utils/map-path.utils';
-import { GameDataService } from 'src/services/game-data.service';
+import { MapPathUtils } from '@/utils/map-path.utils';
+import { GameDataService } from '@/services/game-data.service';
 
 import {
   checkIfEncountersHappensOnTravel,
   Encounter,
-} from 'src/data/bank/encounter';
-import { showEncounterDialog, showToast } from 'src/utils/ui-notification.util';
-import { showStaminaGauge } from 'src/utils/ui-elements.util';
-import { GAUGE_KEYS, GaugeCalc } from 'src/models/gauge';
+} from '@/data/bank/encounter';
+import { showEncounterDialog, showToast } from '@/utils/ui-notification.util';
+import { showStaminaGauge } from '@/utils/ui-elements.util';
+import { GAUGE_KEYS, GaugeCalc } from '@/models/gauge';
 
 export class MapPathScene extends Phaser.Scene {
   mapScene: any;

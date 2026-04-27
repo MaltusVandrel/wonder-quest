@@ -1,18 +1,18 @@
-import { Actor } from 'src/models/actor';
+import { Actor } from '@/models/actor';
 import {
   BattleActor,
   BattleContext,
   BattleInstructionExpression,
   BattleTeam,
 } from './battle-context';
-import { MoveBehaviour, MoveBonk, MoveExpression } from 'src/models/move';
-import { StatCalc } from 'src/models/stats';
+import { MoveBehaviour, MoveBonk, MoveExpression } from '@/models/move';
+import { StatCalc } from '@/models/stats';
 import {
   GAUGE_ABBREVIATION,
   GAUGE_KEYS,
   GaugeCalc,
   GaugeKey,
-} from 'src/models/gauge';
+} from '@/models/gauge';
 
 export async function doAttack(
   battle: BattleContext,

@@ -2,24 +2,24 @@ import { Actor } from '../models/actor';
 import { Context } from './context';
 import { MessageHandler } from './message-handler';
 import { BehaviorSubject, first } from 'rxjs';
-import { CalcUtil } from 'src/utils/calc.utils';
-import { STAT_KEY, StatCalc } from 'src/models/stats';
+import { CalcUtil } from '@/utils/calc.utils';
+import { STAT_KEY, StatCalc } from '@/models/stats';
 import {
   GAUGE_ABBREVIATION,
   GAUGE_KEYS,
   GaugeCalc,
   GaugeKey,
-} from 'src/models/gauge';
-import { GameDataService } from 'src/services/game-data.service';
-import { SLIME_BUILDER } from 'src/data/builder/slime-builder';
-import { COMPANY_POSITION } from 'src/models/company';
+} from '@/models/gauge';
+import { GameDataService } from '@/services/game-data.service';
+import { SLIME_BUILDER } from '@/data/builder/slime-builder';
+import { COMPANY_POSITION } from '@/models/company';
 import {
   ChallangeDificultyXPInfluence,
   defaultXPGrowthPlan,
   XPGrowth,
 } from './xp-calc';
-import { showStaminaGauge } from 'src/utils/ui-elements.util';
-import { MoveBonk, MoveExpression } from 'src/models/move';
+import { showStaminaGauge } from '@/utils/ui-elements.util';
+import { MoveBonk, MoveExpression } from '@/models/move';
 import { BATTLE_INSTRUCTIONS } from './battle-instructions';
 import { doAttack } from './battle-context.attack';
 

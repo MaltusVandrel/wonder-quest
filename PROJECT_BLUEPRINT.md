@@ -1,5 +1,7 @@
 # WonderQuest - Blueprint Técnico para Projeto Análogo
 
+> ⚠️ **AVISO: Este documento está DESATUALIZADO.** O projeto foi migrado de Angular para **Vite + React + TypeScript + Redux Toolkit + i18n + Phaser + SCSS**. As referências à Angular, `@angular`, `AppComponent`, `app.module.ts`, `angular.json`, etc. não refletem a stack atual. Consulte `AGENTS.md` para a arquitetura vigente.
+>
 > Documento gerado a partir da análise do projeto WonderQuest.
 > Contém schemas, estruturas, conexões e arquitetura para replicação/expansão.
 

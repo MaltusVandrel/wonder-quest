@@ -1,9 +1,9 @@
-import { Biome } from 'src/models/biome';
+import { Biome } from '@/models/biome';
 import { BIOME_TYPES, BIOMES } from './biome';
-import { GameDataService } from 'src/services/game-data.service';
-import { MapScene } from 'src/scenes/map.scene';
-import { MapPathUtils } from 'src/utils/map-path.utils';
-import { MapGeneratorUtils } from 'src/utils/map-generator.utils';
+import { GameDataService } from '@/services/game-data.service';
+import { MapScene } from '@/scenes/map.scene';
+import { MapPathUtils } from '@/utils/map-path.utils';
+import { MapGeneratorUtils } from '@/utils/map-generator.utils';
 import seedrandom from 'seedrandom';
 //import seedrandom from 'seedrandom';
 

@@ -1,4 +1,4 @@
-import { BIOME_TYPES } from 'src/data/bank/biome';
+import { BIOME_TYPES } from '@/data/bank/biome';
 
 export interface Biome {
   type: BIOME_TYPES;

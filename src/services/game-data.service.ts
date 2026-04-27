@@ -1,9 +1,9 @@
-import { MapRegion } from 'src/data/bank/map-region';
-import { HERO_BUILDER } from 'src/data/builder/hero-builder';
-import { Biome } from 'src/models/biome';
-import { Actor } from 'src/models/actor';
-import { Company } from 'src/models/company';
-import { BattleGroup, BattleScheme } from 'src/core/battle-context';
+import { MapRegion } from '@/data/bank/map-region';
+import { HERO_BUILDER } from '@/data/builder/hero-builder';
+import { Biome } from '@/models/biome';
+import { Actor } from '@/models/actor';
+import { Company } from '@/models/company';
+import { BattleGroup, BattleScheme } from '@/core/battle-context';
 export interface TimeData {
   years: number;
   months: number;

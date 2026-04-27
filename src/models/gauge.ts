@@ -1,4 +1,3 @@
-import { ChildComponent } from './child-component';
 import { Company, COMPANY_POSITION } from './company';
 import { Actor } from './actor';
 import { STAT_KEY, StatCalc, StatKey } from './stats';
