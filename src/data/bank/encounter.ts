@@ -317,11 +317,11 @@ export const ENCOUNTERS: { [key in BIOME_TYPES]: Array<EncounterScheme> } = {
               'Yva',
               'Zerin',
             ];
-            const numberOfTeams = Math.ceil(Math.random() * 15) + 5;
+            const numberOfTeams = Math.ceil(Math.random() * 4) + 2;
 
             Array.from({ length: numberOfTeams }).map((_, teamIndex) => {
               const name = names[teamIndex];
-              const numberOfEnemies = Math.ceil(Math.random() * 6) + 1;
+              const numberOfEnemies = Math.ceil(Math.random() * 2) + 1;
 
               const enemies = Array.from({ length: numberOfEnemies }).map(
                 (_, charIndex) => {
