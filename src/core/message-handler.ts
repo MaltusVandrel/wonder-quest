@@ -1,16 +1,10 @@
-import { Injectable } from '@angular/core';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-
-@Injectable()
 export class MessageHandler {
-  static messages: SafeHtml[] = [];
+  static messages: string[] = [];
   private static messagesPile: string[] = [];
   private static intervalId: any;
   private static showMessageTimer: number = 10;
 
-  constructor(private domSanitizer: DomSanitizer) {}
-
-  public getMessages(): SafeHtml[] {
+  public getMessages(): string[] {
     return MessageHandler.messages;
   }
 
@@ -24,11 +18,7 @@ export class MessageHandler {
   private showNewMessages() {
     if (MessageHandler.intervalId == null) {
       MessageHandler.intervalId = setInterval(() => {
-        MessageHandler.messages.push(
-          this.domSanitizer.bypassSecurityTrustHtml(
-            MessageHandler.messagesPile.shift() + ''
-          )
-        );
+        MessageHandler.messages.push(MessageHandler.messagesPile.shift() + '');
         if (MessageHandler.messagesPile.length == 0) {
           clearInterval(MessageHandler.intervalId);
           MessageHandler.intervalId = null;

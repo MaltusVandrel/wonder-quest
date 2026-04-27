@@ -1,8 +1,6 @@
-/* To learn more about this file see: https://angular.io/config/tsconfig. */
 {
-  "compileOnSave": false,
   "compilerOptions": {
-    "baseUrl": "./",
+    "baseUrl": ".",
     "outDir": "./dist/out-tsc",
     "forceConsistentCasingInFileNames": true,
     "strict": true,
@@ -12,21 +10,17 @@
     "noFallthroughCasesInSwitch": true,
     "sourceMap": true,
     "declaration": false,
-    "experimentalDecorators": true,
     "moduleResolution": "node",
     "importHelpers": true,
-    "target": "es2022",
-    "module": "es2022",
+    "target": "ES2022",
+    "module": "ESNext",
     "resolveJsonModule": true,
     "esModuleInterop": true,
-    "lib": ["es2022", "dom", "scripthost"]
+    "lib": ["ES2022", "DOM"],
+    "jsx": "react-jsx",
+    "skipLibCheck": true,
+    "typeRoots": ["./node_modules/phaser/types"]
   },
-  "angularCompilerOptions": {
-    "enableI18nLegacyMessageIdFormat": false,
-    "strictInjectionParameters": true,
-    "strictInputAccessModifiers": true,
-    "strictTemplates": true
-  },
-  "typeRoots": ["./node_modules/phaser/types"],
-  "types": ["Phaser"]
+  "include": ["src"],
+  "exclude": ["node_modules"]
 }

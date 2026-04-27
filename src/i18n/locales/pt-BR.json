@@ -1,0 +1,43 @@
+{
+  "menu": {
+    "title": "WonderQuest",
+    "newGame": "Novo Jogo",
+    "continue": "Continuar",
+    "editor": "Editor de Mundo",
+    "settings": "Configurações",
+    "quit": "Sair"
+  },
+  "game": {
+    "inventory": "Inventário",
+    "stats": "Atributos",
+    "map": "Mapa",
+    "pause": "Pausar",
+    "resume": "Retomar"
+  },
+  "editor": {
+    "tools": {
+      "select": "Selecionar",
+      "move": "Mover",
+      "paint": "Pintar",
+      "erase": "Apagar",
+      "entity": "Entidade",
+      "path": "Caminho"
+    },
+    "layers": {
+      "terrain": "Terreno",
+      "objects": "Objetos",
+      "entities": "Entidades",
+      "paths": "Caminhos"
+    }
+  },
+  "settings": {
+    "language": "Idioma",
+    "volume": {
+      "master": "Geral",
+      "music": "Música",
+      "sfx": "Efeitos"
+    },
+    "fullscreen": "Tela Cheia",
+    "fps": "Mostrar FPS"
+  }
+}

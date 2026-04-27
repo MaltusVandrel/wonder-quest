@@ -1,4 +1,3 @@
-import { Injectable } from '@angular/core';
 import Alea from 'alea';
 import { createNoise2D, NoiseFunction2D } from 'simplex-noise';
 import { BiomeUtils } from './biome.utils';

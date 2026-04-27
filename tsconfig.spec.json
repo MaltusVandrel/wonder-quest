@@ -1,18 +1,14 @@
-/* To learn more about this file see: https://angular.io/config/tsconfig. */
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "./out-tsc/spec",
-    "types": [
-      "jasmine"
-    ]
+    "types": ["vitest/globals", "@testing-library/jest-dom"]
   },
-  "files": [
-    "src/test.ts",
-    "src/polyfills.ts"
-  ],
   "include": [
+    "src/**/*.test.ts",
+    "src/**/*.test.tsx",
     "src/**/*.spec.ts",
+    "src/**/*.spec.tsx",
     "src/**/*.d.ts"
   ]
 }

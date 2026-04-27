@@ -1,4 +1,3 @@
-import { Injectable } from '@angular/core';
 import { MapRegion } from 'src/data/bank/map-region';
 import { HERO_BUILDER } from 'src/data/builder/hero-builder';
 import { Biome } from 'src/models/biome';
