@@ -65,8 +65,7 @@ export class MapPathUtils {
     };
     steps.push({ x: originalX, y: originalY });
     while (
-      (playerX != targetCellXOnScreenGridMap ||
-        playerY != targetCellYOnScreenGridMap) &&
+      (playerX != targetCellXOnScreenGridMap || playerY != targetCellYOnScreenGridMap) &&
       steps.length < maximumTiles &&
       steps.length < cautionException
     ) {
@@ -86,17 +85,13 @@ export class MapPathUtils {
         let stepTimeCost = stepCell.timeCost;
 
         if (!uncoveredCells[stepX + ';' + stepY]) {
-          let directionCostModifier = Math.sqrt(
-            Math.abs(directionX) + Math.abs(directionY)
-          );
+          let directionCostModifier = Math.sqrt(Math.abs(directionX) + Math.abs(directionY));
           let pathCost =
             Math.abs(stepX - targetCellXOnScreenGridMap) +
             Math.abs(stepY - targetCellYOnScreenGridMap);
           let staminaCostWeight = stepStaminaCost / BIOME_DEFAULTS.staminaCost;
           let timeCostWeight = (stepTimeCost / BIOME_DEFAULTS.timeCost) * 0.1;
-          let weightCost =
-            (staminaCostWeight + timeCostWeight) *
-            (directionCostModifier * 0.3);
+          let weightCost = (staminaCostWeight + timeCostWeight) * (directionCostModifier * 0.3);
           weightCost = weightCost * 30;
 
           let referenceCost = pathCost + weightCost;
@@ -163,19 +158,13 @@ export class MapPathUtils {
           let otherStepX = otherStep.x;
           let otherStepY = otherStep.y;
           //pula iteracao se nao for adjacente
-          if (
-            Math.abs(otherStepX - targetStepX) > 1 ||
-            Math.abs(otherStepY - targetStepY) > 1
-          ) {
+          if (Math.abs(otherStepX - targetStepX) > 1 || Math.abs(otherStepY - targetStepY) > 1) {
             continue otherStepFor;
           }
           directionsFor: for (let direction of this.DIRECTIONS) {
             let directionX = direction[0];
             let directionY = direction[1];
-            if (
-              directionX + otherStepX == targetStepX &&
-              directionY + otherStepY == targetStepY
-            ) {
+            if (directionX + otherStepX == targetStepX && directionY + otherStepY == targetStepY) {
               let startSteps = steps.slice(0, j + 1);
               let endSteps = steps.slice(i, steps.length);
               let newLength = startSteps.length + endSteps.length;
@@ -196,10 +185,7 @@ export class MapPathUtils {
           let aheadStepX = aheadStep.x;
           let aheadStepY = aheadStep.y;
           //pula iteracao se nao for adjacente
-          if (
-            Math.abs(aheadStepX - currentStepX) > 1 ||
-            Math.abs(aheadStepY - currentStepY) > 1
-          ) {
+          if (Math.abs(aheadStepX - currentStepX) > 1 || Math.abs(aheadStepY - currentStepY) > 1) {
             continue aheadStepFor;
           }
           thereIsAdjacent = true;

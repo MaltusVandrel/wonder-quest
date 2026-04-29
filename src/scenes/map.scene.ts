@@ -3,10 +3,8 @@ import { GameDataService } from '@/services/game-data.service';
 import { ColorUtils } from '@/utils/color.utils';
 import { MapGeneratorUtils } from '@/utils/map-generator.utils';
 import { MapUIScene } from './map.ui.scene';
-import { setMapUpUI } from '@/utils/ui-elements.util';
 
 export class MapScene extends Phaser.Scene {
-  static DIALOG_OPEN_COUNT = 0;
   static HOVER_UI_ELEMENT: boolean = false;
   mapPathScene: any;
   mapPlayerScene: any;
@@ -67,7 +65,7 @@ export class MapScene extends Phaser.Scene {
 
   create() {
     this.updateToCanvasSize();
-    setMapUpUI();
+    // UI do mapa agora é gerenciada pelo React GameOverlay
     this.actualGridCenter = this.gridCenter();
 
     const diffPlayerCenter = {
@@ -153,9 +151,7 @@ export class MapScene extends Phaser.Scene {
         cell.addListener('pointerover', () => {
           if (MapScene.isUiBlocking()) return;
           this.activeCell = cell;
-          let color = Phaser.Display.Color.ValueToColor(
-            cell.getData('biome').color
-          );
+          let color = Phaser.Display.Color.ValueToColor(cell.getData('biome').color);
           color.brighten(20);
           color.saturate(25);
           cell.fillColor = ColorUtils.colorToInteger(color);
@@ -214,10 +210,7 @@ export class MapScene extends Phaser.Scene {
       this.colorFilter.fillStyle(0x0000ff, 0.5); // Change the color and alpha as needed
     }
 
-    if (
-      (time.hours >= 5 && time.hours < 8) ||
-      (time.hours >= 17 && time.hours < 20)
-    ) {
+    if ((time.hours >= 5 && time.hours < 8) || (time.hours >= 17 && time.hours < 20)) {
       this.colorFilter.fillStyle(0xff5500, 0.5); // Change the color and alpha as needed
     }
 
@@ -234,6 +227,6 @@ export class MapScene extends Phaser.Scene {
     return centerPos.x == x && centerPos.y == y;
   }
   static isUiBlocking(): boolean {
-    return MapScene.DIALOG_OPEN_COUNT > 0 || MapScene.HOVER_UI_ELEMENT;
+    return MapScene.HOVER_UI_ELEMENT;
   }
 }

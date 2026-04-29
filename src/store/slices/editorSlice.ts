@@ -48,5 +48,6 @@ const editorSlice = createSlice({
   },
 });
 
-export const { toggleEditor, setActiveTool, setActiveLayer, pushHistory, undo, redo } = editorSlice.actions;
+export const { toggleEditor, setActiveTool, setActiveLayer, pushHistory, undo, redo } =
+  editorSlice.actions;
 export default editorSlice.reducer;

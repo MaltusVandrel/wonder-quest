@@ -1,10 +1,13 @@
 {
   "menu": {
     "title": "WonderQuest",
+    "startGame": "Start Game",
     "newGame": "New Game",
     "continue": "Continue",
     "editor": "World Editor",
     "settings": "Settings",
+    "options": "Options",
+    "optionsPlaceholder": "Ask the tech lead to take his head out of his ass and do the options menu.",
     "quit": "Quit"
   },
   "game": {
@@ -12,7 +15,10 @@
     "stats": "Stats",
     "map": "Map",
     "pause": "Pause",
-    "resume": "Resume"
+    "resume": "Resume",
+    "rest": "Rest",
+    "stamina": "Stamina",
+    "openCompany": "Open company"
   },
   "editor": {
     "tools": {
@@ -29,6 +35,27 @@
       "entities": "Entities",
       "paths": "Paths"
     }
+  },
+  "introduction": {
+    "chooseName": "Choose the name of the vessel:",
+    "arise": "Arise",
+    "realmWelcome": "A realm welcomes you from beyond the misty veil, it draws breath for {{years}} cycles.",
+    "emergedVessel": "You are but a wish to shape it and you emerged the vessel <strong>{{name}}</strong> from under the ghost fumes to enact your will.",
+    "vesselHollow": "The vessel is hollow to be fill with memories lived.",
+    "crossMist": "{{name}} cross the sepia mist..."
+  },
+  "battle": {
+    "chooseTarget": "Choose Target",
+    "back": "Back"
+  },
+  "dialog": {
+    "ok": "OK",
+    "companyTitle": "Company",
+    "level": "Level",
+    "skillPoints": "Skill Points",
+    "autoBattle": "Auto Battle?",
+    "noMembers": "No members in the company.",
+    "battleTitle": "Battle!!"
   },
   "settings": {
     "language": "Language",

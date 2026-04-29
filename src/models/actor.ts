@@ -24,12 +24,13 @@ export class Actor {
     core: { xp: 0, skillPoints: 0, growthPlan: { ...defaultXPGrowthPlan } },
     configuration: { autoBattle: false },
   };
-  gauges: Record<GaugeKey, Gauge> = (
-    Object.values(GAUGE_KEYS) as GaugeKey[]
-  ).reduce((acc, key) => {
-    acc[key] = { key, title: key.toLowerCase(), value: 1, consumed: 1 };
-    return acc;
-  }, {} as Record<GaugeKey, Gauge>);
+  gauges: Record<GaugeKey, Gauge> = (Object.values(GAUGE_KEYS) as GaugeKey[]).reduce(
+    (acc, key) => {
+      acc[key] = { key, title: key.toLowerCase(), value: 1, consumed: 1 };
+      return acc;
+    },
+    {} as Record<GaugeKey, Gauge>
+  );
 
   stats: Record<StatKey, Stat> = (Object.values(STAT_KEY) as StatKey[]).reduce(
     (acc, key) => {
@@ -61,9 +62,7 @@ export class Actor {
   }
 
   isFainted(): boolean {
-    return (
-      GaugeCalc.getCurrentValue(this, this.gauges[GAUGE_KEYS.VITALITY]) <= 0
-    );
+    return GaugeCalc.getCurrentValue(this, this.gauges[GAUGE_KEYS.VITALITY]) <= 0;
   }
   getInitiative(): number {
     return this.getActionSpeed();
@@ -86,9 +85,8 @@ export class Actor {
   getActionSpeed(): number {
     const luk = this.stats[STAT_KEY.LUCK];
     const normalSpeed = this.getNormalSpeed();
-    normalSpeed +
-      CalcUtil.getRandom(StatCalc.getInfluenceValue(this, luk)) +
-      this.level / 4;
-    return normalSpeed > 0 ? normalSpeed : 1;
+    const actionSpeed =
+      normalSpeed + CalcUtil.getRandom(StatCalc.getInfluenceValue(this, luk)) + this.level / 4;
+    return actionSpeed > 0 ? actionSpeed : 1;
   }
 }

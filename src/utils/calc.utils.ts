@@ -25,8 +25,6 @@ export class CalcUtil {
     return Math.round(Math.random());
   }
   static genId(): string {
-    return (
-      new Date().getTime() + '-' + Math.floor(Math.random() * 100000000000)
-    );
+    return new Date().getTime() + '-' + Math.floor(Math.random() * 100000000000);
   }
 }

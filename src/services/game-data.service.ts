@@ -46,17 +46,12 @@ export class GameDataService {
   static hoursInADay = 24;
   static daysInAMonth = 28;
   static daysInAWeek = GameDataService.daysInAMonth / 4;
-  static daysInASeason =
-    GameDataService.daysInAMonth * 4 + GameDataService.daysInAWeek;
+  static daysInASeason = GameDataService.daysInAMonth * 4 + GameDataService.daysInAWeek;
   static monthsInAYear = 13;
-  static daysInAYear =
-    GameDataService.daysInAMonth * GameDataService.monthsInAYear;
-  static minutesInADay =
-    GameDataService.hoursInADay * GameDataService.minutesInAHour;
-  static minutesInAMonth =
-    GameDataService.daysInAMonth * GameDataService.minutesInADay;
-  static minutesInAYear =
-    GameDataService.daysInAYear * GameDataService.minutesInADay;
+  static daysInAYear = GameDataService.daysInAMonth * GameDataService.monthsInAYear;
+  static minutesInADay = GameDataService.hoursInADay * GameDataService.minutesInAHour;
+  static minutesInAMonth = GameDataService.daysInAMonth * GameDataService.minutesInADay;
+  static minutesInAYear = GameDataService.daysInAYear * GameDataService.minutesInADay;
 
   static GAME_DATA: GameData = {
     time: this.INITIAL_TIME - this.LEFTOVERS + 0.1,
@@ -70,9 +65,7 @@ export class GameDataService {
   };
 
   constructor() {}
-  static getTimeData(
-    totalMinutes: number = GameDataService.GAME_DATA.time
-  ): TimeData {
+  static getTimeData(totalMinutes: number = GameDataService.GAME_DATA.time): TimeData {
     let year = totalMinutes / GameDataService.minutesInAYear;
     let month = (year % 1) * GameDataService.monthsInAYear;
     let day = (month % 1) * GameDataService.daysInAMonth;
@@ -93,9 +86,7 @@ export class GameDataService {
     };
   }
 
-  static getFormattedTime(
-    totalMinutes: number = GameDataService.GAME_DATA.time
-  ) {
+  static getFormattedTime(totalMinutes: number = GameDataService.GAME_DATA.time) {
     const formatNumber = (num: number) => num.toString().padStart(2, '0');
     const timeData: any = this.getTimeData(totalMinutes);
     timeData.months++;
@@ -108,22 +99,15 @@ export class GameDataService {
   }
   // Save data to localStorage
   static saveData(): void {
-    this.GAME_DATA.companyData = Company.untieCircularReference(
-      this.GAME_DATA.companyData
-    );
-    localStorage.setItem(
-      GameDataService.STORAGE_KEY,
-      JSON.stringify(this.GAME_DATA)
-    );
+    this.GAME_DATA.companyData = Company.untieCircularReference(this.GAME_DATA.companyData);
+    localStorage.setItem(GameDataService.STORAGE_KEY, JSON.stringify(this.GAME_DATA));
   }
 
   // Load data from localStorage
   static loadData(): any {
     const data = localStorage.getItem(GameDataService.STORAGE_KEY);
     this.GAME_DATA = { ...this.GAME_DATA, ...JSON.parse(data ?? '') };
-    this.GAME_DATA.companyData = Company.instantiate(
-      this.GAME_DATA.companyData
-    );
+    this.GAME_DATA.companyData = Company.instantiate(this.GAME_DATA.companyData);
   }
   static existsData(): any {
     const data = localStorage.getItem(GameDataService.STORAGE_KEY);

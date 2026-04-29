@@ -12,10 +12,7 @@ export abstract class ColorUtils {
   }
   public static rgbToHexString(r: number, g: number, b: number): string {
     return (
-      '0x' +
-      ColorUtils.channelToHex(r) +
-      ColorUtils.channelToHex(g) +
-      ColorUtils.channelToHex(b)
+      '0x' + ColorUtils.channelToHex(r) + ColorUtils.channelToHex(g) + ColorUtils.channelToHex(b)
     );
   }
   public static hexToColor(hexColor: string): Phaser.Display.Color {

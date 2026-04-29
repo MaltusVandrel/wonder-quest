@@ -10,38 +10,38 @@ body {
 }
 
 @font-face {
-  font-family: "Caviar Dreams";
+  font-family: 'Caviar Dreams';
   src: url(/assets/fonts/caviar_dreams/CaviarDreams.ttf);
   font-weight: normal;
   font-style: normal;
 }
 @font-face {
-  font-family: "Caviar Dreams";
+  font-family: 'Caviar Dreams';
   src: url(/assets/fonts/caviar_dreams/CaviarDreams_Bold.ttf);
   font-weight: bold;
   font-style: normal;
 }
 @font-face {
-  font-family: "Caviar Dreams";
+  font-family: 'Caviar Dreams';
   src: url(/assets/fonts/caviar_dreams/CaviarDreams_Italic.ttf);
   font-weight: normal;
   font-style: italic;
 }
 
 @font-face {
-  font-family: "Caviar Dreams";
+  font-family: 'Caviar Dreams';
   src: url(/assets/fonts/caviar_dreams/CaviarDreams_BoldItalic.ttf);
   font-weight: bold;
   font-style: italic;
 }
 * {
-  font-family: "Caviar Dreams", sans-serif;
-  cursor: url("/assets/cursor.png"), auto;
+  font-family: 'Caviar Dreams', sans-serif;
+  cursor: url('/assets/cursor.png'), auto;
   box-sizing: border-box !important;
   scrollbar-color: wheat rgba(0, 0, 0, 0);
   scrollbar-width: thin;
 }
-input[type="checkbox"] {
+input[type='checkbox'] {
   -webkit-appearance: none;
   appearance: none;
   /* For iOS < 15 to remove gradient background */
@@ -59,7 +59,7 @@ input[type="checkbox"] {
   place-content: center;
   padding: 0px 0px 1px 1px;
   &::before {
-    content: "";
+    content: '';
     width: 0.65em;
     height: 0.65em;
     transform: scale(0);
@@ -279,6 +279,86 @@ button.rest-button {
 ::backdrop {
   pointer-events: none;
 }
+
+.dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 100;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.6);
+}
+
+.dialog-element {
+  position: relative;
+  background-color: #4a2a0a;
+  color: wheat;
+  padding: 16px;
+  border-radius: 6px;
+  min-width: 280px;
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  button.dismiss {
+    position: absolute;
+    background: none;
+    outline: 0px;
+    border: 0px;
+    font-size: 2em;
+    right: 8px;
+    top: 4px;
+    color: wheat;
+    cursor: pointer;
+    &:hover {
+      transform: scale(1.05);
+    }
+  }
+
+  progress.dialog-closing-progress {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    left: 0px;
+    border-radius: 0px;
+    height: 6px;
+    background-color: #38eba6 !important;
+    &::-moz-progress-value {
+      background-color: #38eba6 !important;
+    }
+    &::-webkit-progress-value {
+      background-color: #38eba6 !important;
+    }
+    &::-moz-progress-bar {
+      background-color: rgba(15, 15, 15, 0.9);
+    }
+  }
+
+  header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding-right: 32px;
+  }
+
+  menu {
+    margin: 0px;
+    gap: 4px;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
+  }
+}
+
+// Estilos legados para <dialog> (mantidos para compatibilidade)
 dialog.dialog-element {
   position: fixed;
   margin: auto;
@@ -376,15 +456,24 @@ div#toast-holder {
     padding: 8px;
     text-overflow: ellipsis;
     pointer-events: none;
-    transition: margin-top 0.5s ease, opacity 0.3s ease;
+    transition:
+      margin-top 0.5s ease,
+      opacity 0.3s ease;
     strong {
       display: block;
       position: absolute;
       margin-left: 96.5%;
       margin-top: -13px;
       font-size: 1.2em;
-      text-shadow: 2px 0 0 black, 0 2px 0 black, -2px 0 0 black, 0 -2px 0 black,
-        2px 2px 0 black, -2px -2px 0 black, -2px 2px 0 black, 2px -2px 0 black;
+      text-shadow:
+        2px 0 0 black,
+        0 2px 0 black,
+        -2px 0 0 black,
+        0 -2px 0 black,
+        2px 2px 0 black,
+        -2px -2px 0 black,
+        -2px 2px 0 black,
+        2px -2px 0 black;
     }
   }
 }
@@ -497,7 +586,8 @@ div#toast-holder {
   height: calc(100vh - 8px);
   display: flex;
   flex-direction: column;
-  section {
+  section,
+  .battle-content {
     display: flex;
     width: 100%;
     justify-content: space-between;
@@ -610,13 +700,19 @@ div#toast-holder {
 }
 @keyframes criticalText {
   0% {
-    text-shadow: 1px 1px 0px #ff8903, -1px -1px 0px #03ffff;
+    text-shadow:
+      1px 1px 0px #ff8903,
+      -1px -1px 0px #03ffff;
   }
   50% {
-    text-shadow: 0px 0px 1px #ff8903, 0px 0px 1px #03ffff;
+    text-shadow:
+      0px 0px 1px #ff8903,
+      0px 0px 1px #03ffff;
   }
   100% {
-    text-shadow: 1px 1px 0px #ff8903, -1px -1px 0px #03ffff;
+    text-shadow:
+      1px 1px 0px #ff8903,
+      -1px -1px 0px #03ffff;
   }
 }
 .hit-taken {
@@ -638,16 +734,15 @@ div#toast-holder {
 }
 
 .hit-taken {
-  animation: blinkHitTaken 0.2s cubic-bezier(0.87, 0, 0.13, 1) 0s 1 normal
-      forwards,
+  animation:
+    blinkHitTaken 0.2s cubic-bezier(0.87, 0, 0.13, 1) 0s 1 normal forwards,
     shakeHitTaken 0.2s cubic-bezier(0.87, 0, 0.13, 1) 0s 1 normal forwards;
 
   //
 }
 .shrink-slide-out {
   overflow: hidden;
-  animation: shrinkAndSlideOut 0.2s cubic-bezier(0.87, 0, 0.13, 1) 0s 1 normal
-    forwards;
+  animation: shrinkAndSlideOut 0.2s cubic-bezier(0.87, 0, 0.13, 1) 0s 1 normal forwards;
 }
 @keyframes blinkHitTaken {
   0%,

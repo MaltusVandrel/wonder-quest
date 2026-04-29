@@ -2,12 +2,9 @@ import * as Phaser from 'phaser';
 import { MapPathUtils } from '@/utils/map-path.utils';
 import { GameDataService } from '@/services/game-data.service';
 
-import {
-  checkIfEncountersHappensOnTravel,
-  Encounter,
-} from '@/data/bank/encounter';
+import { checkIfEncountersHappensOnTravel, Encounter } from '@/data/bank/encounter';
 import { showEncounterDialog, showToast } from '@/utils/ui-notification.util';
-import { showStaminaGauge } from '@/utils/ui-elements.util';
+
 import { GAUGE_KEYS, GaugeCalc } from '@/models/gauge';
 
 export class MapPathScene extends Phaser.Scene {
@@ -99,7 +96,6 @@ export class MapPathScene extends Phaser.Scene {
       this.mapScene.moveCamera(-incrementOnOffsetX, -incrementOnOffsetY);
       this.pathPositionUpdate(-incrementOnOffsetX, -incrementOnOffsetY);
       stamina.consumed += step.cell.staminaCost;
-      showStaminaGauge();
       GameDataService.GAME_DATA.time += step.cell.timeCost;
       this.mapUIScene.showCurrentTime();
       this.mapScene.doColorFilter();
@@ -108,20 +104,16 @@ export class MapPathScene extends Phaser.Scene {
 
       //encouter???
       const pos = this.mapScene.gridCenter();
-      const triggeredEncounters: Array<Encounter> | null =
-        checkIfEncountersHappensOnTravel(
-          pos.x + this.mapScene.gridOffsetX,
-          pos.y + this.mapScene.gridOffsetY
-        );
+      const triggeredEncounters: Array<Encounter> | null = checkIfEncountersHappensOnTravel(
+        pos.x + this.mapScene.gridOffsetX,
+        pos.y + this.mapScene.gridOffsetY
+      );
       if (triggeredEncounters && triggeredEncounters.length > 0) {
-        if (
-          triggeredEncounters[triggeredEncounters.length - 1].demandsAttention
-        ) {
+        if (triggeredEncounters[triggeredEncounters.length - 1].demandsAttention) {
           const encounterToDialog = triggeredEncounters.pop();
           if (encounterToDialog) {
             showEncounterDialog(encounterToDialog);
-            this.mapScene.activeCell.fillColor =
-              this.mapScene.activeCell.getData('biome').color;
+            this.mapScene.activeCell.fillColor = this.mapScene.activeCell.getData('biome').color;
             this.mapScene.activeCell.setStrokeStyle(0, 0xffffff);
             this.lockPath = false;
             this.clearPath();
@@ -154,11 +146,7 @@ export class MapPathScene extends Phaser.Scene {
   pathPositionUpdate(incrementOnOffsetX: number, incrementOnOffsetY: number) {
     let pathX = this.pathGraphics?.x || 0;
     let pathY = this.pathGraphics?.y || 0;
-    this.pathGraphics?.setX(
-      pathX + -incrementOnOffsetX * this.mapScene.tileSize
-    );
-    this.pathGraphics?.setY(
-      pathY + -incrementOnOffsetY * this.mapScene.tileSize
-    );
+    this.pathGraphics?.setX(pathX + -incrementOnOffsetX * this.mapScene.tileSize);
+    this.pathGraphics?.setY(pathY + -incrementOnOffsetY * this.mapScene.tileSize);
   }
 }

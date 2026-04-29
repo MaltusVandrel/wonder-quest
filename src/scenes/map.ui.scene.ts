@@ -100,12 +100,7 @@ export class MapUIScene extends Phaser.Scene {
         this.getPosX(UIElement.ALIGNMENT.START, 12),
         this.getPosY(UIElement.ALIGNMENT.END, 12),
         [
-          getRegionName(tileInfoX, tileInfoY, tileBiome) +
-            ' (' +
-            tileInfoX +
-            '/' +
-            tileInfoY +
-            ')',
+          getRegionName(tileInfoX, tileInfoY, tileBiome) + ' (' + tileInfoX + '/' + tileInfoY + ')',
           totalStaminaCost + ' Stamina Cost',
           formattedTimeCost,
         ],

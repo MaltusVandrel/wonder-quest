@@ -42,11 +42,7 @@ const florestScheme: MapRegionScheme = {
 const mountainScheme: MapRegionScheme = {
   name: 'Mountain',
   seedBiomeType: BIOME_TYPES.MOUNTAINS,
-  relativeBiomes: [
-    BIOME_TYPES.MOUNTAINS,
-    BIOME_TYPES.HIGH_MOUNTAINS,
-    BIOME_TYPES.SNOWY_PEAKS,
-  ],
+  relativeBiomes: [BIOME_TYPES.MOUNTAINS, BIOME_TYPES.HIGH_MOUNTAINS, BIOME_TYPES.SNOWY_PEAKS],
   tileLimit: 2500,
 };
 const waterScheme: MapRegionScheme = {
@@ -65,11 +61,7 @@ const waterScheme: MapRegionScheme = {
 const plainsScheme: MapRegionScheme = {
   name: 'Plains',
   seedBiomeType: BIOME_TYPES.PLAINS,
-  relativeBiomes: [
-    BIOME_TYPES.PLAINS,
-    BIOME_TYPES.HIGH_GRASS,
-    BIOME_TYPES.HILLS,
-  ],
+  relativeBiomes: [BIOME_TYPES.PLAINS, BIOME_TYPES.HIGH_GRASS, BIOME_TYPES.HILLS],
   tileLimit: 2500,
 };
 const desertScheme: MapRegionScheme = {
@@ -87,9 +79,7 @@ const schemes: MapRegionScheme[] = [
 ];
 
 const letras: Array<string> =
-  'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789☼☽Ω℧☃★☭☯♁♔♕♖♗♘♙♚♛♜♝♞♟♠♡♢♣♤♥♦♧⚀⚁⚂⚃⚄⚅⚆⚜⚬❦'.split(
-    ''
-  );
+  'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789☼☽Ω℧☃★☭☯♁♔♕♖♗♘♙♚♛♜♝♞♟♠♡♢♣♤♥♦♧⚀⚁⚂⚃⚄⚅⚆⚜⚬❦'.split('');
 const regionSize: number = 128;
 const goodPlaces = [
   'Bright',
@@ -225,8 +215,8 @@ function getLastRightTile(region: MapRegion): { x: number; y: number } {
 }
 //Deserves to live cuz was helpful once. they pastel colors btw.
 const arrayzinhoFodase = [
-  0xffffcc, 0xffcc99, 0xffcccc, 0xff99cc, 0xffccff, 0xccccff, 0x99ccff,
-  0xcc99ff, 0xccffff, 0x99ffcc, 0xccffcc, 0xccff99,
+  0xffffcc, 0xffcc99, 0xffcccc, 0xff99cc, 0xffccff, 0xccccff, 0x99ccff, 0xcc99ff, 0xccffff,
+  0x99ffcc, 0xccffcc, 0xccff99,
 ];
 
 //fazer por quadrantes semi randomicos direcionais

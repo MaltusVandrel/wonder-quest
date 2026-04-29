@@ -58,12 +58,7 @@ export class MapGeneratorUtils {
     }
   }
 
-  static generateChunk(
-    height: number,
-    width: number,
-    offsetX: number,
-    offsetY: number
-  ) {
+  static generateChunk(height: number, width: number, offsetX: number, offsetY: number) {
     // Parâmetros para ruído e seed
 
     for (let layer of this.layers) {
@@ -121,8 +116,7 @@ export class MapGeneratorUtils {
     return false;
   }
   static generateTilesData(layer: any, x: number, y: number) {
-    if (!this.generatedTilesData[layer.key][y])
-      this.generatedTilesData[layer.key][y] = [];
+    if (!this.generatedTilesData[layer.key][y]) this.generatedTilesData[layer.key][y] = [];
     if (this.generatedTilesData[layer.key][y][x]) {
       return;
     }

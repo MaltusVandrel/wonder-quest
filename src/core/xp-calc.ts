@@ -43,26 +43,17 @@ export class XPGrowth {
     challangeLevel: number,
     dificultyInfluence?: ChallangeDificultyXPInfluence
   ): number {
-    const difficultyXpInfluence =
-      dificultyInfluence || ChallangeDificultyXPInfluence.NORMAL;
+    const difficultyXpInfluence = dificultyInfluence || ChallangeDificultyXPInfluence.NORMAL;
     const xpBase = this.xpGrowthPlan.baseGoal;
 
     const linearGoal = Math.ceil(
-      xpBase +
-        (challangeLevel - 1) *
-          (xpBase * this.xpGrowthPlan.percentualBaseGoalIncrement)
+      xpBase + (challangeLevel - 1) * (xpBase * this.xpGrowthPlan.percentualBaseGoalIncrement)
     );
-    const simpleGrowthAmountSection = Math.ceil(
-      linearGoal / this.xpGrowthPlan.aimedBaseMatches
-    );
+    const simpleGrowthAmountSection = Math.ceil(linearGoal / this.xpGrowthPlan.aimedBaseMatches);
     const levelDifference = challangeLevel - skillLevel;
-    const levelDifferenceAmount =
-      levelDifference * this.xpGrowthPlan.levelDifferenceInfluence;
+    const levelDifferenceAmount = levelDifference * this.xpGrowthPlan.levelDifferenceInfluence;
     return Math.max(
-      Math.ceil(
-        (simpleGrowthAmountSection + levelDifferenceAmount) *
-          difficultyXpInfluence
-      ),
+      Math.ceil((simpleGrowthAmountSection + levelDifferenceAmount) * difficultyXpInfluence),
       1
     );
   }
@@ -72,8 +63,7 @@ export class XPGrowth {
     const growthAmountSection = xpBase / this.xpGrowthPlan.aimedBaseMatches;
 
     const stepeningCurve = Math.exp(
-      (skillLevel + growthAmountSection) /
-        (this.xpGrowthPlan.aimedBaseMatches * 10)
+      (skillLevel + growthAmountSection) / (this.xpGrowthPlan.aimedBaseMatches * 10)
     );
     const multipliers =
       (skillLevel - 1) *
@@ -81,8 +71,7 @@ export class XPGrowth {
       (1 + stepeningCurve);
     const linearGoal = Math.ceil(xpBase + multipliers);
     const simpleValue = Math.ceil(linearGoal);
-    const visualAdjustment =
-      simpleValue % this.xpGrowthPlan.goalVisualMultiplierAdjustment;
+    const visualAdjustment = simpleValue % this.xpGrowthPlan.goalVisualMultiplierAdjustment;
     const adjustedValue = Math.ceil(simpleValue - visualAdjustment);
     return adjustedValue;
   }

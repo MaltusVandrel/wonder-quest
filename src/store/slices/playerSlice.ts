@@ -38,5 +38,6 @@ const playerSlice = createSlice({
   },
 });
 
-export const { setPlayerName, setStats, setInventory, setPosition, setCurrentRegion } = playerSlice.actions;
+export const { setPlayerName, setStats, setInventory, setPosition, setCurrentRegion } =
+  playerSlice.actions;
 export default playerSlice.reducer;

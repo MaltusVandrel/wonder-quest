@@ -7,7 +7,7 @@ import {
 } from '@/services/game-data.service';
 import { getRegionSeed } from './map-region';
 import { MapGeneratorUtils } from '@/utils/map-generator.utils';
-import { DIALOG_TYPES } from '@/utils/ui-notification.util';
+import { DIALOG_TYPES } from '@/types/dialog';
 import {
   BATTLE_EVENT_TYPE,
   BattleContext,
@@ -17,7 +17,7 @@ import {
 } from '@/core/battle-context';
 import { SLIME_BUILDER } from '../builder/slime-builder';
 import { ChallangeDificultyXPInfluence } from '@/core/xp-calc';
-import { BATTLE_INSTRUCTIONS } from '@/core/battle-instructions';
+
 const TRIGGER_MULTIPLIER = 0.1;
 /*
 interface EncounterScheme {
@@ -91,11 +91,8 @@ export const ENCOUNTERS: { [key in BIOME_TYPES]: Array<EncounterScheme> } = {
       demandsAttention: false,
 
       onTrigger: (data: OverallGameDataParamter) => {
-        let hapenstance =
-          GameDataService.GAME_DATA.encounterData['bunny.funny.happenstance'] ||
-          0;
-        GameDataService.GAME_DATA.encounterData['bunny.funny.happenstance'] =
-          ++hapenstance;
+        let hapenstance = GameDataService.GAME_DATA.encounterData['bunny.funny.happenstance'] || 0;
+        GameDataService.GAME_DATA.encounterData['bunny.funny.happenstance'] = ++hapenstance;
       },
     },
     {
@@ -109,8 +106,7 @@ export const ENCOUNTERS: { [key in BIOME_TYPES]: Array<EncounterScheme> } = {
     {
       key: 'dangerous.heroic.bunny',
       title: 'A weird thing happened',
-      description:
-        'A cool bunny with a scar and a red flowy scarf appears for a duel!',
+      description: 'A cool bunny with a scar and a red flowy scarf appears for a duel!',
       chance: 0.01 * TRIGGER_MULTIPLIER,
       demandsAttention: true,
       blocksOtherEncounters: true,
@@ -156,8 +152,7 @@ export const ENCOUNTERS: { [key in BIOME_TYPES]: Array<EncounterScheme> } = {
       ],
       canTrigger: (data: OverallGameDataParamter) => {
         let bunnyHapenstance =
-          GameDataService.GAME_DATA.encounterData['bunny.funny.happenstance'] ||
-          0;
+          GameDataService.GAME_DATA.encounterData['bunny.funny.happenstance'] || 0;
         if (bunnyHapenstance > 100 / TRIGGER_MULTIPLIER) {
           return true;
         }
@@ -191,8 +186,7 @@ export const ENCOUNTERS: { [key in BIOME_TYPES]: Array<EncounterScheme> } = {
                 fainted: false,
                 legendaryActions: 0,
                 dificulty: ChallangeDificultyXPInfluence.EASY,
-                battleInstructions:
-                  BATTLE_INSTRUCTIONS.GET_RANDOM_ALIVE_ADVERSARY,
+                battleInstructions: 'GET_RANDOM_ALIVE_ADVERSARY',
               };
             });
 
@@ -200,7 +194,7 @@ export const ENCOUNTERS: { [key in BIOME_TYPES]: Array<EncounterScheme> } = {
               members: enemies,
               teamName: 'Slimes',
               teamKey: 'slime',
-              disavantage: false,
+              disadvantage: false,
               adversarial: true,
               supporter: false,
               actionBehaviour: BattleContext.ACTION_BEHAVIOUR.AUTO,
@@ -236,10 +230,9 @@ export const ENCOUNTERS: { [key in BIOME_TYPES]: Array<EncounterScheme> } = {
                     fainted: false,
                     legendaryActions: 0,
                     dificulty: ChallangeDificultyXPInfluence.EASY,
-                    battleInstructions:
-                      BATTLE_INSTRUCTIONS.GET_RANDOM_ALIVE_ADVERSARY,
+                    battleInstructions: 'GET_RANDOM_ALIVE_ADVERSARY',
                   },
-                  battle.getTeamByKey('slime')
+                  battle.getTeamByKey('slime')!
                 );
                 return {
                   stopBattle: false,
@@ -323,20 +316,17 @@ export const ENCOUNTERS: { [key in BIOME_TYPES]: Array<EncounterScheme> } = {
               const name = names[teamIndex];
               const numberOfEnemies = Math.ceil(Math.random() * 2) + 1;
 
-              const enemies = Array.from({ length: numberOfEnemies }).map(
-                (_, charIndex) => {
-                  const sabo = SLIME_BUILDER.getASlime(level);
-                  sabo.name = name + ' Sabo  #' + (charIndex + 1);
-                  return {
-                    character: sabo,
-                    fainted: false,
-                    legendaryActions: 0,
-                    dificulty: ChallangeDificultyXPInfluence.EASY,
-                    battleInstructions:
-                      BATTLE_INSTRUCTIONS.GET_RANDOM_ALIVE_ADVERSARY,
-                  };
-                }
-              );
+              const enemies = Array.from({ length: numberOfEnemies }).map((_, charIndex) => {
+                const sabo = SLIME_BUILDER.getASlime(level);
+                sabo.name = name + ' Sabo  #' + (charIndex + 1);
+                return {
+                  character: sabo,
+                  fainted: false,
+                  legendaryActions: 0,
+                  dificulty: ChallangeDificultyXPInfluence.EASY,
+                  battleInstructions: 'GET_RANDOM_ALIVE_ADVERSARY',
+                };
+              });
 
               let adversarial = Math.random() > 0.5999;
               let supporter = Math.random() > 0.3999 && !adversarial;
@@ -345,7 +335,7 @@ export const ENCOUNTERS: { [key in BIOME_TYPES]: Array<EncounterScheme> } = {
                 members: enemies,
                 teamName: name + ' Sabo',
                 teamKey: 'sabo_' + name.toLocaleLowerCase(),
-                disavantage: true,
+                disadvantage: true,
                 adversarial: adversarial,
                 supporter: supporter,
                 actionBehaviour: BattleContext.ACTION_BEHAVIOUR.AUTO,
@@ -353,9 +343,7 @@ export const ENCOUNTERS: { [key in BIOME_TYPES]: Array<EncounterScheme> } = {
               });
             });
             groups.forEach((group) => {
-              const noMes = groups.filter(
-                (oGroup) => oGroup.teamKey != group.teamKey
-              );
+              const noMes = groups.filter((oGroup) => oGroup.teamKey != group.teamKey);
               const adversarial = group.adversarial;
               const supporter = group.supporter;
               const neutral = !(supporter || adversarial);
@@ -381,12 +369,8 @@ export const ENCOUNTERS: { [key in BIOME_TYPES]: Array<EncounterScheme> } = {
                   });
                 }
               } else {
-                groupsToHelp = noMes.filter(
-                  (oGroup) => !(oGroup.supporter || oGroup.adversarial)
-                );
-                groupsToHarm = noMes.filter(
-                  (oGroup) => oGroup.supporter || oGroup.adversarial
-                );
+                groupsToHelp = noMes.filter((oGroup) => !(oGroup.supporter || oGroup.adversarial));
+                groupsToHarm = noMes.filter((oGroup) => oGroup.supporter || oGroup.adversarial);
               }
               groupsToHelp
                 .filter((g) => Math.random() > 0.5)
@@ -492,10 +476,7 @@ function populateEncounter(
   };
 }
 
-export function checkIfEncountersHappensOnTravel(
-  x: number,
-  y: number
-): Array<Encounter> | null {
+export function checkIfEncountersHappensOnTravel(x: number, y: number): Array<Encounter> | null {
   const biome = MapGeneratorUtils.getBiomeData(x, y);
   const biomeType: BIOME_TYPES = biome.type;
 
@@ -514,8 +495,7 @@ function checkIfEncountersHappens(
 ): Array<Encounter> | null {
   if (overalGameDataParamter.biome == null) throw 'Tell the biome ya fucker!';
   if (overalGameDataParamter.pos == null) throw 'Tell the position ya fucker!';
-  if (overalGameDataParamter.encounterTriggerType == null)
-    throw 'Tell the trigger type ya fucker!';
+  if (overalGameDataParamter.encounterTriggerType == null) throw 'Tell the trigger type ya fucker!';
 
   const pos: { x: number; y: number } = overalGameDataParamter.pos;
   const biome = overalGameDataParamter.biome;
@@ -537,8 +517,7 @@ function checkIfEncountersHappens(
         (schemeA.priority || 99) - (schemeB.priority || 99)
     );
   if (blockingEvents && blockingEvents.length > 0) {
-    if (blockingEvents[0].onTrigger)
-      blockingEvents[0].onTrigger(overalGameDataParamter);
+    if (blockingEvents[0].onTrigger) blockingEvents[0].onTrigger(overalGameDataParamter);
     return [populateEncounter(blockingEvents[0], overalGameDataParamter)];
   }
   const demandsAttentionEncounter = toTriggerEncounters
@@ -559,9 +538,7 @@ function checkIfEncountersHappens(
     triggeredEncounters.push(demandsAttentionEncounter[0]);
   }
   if (!(triggeredEncounters.length > 0)) return null;
-  const encounters = triggeredEncounters.map((e) =>
-    populateEncounter(e, overalGameDataParamter)
-  );
+  const encounters = triggeredEncounters.map((e) => populateEncounter(e, overalGameDataParamter));
   encounters.forEach((encounter: Encounter) => {
     encounter.onTrigger && encounter.onTrigger(overalGameDataParamter);
   });

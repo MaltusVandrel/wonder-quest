@@ -1,10 +1,6 @@
 import * as Phaser from 'phaser';
 import { defaultXPGrowthPlan, XPGrowth } from '@/core/xp-calc';
 import { GameDataService } from '@/services/game-data.service';
-import {
-  setUpMainMenuUI,
-  tearDownMainMenuUI,
-} from '@/utils/ui-elements.util';
 
 export class MainMenuScene extends Phaser.Scene {
   textStyle: Phaser.Types.GameObjects.Text.TextStyle = {
@@ -18,16 +14,12 @@ export class MainMenuScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.font(
-      'Monocraft Sans',
-      'assets/Monocraft-nerd-fonts-patched.ttf',
-      'truetype'
-    );
+    this.load.font('Monocraft Sans', 'assets/Monocraft-nerd-fonts-patched.ttf', 'truetype');
     this.load.image('particle', 'assets/particula.png'); // Ensure you have this image in your assets directory
   }
 
   create() {
-    setUpMainMenuUI();
+    // Menu principal agora é gerenciado pelo React MainMenuOverlay
     const height = parseInt(this.game?.scale?.height + '');
     const width = parseInt(this.game?.scale?.width + '');
 
@@ -56,11 +48,9 @@ export class MainMenuScene extends Phaser.Scene {
   }
 
   startGame(isContinue: boolean = false) {
-    tearDownMainMenuUI();
     this.scene.start('introduction-scene', { isContinue: isContinue });
   }
   loadGame() {
-    tearDownMainMenuUI();
     GameDataService.loadData();
     this.startGame(true);
   }

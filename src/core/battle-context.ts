@@ -4,93 +4,45 @@ import { MessageHandler } from './message-handler';
 import { BehaviorSubject, first } from 'rxjs';
 import { CalcUtil } from '@/utils/calc.utils';
 import { STAT_KEY, StatCalc } from '@/models/stats';
-import {
-  GAUGE_ABBREVIATION,
-  GAUGE_KEYS,
-  GaugeCalc,
-  GaugeKey,
-} from '@/models/gauge';
+import { GAUGE_ABBREVIATION, GAUGE_KEYS, GaugeCalc, GaugeKey } from '@/models/gauge';
 import { GameDataService } from '@/services/game-data.service';
 import { SLIME_BUILDER } from '@/data/builder/slime-builder';
 import { COMPANY_POSITION } from '@/models/company';
-import {
-  ChallangeDificultyXPInfluence,
-  defaultXPGrowthPlan,
-  XPGrowth,
-} from './xp-calc';
-import { showStaminaGauge } from '@/utils/ui-elements.util';
-import { MoveBonk, MoveExpression } from '@/models/move';
-import { BATTLE_INSTRUCTIONS } from './battle-instructions';
-import { doAttack } from './battle-context.attack';
+import { ChallangeDificultyXPInfluence, defaultXPGrowthPlan, XPGrowth } from './xp-calc';
 
-export interface BattleTeam {
-  id: string;
-  name: string;
-  key: string;
-  actors: Array<BattleActor>;
-  actionBehaviour: number;
-  isPlayer: boolean;
-  relationships: Array<TeamRelationship>;
-  disadvantage: boolean;
-  adversarial: boolean;
-  supporter: boolean;
-}
-interface TeamRelationship {
-  team: BattleTeam;
-  behaviour: number;
-}
-export interface BattleInstructionExpression {
-  actionType: BattleActionType;
-  move?: MoveExpression;
-  self?: boolean;
-  teamTargets?: Array<Array<BattleTeam>>;
-  actorTargets?: Array<Array<BattleActor>>;
-  battleActionTargets?: Array<Array<BattleActionSlot>>;
-}
-export interface BattleInstruction {
-  (battle: BattleContext, self: BattleActor): BattleInstructionExpression;
-}
-export interface BattleActor {
-  character: Actor;
-  team: BattleTeam;
-  speed: number;
-  progress: number;
-  isAuto: boolean;
-  arrivalTurn: number;
-  legendaryActions: number;
-  dificulty: ChallangeDificultyXPInfluence;
-  fainted: boolean;
-  battleInstructions: BattleInstruction;
-}
-interface BattleActorSchema {
-  character: Actor;
-  fainted?: boolean;
-  legendaryActions?: number;
-  dificulty?: ChallangeDificultyXPInfluence;
-  battleInstructions?: BattleInstruction;
-}
-export enum BattleActionType {
-  FLEE,
-  ATTACK,
-  WAIT,
-}
-export interface BattleActionSlot {
-  id: string;
-  battleActor: BattleActor;
-  speed: number;
-  timeStamp: number;
-  localProgress: number;
-}
-export interface BattleGroup {
-  members: Array<BattleActorSchema>;
-  teamName: string;
-  teamKey: string;
-  actionBehaviour: number;
-  relationships: Array<{ teamKey: string; behaviour: number }>;
-  disavantage: boolean;
-  adversarial: boolean;
-  supporter: boolean;
-}
+import { MoveBonk, MoveExpression } from '@/models/move';
+import { BattleInstructionRegistry } from '@/core/battle/instructions';
+import { doAttack } from './battle-context.attack';
+import { BattleState } from '@/core/battle/state/BattleState';
+import type { IBattleRenderer } from '@/core/battle/renderer/IBattleRenderer';
+import { BattleEventBus } from '@/core/battle/state/BattleEventBus';
+import { PhasePipeline } from '@/core/battle/state/BattlePhase';
+import {
+  BattleActionSlot,
+  BattleActionType,
+  BattleActor,
+  BattleActorSchema,
+  BattleGroup,
+  BattleInstruction,
+  BattleInstructionExpression,
+  BattlePhase,
+  BattleTeam,
+  BattleTurnInfo,
+  TeamRelationship,
+} from '@/core/battle/types';
+
+export type {
+  BattleActionSlot,
+  BattleActionType,
+  BattleActor,
+  BattleActorSchema,
+  BattleGroup,
+  BattleInstruction,
+  BattleInstructionExpression,
+  BattleTeam,
+  BattleTurnInfo,
+  TeamRelationship,
+} from '@/core/battle/types';
 
 export enum BATTLE_EVENT_TYPE {
   BEFORE_BATTLE_START,
@@ -132,17 +84,6 @@ export interface BattleScheme {
   events: Array<BattleEvent>;
   playerDisadvantage: boolean;
 }
-export interface BattleTurnInfo {
-  turn?: number;
-  activeSlot?: BattleActionSlot;
-  activeActor?: BattleActor;
-  activeMove?: any; //'delayed' move or action, interface to be defined
-  aimedActor?: BattleActor;
-  isPlayer?: boolean;
-  isMove?: boolean;
-  isHeal?: boolean;
-  moves: any[];
-}
 
 export class BattleContext extends Context {
   static TEAM_KEY_PLAYER: string = 'player';
@@ -157,90 +98,136 @@ export class BattleContext extends Context {
     PLAYER: 0,
     AUTO: 1,
   };
-  static WAIT_TIME = 1; //300;
+  static WAIT_TIME = 16; //300;
   self: BattleContext = this;
-  textPanel: HTMLElement;
-  orderPanel: HTMLElement;
-  actionMenu: HTMLElement;
-  adversarialTeamsPanel: HTMLElement;
-  allyTeamsPanel: HTMLElement;
-
-  actionSlots: Array<BattleActionSlot> = [];
-  battleActors: Array<BattleActor> = [];
-  battleTeams: Array<BattleTeam> = [];
-  timeProgress: number = 0;
-  sets: number = 0;
-  turn: number = 0;
-  turnDuration: number = 0;
   scheme: BattleScheme;
-  events: BattleEvent[] = [];
-  data: any = {};
-  //caso eventos sejam chamados fora do contexto
-  //do unravel
-  fallbackEndBattle: boolean = false;
-  turnInfo: BattleTurnInfo = {
-    turn: 0,
-    moves: [],
-  };
-  turnInfoHistory: Array<BattleTurnInfo> = [];
-  actionSlotHistory: Array<BattleActionSlot> = [];
-  retreatedTeams: Array<BattleTeam> = [];
-
   onEndCallback: () => void = () => {};
+  state: BattleState;
+  renderer: IBattleRenderer;
+  bus: BattleEventBus;
+  pipeline: PhasePipeline;
 
-  constructor(
-    textPanel: HTMLElement,
-    orderPanel: HTMLElement,
-    adversarialTeamsPanel: HTMLElement,
-    allyTeamsPanel: HTMLElement,
-    actionMenu: HTMLElement,
-    scheme: BattleScheme
-  ) {
+  /** Delegação para BattleState — propriedades legadas migradas para estado unificado */
+  get actionSlots(): Array<BattleActionSlot> {
+    return this.state.actionSlots;
+  }
+  set actionSlots(v: Array<BattleActionSlot>) {
+    this.state.actionSlots = v;
+  }
+  get battleActors(): Array<BattleActor> {
+    return this.state.battleActors;
+  }
+  set battleActors(v: Array<BattleActor>) {
+    this.state.battleActors = v;
+  }
+  get battleTeams(): Array<BattleTeam> {
+    return this.state.battleTeams;
+  }
+  set battleTeams(v: Array<BattleTeam>) {
+    this.state.battleTeams = v;
+  }
+  get timeProgress(): number {
+    return this.state.timeProgress;
+  }
+  set timeProgress(v: number) {
+    this.state.timeProgress = v;
+  }
+  get sets(): number {
+    return this.state.sets;
+  }
+  set sets(v: number) {
+    this.state.sets = v;
+  }
+  get turn(): number {
+    return this.state.turn;
+  }
+  set turn(v: number) {
+    this.state.turn = v;
+  }
+  get turnDuration(): number {
+    return this.state.turnDuration;
+  }
+  set turnDuration(v: number) {
+    this.state.turnDuration = v;
+  }
+  get events(): any {
+    return this.state.events;
+  }
+  set events(v: any) {
+    this.state.events = v;
+  }
+  get data(): any {
+    return this.state.data;
+  }
+  set data(v: any) {
+    this.state.data = v;
+  }
+  get fallbackEndBattle(): boolean {
+    return this.state.fallbackEndBattle;
+  }
+  set fallbackEndBattle(v: boolean) {
+    this.state.fallbackEndBattle = v;
+  }
+  get turnInfo(): BattleTurnInfo {
+    return this.state.turnInfo;
+  }
+  set turnInfo(v: BattleTurnInfo) {
+    this.state.turnInfo = v;
+  }
+  get turnInfoHistory(): Array<BattleTurnInfo> {
+    return this.state.turnInfoHistory;
+  }
+  set turnInfoHistory(v: Array<BattleTurnInfo>) {
+    this.state.turnInfoHistory = v;
+  }
+  get actionSlotHistory(): Array<BattleActionSlot> {
+    return this.state.actionSlotHistory;
+  }
+  set actionSlotHistory(v: Array<BattleActionSlot>) {
+    this.state.actionSlotHistory = v;
+  }
+  get retreatedTeams(): Array<BattleTeam> {
+    return this.state.retreatedTeams;
+  }
+  set retreatedTeams(v: Array<BattleTeam>) {
+    this.state.retreatedTeams = v;
+  }
+
+  constructor(renderer: IBattleRenderer, scheme: BattleScheme) {
     super('battle');
     Context.ACTIVE_CONTEXTS[this.type] = this;
 
-    this.textPanel = textPanel;
-    this.orderPanel = orderPanel;
-    this.adversarialTeamsPanel = adversarialTeamsPanel;
-    this.allyTeamsPanel = allyTeamsPanel;
-    this.actionMenu = actionMenu;
     this.scheme = scheme;
+    this.state = new BattleState(scheme as any);
+    this.renderer = renderer;
+    this.bus = new BattleEventBus();
+    this.pipeline = new PhasePipeline();
   }
 
-  static build(
-    textPanel: HTMLElement,
-    orderPanel: HTMLElement,
-    adversarialTeamsPanel: HTMLElement,
-    allyTeamsPanel: HTMLElement,
-    actionMenu: HTMLElement,
-    scheme: BattleScheme
-  ): BattleContext {
-    return new BattleContext(
-      textPanel,
-      orderPanel,
-      adversarialTeamsPanel,
-      allyTeamsPanel,
-      actionMenu,
-      scheme
-    );
+  static build(renderer: IBattleRenderer, scheme: BattleScheme): BattleContext {
+    return new BattleContext(renderer, scheme);
   }
   async triggerEvents(type: BATTLE_EVENT_TYPE) {
     if (this.fallbackEndBattle) return this.fallbackEndBattle;
 
+    // Emite a fase equivalente no novo barramento (transicional)
+    const phase = this.mapEventTypeToPhase(type);
+    const cancelled = await this.emitPhase(phase);
+    if (cancelled) return true;
+
     if (type != BATTLE_EVENT_TYPE.AFTER_BATTLE_END) this.updateTeamInfoUI();
-    const eventsOfType = this.events.filter(
-      (event) => event.type == type && event.startingTurn <= this.turn
+    const eventsOfType = (this.events as BattleEvent[]).filter(
+      (event: BattleEvent) => event.type == type && event.startingTurn <= this.turn
     );
     if (eventsOfType.length == 0) return;
     eventsOfType
-      .filter((event) => event.calculatedOccurence == true)
-      .forEach((event) => {
-        if (event.getNextTurnToOccur)
-          event.nextTurnToOccur = event.getNextTurnToOccur(this);
+      .filter((event: BattleEvent) => event.calculatedOccurence == true)
+      .forEach((event: BattleEvent) => {
+        if (event.getNextTurnToOccur) event.nextTurnToOccur = event.getNextTurnToOccur(this);
       });
 
     const eventsToTrigger = eventsOfType.filter(
-      (event) =>
+      (event: BattleEvent) =>
         event.nextTurnToOccur == this.turn ||
         event.startingTurn == this.turn ||
         (this.turn - event.startingTurn) % event.turnGapForRecurrence == 0
@@ -250,8 +237,7 @@ export class BattleContext extends Context {
     for (const event of eventsToTrigger) {
       await BattleContext.delay(50);
       const eventReturn = event.event(this, event);
-      stop =
-        stop || eventReturn.stopAll == true || eventReturn.stopBattle == true;
+      stop = stop || eventReturn.stopAll == true || eventReturn.stopBattle == true;
       this.fallbackEndBattle = this.fallbackEndBattle || stop;
       if (eventReturn.message) this.writeMessage(eventReturn.message);
       if (eventReturn.stopAll) break;
@@ -259,111 +245,42 @@ export class BattleContext extends Context {
 
     return stop;
   }
-  doTeams() {
-    const groups: Array<BattleGroup> = this.scheme.groups;
-    const company = GameDataService.GAME_DATA.companyData;
 
-    groups
-      .filter((group) => group.relationships.length == 0)
-      .forEach((group) => {
-        group.relationships.push({
-          teamKey: BattleContext.TEAM_KEY_PLAYER,
-          behaviour: BattleContext.RELATIONSHIP_BEHAVIOUR.FOE,
-        });
-      });
+  /** Emite uma fase no barramento de eventos. Retorna `true` se algum listener cancelou. */
+  async emitPhase(phase: BattlePhase): Promise<boolean> {
+    if (this.fallbackEndBattle) return this.fallbackEndBattle;
+    const payload = await this.bus.emit(phase, { state: this.state as any });
+    return payload.cancel || false;
+  }
 
-    const playerTeam: BattleGroup = {
-      members: company.members.map(
-        (member: { character: Actor; positions: COMPANY_POSITION[] }) => {
-          return {
-            character: member.character,
-            fainted: false,
-            legendaryActions: 0,
-            dificulty: ChallangeDificultyXPInfluence.NORMAL,
-            battleInstructions: BATTLE_INSTRUCTIONS.GET_RANDOM_ALIVE_ADVERSARY,
-          };
-        }
-      ),
-      teamName: company.title || 'company',
-      teamKey: BattleContext.TEAM_KEY_PLAYER,
-      actionBehaviour: BattleContext.ACTION_BEHAVIOUR.PLAYER,
-      disavantage: this.scheme.playerDisadvantage,
-      supporter: true,
-      adversarial: false,
-      relationships: groups
-        .filter(
-          (group) =>
-            group.relationships.filter(
-              (rel) => rel.teamKey == BattleContext.TEAM_KEY_PLAYER
-            ).length > 0
-        )
-        .map((group) => {
-          return {
-            teamKey: group.teamKey,
-            behaviour: group.relationships.filter(
-              (rel) => rel.teamKey == BattleContext.TEAM_KEY_PLAYER
-            )[0].behaviour,
-          };
-        }),
-    };
-    groups.unshift(playerTeam);
-    this.battleTeams = groups.map((group) => {
-      const isPlayer =
-        group.actionBehaviour == BattleContext.ACTION_BEHAVIOUR.PLAYER;
-
-      const battleTeam: BattleTeam = {
-        id: CalcUtil.genId(),
-        name: group.teamName,
-        key: group.teamKey,
-        actionBehaviour: group.actionBehaviour,
-        isPlayer: isPlayer,
-        actors: [],
-        relationships: [],
-        supporter: group.supporter,
-        adversarial: group.adversarial,
-        disadvantage: group.disavantage,
-      };
-
-      battleTeam.actors = group.members.map(
-        (actorSchema: BattleActorSchema) => {
-          const character = actorSchema.character;
-          const battleActor: BattleActor = {
-            team: battleTeam,
-            character: character,
-            legendaryActions: actorSchema.legendaryActions || 0,
-            dificulty:
-              actorSchema.dificulty || ChallangeDificultyXPInfluence.NORMAL,
-            fainted: actorSchema.fainted || character.isFainted(),
-            battleInstructions:
-              actorSchema.battleInstructions ||
-              BATTLE_INSTRUCTIONS.GET_RANDOM_ALIVE_ADVERSARY,
-            progress: battleTeam.disadvantage
-              ? BattleContext.DISADVANTAGE_INFLUENCE
-              : 0,
-            speed: character.getNormalSpeed(),
-            isAuto: isPlayer
-              ? character.data.configuration.autoBattle == true
-              : true,
-            arrivalTurn: this.turn,
-          };
-          return battleActor;
-        }
-      );
-      return battleTeam;
-    });
-    this.battleTeams.forEach((team: BattleTeam, index: number) => {
-      const group = groups[index];
-      team.relationships = group.relationships.map((rel) => {
-        return {
-          team: this.getTeamByKey(rel.teamKey),
-          behaviour: rel.behaviour,
-        };
-      });
-    });
-    this.battleActors = [];
-    this.battleTeams.forEach((team) =>
-      team.actors.forEach((actor) => this.battleActors.push(actor))
-    );
+  /** Mapeamento transicional de eventos legados para fases do novo pipeline. */
+  private mapEventTypeToPhase(type: BATTLE_EVENT_TYPE): BattlePhase {
+    switch (type) {
+      case BATTLE_EVENT_TYPE.BEFORE_BATTLE_START:
+        return BattlePhase.BEFORE_BATTLE_START;
+      case BATTLE_EVENT_TYPE.TURN_START:
+        return BattlePhase.TURN_START;
+      case BATTLE_EVENT_TYPE.TURN_END:
+        return BattlePhase.TURN_END;
+      case BATTLE_EVENT_TYPE.BEFORE_ACTION:
+        return BattlePhase.BEFORE_ACTION_EXECUTE;
+      case BATTLE_EVENT_TYPE.AFTER_ACTION:
+        return BattlePhase.AFTER_ACTION_EXECUTE;
+      case BATTLE_EVENT_TYPE.ON_ARRIVAL:
+        return BattlePhase.ON_ENTER_BATTLE;
+      case BATTLE_EVENT_TYPE.ON_AGGRESSION:
+        return BattlePhase.ON_AGGRESSION;
+      case BATTLE_EVENT_TYPE.ON_SLAIN:
+        return BattlePhase.ON_TARGET_HIT;
+      case BATTLE_EVENT_TYPE.ON_DEMISSE:
+        return BattlePhase.ON_TARGET_HIT;
+      case BATTLE_EVENT_TYPE.ON_TEAM_RETREAT:
+        return BattlePhase.TURN_END;
+      case BATTLE_EVENT_TYPE.AFTER_BATTLE_END:
+        return BattlePhase.AFTER_BATTLE_END;
+      default:
+        return BattlePhase.CHECK_BATTLE_END;
+    }
   }
 
   onEnd(callback: () => void) {
@@ -371,137 +288,46 @@ export class BattleContext extends Context {
   }
 
   async start() {
-    this.doTeams();
+    this.state.initialize();
     this.events = this.scheme.events;
-    /**
-     * Alterar pra mudar behaviour da batalha conforme desejado
-     * e ou idealizado
-     */
-    this.turnDuration = this.battleActors[0].speed * 2.25;
-    this.doActionList();
+    this.state.computeActionSlots();
+    this.state.battleActors.sort(
+      (actorA: BattleActor, actorB: BattleActor) => actorB.speed - actorA.speed
+    );
 
-    this.battleActors.sort((actorA: BattleActor, actorB: BattleActor) => {
-      return actorB.speed - actorA.speed;
-    });
-
-    /**
-     * DO BATTLE
-     */
+    this.renderer.clearOrderPanel();
+    this.renderer.clearTeamPanels();
+    this.actionSlots.forEach((slot) => this.actionSlotToElementUI(slot));
+    this.setOrderActionListUI();
 
     if (await this.triggerEvents(BATTLE_EVENT_TYPE.BEFORE_BATTLE_START)) return;
     const message = this.scheme.introductionText || 'A battle starts!';
-    this.textPanel.innerHTML = `<p>${message}</p>`;
+    this.renderer.setIntroductionMessage(message);
     BattleContext.delay().then(() => this.unravelBattle());
   }
   doActionList() {
-    const activeActors = this.battleActors
-      .filter((actor: BattleActor) => !actor.character.isFainted())
-      .sort((a: BattleActor, b: BattleActor) => b.speed - a.speed);
-    const actionSlots: BattleActionSlot[] = [];
-    //let startingTurn = this.turn;
-    //if (this.actionSlots.length > 0) { }
-    //let runs = 0;
-    activeActors.forEach((actor: BattleActor) => {
-      while (actor.progress < this.turnDuration * (10 + this.turn)) {
-        const speed = actor.character.getActionSpeed();
-        //me da valor pequeno pra quem tem velocidade alta
-        //o oposto é real
-        const progress = this.turnDuration - speed;
-        Array.from({
-          length: 1 + actor.legendaryActions,
-        }).forEach((_) => {
-          actionSlots.push({
-            id: CalcUtil.genId(),
-            battleActor: actor,
-            speed: speed,
-            timeStamp: actor.progress + progress,
-            localProgress: progress,
-          });
-        });
-        actor.progress += progress;
-      }
-    });
-    actionSlots.sort(
-      (a: BattleActionSlot, b: BattleActionSlot) => a.timeStamp - b.timeStamp
-    );
-    actionSlots.forEach((actionSlot: BattleActionSlot, index: number) => {
-      this.actionSlotToElementUI(actionSlot);
-    });
-    this.actionSlots.push(...actionSlots);
+    this.state.computeActionSlots();
+    this.renderer.clearOrderPanel();
+    this.actionSlots.forEach((slot) => this.actionSlotToElementUI(slot));
     this.setOrderActionListUI();
   }
   removeActorFromBattle(actorToRemove: BattleActor) {
-    this.actionSlots = this.actionSlots.filter(
-      (actionSlot: BattleActionSlot) =>
-        actionSlot.battleActor.character.id != actorToRemove.character.id
-    );
-    const elements = document.getElementsByClassName(
-      `turn-slot-${this.toNameKey(actorToRemove.team.name)}-${this.toNameKey(
-        actorToRemove.character.name
-      )}`
-    );
-    Array.from(elements).forEach((el) => {
-      el.remove();
-    });
+    this.state.removeActorFromBattle(actorToRemove);
+    this.renderer.removeActorSlotsFromUI(actorToRemove);
   }
 
-  async addNewBattleActor(
-    timeStamp: number,
-    actorSchema: BattleActorSchema,
-    team: BattleTeam
-  ) {
-    const char = actorSchema.character;
-    const dificulty =
-      actorSchema.dificulty || ChallangeDificultyXPInfluence.NORMAL;
-    const legendaryActions = actorSchema.legendaryActions || 0;
-
-    const actorProgress = this.turnDuration - char.getActionSpeed();
-    const isPlayer = team.isPlayer;
-    const actor: BattleActor = {
-      team: team,
-      character: char,
-      legendaryActions: legendaryActions,
-      dificulty: dificulty,
-      fainted: false,
-      battleInstructions:
-        actorSchema.battleInstructions ||
-        BATTLE_INSTRUCTIONS.GET_RANDOM_ALIVE_ADVERSARY,
-      progress:
-        timeStamp +
-        actorProgress +
-        (team.disadvantage ? BattleContext.DISADVANTAGE_INFLUENCE : 1),
-      speed: char.getNormalSpeed(),
-      isAuto: isPlayer ? char.data.configuration.autoBattle == true : true,
-      arrivalTurn: this.turn,
-    };
-    team.actors.push(actor);
-    this.battleActors.push(actor);
-    this.battleActors.sort((actorA: BattleActor, actorB: BattleActor) => {
-      return actorB.speed - actorA.speed;
-    });
-    while (actor.progress < this.turnDuration * (10 + this.turn)) {
-      const speed = actor.character.getActionSpeed();
-      const progress = this.turnDuration - speed;
-      const actionSlot: BattleActionSlot = {
-        id: CalcUtil.genId(),
-        battleActor: actor,
-        speed: speed,
-        timeStamp: actor.progress + progress,
-        localProgress: progress,
-      };
-      this.actionSlots.push(actionSlot);
-      actor.progress += progress;
-      this.actionSlotToElementUI(actionSlot);
-    }
-    this.actionSlots.sort((a, b) => a.timeStamp - b.timeStamp);
+  async addNewBattleActor(timeStamp: number, actorSchema: BattleActorSchema, team: BattleTeam) {
+    this.state.addNewBattleActor(actorSchema, team, timeStamp);
+    this.renderer.clearOrderPanel();
+    this.actionSlots.forEach((slot) => this.actionSlotToElementUI(slot));
     this.setOrderActionListUI();
 
     if (await this.triggerEvents(BATTLE_EVENT_TYPE.ON_ARRIVAL)) return;
   }
   async unravelBattle() {
-    const actionSlot: BattleActionSlot | undefined = this.actionSlots.shift();
+    const actionSlot = this.state.getNextActionSlot();
     if (actionSlot == undefined) throw 'Populate the battle slots ya fucker';
-    await this.retreatFoelessTeams();
+    await this.state.retreatFoelessTeams();
     this.turn++;
 
     this.turnInfo = { turn: this.turn, moves: [] };
@@ -523,14 +349,11 @@ export class BattleContext extends Context {
 
     if (!team.isPlayer || battleActor.isAuto) {
       this.turnInfo.isHeal = false;
-      await doAttack(
-        this,
-        char,
-        BATTLE_INSTRUCTIONS.GET_RANDOM_ALIVE_ADVERSARY(
-          this,
-          this.turnInfo.activeActor
-        )
-      );
+      const strategy = BattleInstructionRegistry.get('GET_RANDOM_ALIVE_ADVERSARY');
+      const instruction = strategy
+        ? strategy.execute(this.state, this.turnInfo.activeActor!)
+        : { actionType: BattleActionType.WAIT, actorTargets: [] };
+      await doAttack(this, char, instruction);
       isAggression = true;
     } else {
       this.turnInfo.isHeal = false;
@@ -556,105 +379,107 @@ export class BattleContext extends Context {
     await this.doEndOrNextTurn(team);
   }
   writeMessage(message: string) {
-    const newP = document.createElement('p');
-    newP.innerHTML += message;
-    this.textPanel.insertBefore(newP, this.textPanel.childNodes[0]);
+    this.renderer.writeMessage(message);
   }
-  isThereAnyAnimosity() {
-    let isThereAnimosity = false;
-    this.battleTeams
-      .filter(
-        (team) =>
-          team.actors.filter((actor) => !actor.character.isFainted()).length > 0
-      )
-      .forEach((team) => {
-        isThereAnimosity =
-          isThereAnimosity ||
-          team.relationships.filter(
-            (rel) =>
-              rel.behaviour >= BattleContext.RELATIONSHIP_BEHAVIOUR.FOE &&
-              rel.team.actors.filter((actor) => !actor.character.isFainted())
-                .length > 0
-          ).length > 0;
-      });
-    return isThereAnimosity;
+  isThereAnyAnimosity(): boolean {
+    return this.state.isThereAnyAnimosity();
   }
   isThereAnyAdversaryAlive(team: BattleTeam): boolean {
-    //Unilateral behaviour cannot ever happen, it may be assimetric but never unilateral
-    const enemyTeams: Array<BattleTeam> = this.getEnemyTeams(team);
-
-    const adversarialTeams: BattleTeam[] = this.getAdversarialTeams(team);
-
-    const detrimentalTeams: BattleTeam[] = this.getDetrimentalTeams(team);
-
-    const allAdvTeams = [
-      ...enemyTeams,
-      ...adversarialTeams,
-      ...detrimentalTeams,
-    ];
-
-    const allBitches: Array<BattleActor> = allAdvTeams
-      .map((team) => {
-        return team.actors;
-      })
-      .reduce((previous: BattleActor[], current: BattleActor[]) => {
-        return previous.concat(current);
-      });
-
-    return (
-      allBitches.filter((battleActor) => {
-        return !battleActor.character.isFainted();
-      }).length > 0
-    );
+    return this.state.isThereAnyAdversaryAlive(team);
   }
   getTeamsWithAliveActors(teamCluster: Array<BattleTeam>): Array<BattleTeam> {
-    return teamCluster.filter((team) => this.doTeamHasAliveActors(team));
+    return this.state.getTeamsWithAliveActors(teamCluster);
   }
   doTeamHasAliveActors(team: BattleTeam): boolean {
-    return team.actors.filter((a) => !a.character.isFainted()).length > 0;
+    return this.state.doTeamHasAliveActors(team);
   }
   chooseAction(char: Actor): Promise<BattleInstructionExpression> {
-    const promise = new Promise<BattleInstructionExpression>((resolve) => {
-      const doShitButton = document.createElement('button');
-      doShitButton.classList.add('ui-game-button');
-      doShitButton.innerHTML = 'Do Shit ' + char.name + '!';
-      doShitButton.addEventListener('click', () => {
-        this.actionMenu.innerHTML = '';
-        if (this.turnInfo.activeActor) {
-          const instruction: BattleInstructionExpression =
-            BATTLE_INSTRUCTIONS.GET_RANDOM_ALIVE_ADVERSARY(
-              this,
-              this.turnInfo.activeActor
-            );
-          resolve(instruction);
-        } else {
-          throw 'WTF dude!!  Set the turn BattleActor!!';
-        }
-      });
-      this.actionMenu.appendChild(doShitButton);
-    });
+    return new Promise<BattleInstructionExpression>((resolve) => {
+      const actor = this.turnInfo.activeActor;
+      if (!actor) {
+        throw 'WTF dude!!  Set the turn BattleActor!!';
+      }
 
-    return promise;
+      const showMainMenu = () => {
+        this.renderer.clearActionMenu();
+
+        const resolveAttack = () => {
+          // Coleta alvos adversários vivos
+          const enemyTeams = this.state.getEnemyTeams(actor.team);
+          const adversarialTeams = this.state.getAdversarialTeams(actor.team);
+          const detrimentalTeams = this.state.getDetrimentalTeams(actor.team);
+          const allAdvTeams = [...enemyTeams, ...adversarialTeams, ...detrimentalTeams];
+          const targets = allAdvTeams
+            .flatMap((t) => t.actors)
+            .filter((a) => !a.character.isFainted());
+
+          if (targets.length === 0) {
+            this.writeMessage('Não há alvos disponíveis!');
+            resolve({ actionType: BattleActionType.WAIT });
+            return;
+          }
+
+          this.renderer.showTargetSelection(
+            targets,
+            (selectedTarget) => {
+              this.renderer.clearActionMenu();
+              resolve({
+                actionType: BattleActionType.ATTACK,
+                move: MoveBonk.defaultExpression, // TODO: permitir escolha de movimento
+                actorTargets: [[selectedTarget]],
+              });
+            },
+            showMainMenu
+          );
+        };
+
+        const resolveDefend = () => {
+          this.renderer.clearActionMenu();
+          resolve({ actionType: BattleActionType.DEFEND, self: true });
+        };
+
+        const resolveFlee = () => {
+          this.renderer.clearActionMenu();
+          resolve({ actionType: BattleActionType.FLEE });
+        };
+
+        const resolveUseItem = () => {
+          this.renderer.clearActionMenu();
+          this.writeMessage(`${char.name} tenta usar um item... (não implementado)`);
+          resolve({ actionType: BattleActionType.WAIT });
+        };
+
+        const resolveConvince = () => {
+          this.renderer.clearActionMenu();
+          this.writeMessage(`${char.name} tenta convencer... (não implementado)`);
+          resolve({ actionType: BattleActionType.WAIT });
+        };
+
+        this.renderer.showActionMenu(char.name, [
+          { label: 'Atacar', onSelect: resolveAttack },
+          { label: 'Defender', onSelect: resolveDefend },
+          { label: 'Item', onSelect: resolveUseItem },
+          { label: 'Convencer', onSelect: resolveConvince },
+          { label: 'Fugir', onSelect: resolveFlee },
+        ]);
+      };
+
+      showMainMenu();
+    });
   }
 
   async markFaintedActors() {
     const activeActor = this.turnInfo.activeActor;
+    const toFell = this.state.markFaintedActors();
 
-    const toFell = this.battleActors.filter((actor) => {
-      return actor.character.isFainted() && !actor.fainted;
-    });
     for (const actorToFell of toFell) {
-      actorToFell.fainted = true;
-      const isActiveActor =
-        activeActor?.character.id == actorToFell.character.id || false;
+      const isActiveActor = activeActor?.character.id == actorToFell.character.id || false;
       const charToFell = actorToFell.character;
 
       if (isActiveActor) {
         this.removeActorFromBattle(actorToFell);
         await BattleContext.delay().then(() => {
-          this.writeMessage(
-            `${this.turn} - ${charToFell.name} met his demise.`
-          );
+          this.writeMessage(`${this.turn} - ${charToFell.name} met his demise.`);
         });
         if (await this.triggerEvents(BATTLE_EVENT_TYPE.ON_DEMISSE)) return;
       } else {
@@ -664,84 +489,27 @@ export class BattleContext extends Context {
           this.writeMessage(`${this.turn} - ${charToFell.name} was felled.`);
         });
         if (await this.triggerEvents(BATTLE_EVENT_TYPE.ON_SLAIN)) return;
-        //gay xp and shit
+        // XP gain/loss
         if (activeActor && activeActor.team.isPlayer) {
           const playerChar = activeActor.character;
-          const xpGrowth = XPGrowth.get(playerChar.data.core.growthPlan);
-          let earnedXp = xpGrowth.xpGain(playerChar.level, charToFell.level);
-          const xpToUp = xpGrowth.xpToUp(playerChar.level);
-          if (playerChar.data.core.xp + earnedXp > xpToUp) {
-            const remaningXP = playerChar.data.core.xp + earnedXp - xpToUp;
-            const earnedRemainingXP = Math.ceil(remaningXP / 10);
-            playerChar.data.core.xp = xpToUp + earnedRemainingXP;
-            earnedXp = Math.max(earnedXp - remaningXP + earnedRemainingXP, 1);
-          }
+          const earnedXp = this.state.calculateXPGain(activeActor, actorToFell);
           playerChar.data.core.xp += earnedXp;
-
           await BattleContext.delay().then(() => {
-            this.writeMessage(
-              `${this.turn} - ${playerChar.name} earned ${earnedXp}XP.`
-            );
+            this.writeMessage(`${this.turn} - ${playerChar.name} earned ${earnedXp}XP.`);
           });
         } else if (actorToFell.team.isPlayer) {
-          const xpGrowth = XPGrowth.get(charToFell.data.core.growthPlan);
-          //its reverse, so you lose less XP if the mosnter is stronger
-          //and a lot if it is weaker
-          let lostXp = Math.ceil(
-            xpGrowth.xpGain(charToFell.level, charToFell.level + 1) / 10
-          );
+          const lostXp = this.state.calculateXPLoss(actorToFell);
           charToFell.data.core.xp -= lostXp;
           await BattleContext.delay().then(() => {
-            this.writeMessage(
-              `${this.turn} - ${charToFell.name} lost ${lostXp}XP.`
-            );
+            this.writeMessage(`${this.turn} - ${charToFell.name} lost ${lostXp}XP.`);
           });
         }
       }
     }
   }
   async retreatFoelessTeams() {
-    let wasTeamRemoved = false;
-    let teamsRemoved: Array<BattleTeam> = [];
-    let actorRemoved: Array<BattleActor> = [];
-    do {
-      wasTeamRemoved = false;
-      let teamsToRemove: Array<BattleTeam> = [];
-      this.battleTeams
-        .filter((team) => !team.isPlayer)
-        .forEach((currentTeam) => {
-          const isThereAnyAdversaryAlive =
-            this.isThereAnyAdversaryAlive(currentTeam);
-          if (!isThereAnyAdversaryAlive) {
-            console.log(
-              `retreatFoeLessTeams().isThereAnyAdversaryAlive??${isThereAnyAdversaryAlive}`
-            );
-          }
-          if (!isThereAnyAdversaryAlive) teamsToRemove.push(currentTeam);
-        });
-      teamsToRemove.forEach((currentTeam) => {
-        //If not player then reatreat team
-        const hasRelationshipWithPlayer =
-          currentTeam.relationships.filter((rel) => rel.team.isPlayer).length >
-          0;
-        console.log(
-          `retreatFoeLessTeams().hasRelationshipWithPlayer??${hasRelationshipWithPlayer}`
-        );
-        if (!hasRelationshipWithPlayer) {
-          teamsRemoved.push(currentTeam);
-          actorRemoved = actorRemoved.concat(currentTeam.actors);
-          this.battleTeams = this.battleTeams.filter(
-            (team) => team.id != currentTeam.id
-          );
-          this.battleActors = this.battleActors.filter(
-            (actor) => actor.team.id != currentTeam.name
-          );
-          wasTeamRemoved = true;
-        }
-      });
-    } while (wasTeamRemoved);
+    const teamsRemoved = this.state.retreatFoelessTeams();
     for (const team of teamsRemoved) {
-      this.retreatedTeams.push(team);
       await BattleContext.delay(50);
       this.writeMessage(`${this.turn} - ${team.name} retreated from battle...`);
       await this.triggerEvents(BATTLE_EVENT_TYPE.ON_TEAM_RETREAT);
@@ -757,20 +525,16 @@ export class BattleContext extends Context {
     )[0];
 
     const thereIsAnyPlayerAlive =
-      playerTeam.actors.filter((actor) => !actor.character.isFainted()).length >
-      0;
+      playerTeam.actors.filter((actor) => !actor.character.isFainted()).length > 0;
 
     let thereIsAnyAllyAlive = false;
     const playerAlliesTeam: Array<BattleTeam> = playerTeam.relationships
-      .filter(
-        (rel) => rel.behaviour == BattleContext.RELATIONSHIP_BEHAVIOUR.ALLY
-      )
+      .filter((rel) => rel.behaviour == BattleContext.RELATIONSHIP_BEHAVIOUR.ALLY)
       .map((rel) => rel.team);
     playerAlliesTeam.forEach((allyTeam) => {
       if (thereIsAnyAllyAlive) return;
       thereIsAnyAllyAlive =
-        allyTeam.actors.filter((actor) => !actor.character.isFainted()).length >
-        0;
+        allyTeam.actors.filter((actor) => !actor.character.isFainted()).length > 0;
     });
 
     if (!thereIsAnyPlayerAlive && !thereIsAnyAllyAlive) {
@@ -789,22 +553,18 @@ export class BattleContext extends Context {
       playerTeam.actors.forEach((actor) => {
         Object.keys(GAUGE_KEYS).forEach((gaugeKey) => {
           var gauge = actor.character.gauges[gaugeKey as GaugeKey];
-          gauge.consumed = Math.ceil(
-            GaugeCalc.getValue(actor.character, gauge) * 0.975
-          );
+          gauge.consumed = Math.ceil(GaugeCalc.getValue(actor.character, gauge) * 0.975);
         });
       });
       //Set max consumed stamina for company
-      GameDataService.GAME_DATA.companyData.stamina.consumed =
-        GaugeCalc.getValue(
-          GameDataService.GAME_DATA.companyData,
-          GameDataService.GAME_DATA.companyData.stamina
-        );
+      GameDataService.GAME_DATA.companyData.stamina.consumed = GaugeCalc.getValue(
+        GameDataService.GAME_DATA.companyData,
+        GameDataService.GAME_DATA.companyData.stamina
+      );
       GameDataService.GAME_DATA.time += 60 * 4;
-      const mapScene = window.game.scene.getScene('map-scene');
-      const mapUIScene = window.game.scene.getScene('map-ui-scene');
+      const mapScene = window.game?.scene?.getScene('map-scene');
+      const mapUIScene = window.game?.scene?.getScene('map-ui-scene');
       mapScene.doColorFilter();
-      showStaminaGauge();
       mapUIScene.showCurrentTime();
       if (this.scheme.endText) message += '<br/>' + this.scheme.endText;
       await BattleContext.delay().then(() => {
@@ -827,9 +587,7 @@ export class BattleContext extends Context {
       // If player wons OR unrelated team wins
       // */
       const alliesTeam: Array<BattleTeam> = currentTeam.relationships
-        .filter(
-          (rel) => rel.behaviour == BattleContext.RELATIONSHIP_BEHAVIOUR.ALLY
-        )
+        .filter((rel) => rel.behaviour == BattleContext.RELATIONSHIP_BEHAVIOUR.ALLY)
         .map((rel) => rel.team);
 
       let message = '';
@@ -849,250 +607,46 @@ export class BattleContext extends Context {
   static delay(ms?: number): Promise<any> {
     return new Promise((res) => setTimeout(res, ms || BattleContext.WAIT_TIME));
   }
-  toNameKey(name: string) {
-    return name.trim().toLocaleLowerCase().replaceAll(' ', '-');
+  getTeamByName(teamName: string): BattleTeam | undefined {
+    return this.state.getTeamByName(teamName);
   }
-  getTeamByName(teamName: string): BattleTeam {
-    return this.battleTeams.filter((team) => team.name == teamName)[0];
+  getTeamByKey(teamKey: string): BattleTeam | undefined {
+    return this.state.getTeamByKey(teamKey);
   }
-  getTeamByKey(teamKey: string): BattleTeam {
-    return this.battleTeams.filter((team) => team.key == teamKey)[0];
-  }
-  getTeamByID(teamId: string): BattleTeam {
-    return this.battleTeams.filter((team) => team.id == teamId)[0];
+  getTeamByID(teamId: string): BattleTeam | undefined {
+    return this.state.getTeamByID(teamId);
   }
   getAllyTeams(team: BattleTeam): Array<BattleTeam> {
-    const alliesTeam: Array<BattleTeam> = team.relationships
-      .filter(
-        (rel) => rel.behaviour == BattleContext.RELATIONSHIP_BEHAVIOUR.ALLY
-      )
-      .map((rel) => rel.team);
-    return alliesTeam;
+    return this.state.getAllyTeams(team);
   }
-  //supportive are allies of allies
   getSupportiveTeams(team: BattleTeam): Array<BattleTeam> {
-    const alliesTeam: Array<BattleTeam> = this.getAllyTeams(team);
-    let searchedIdsTeam: Array<string> = alliesTeam.map((a) => a.id);
-    let searchedTeams: Array<BattleTeam> = alliesTeam;
-    let wasTeamAdded = false;
-    let supportiveTeams: Array<BattleTeam> = [];
-    do {
-      wasTeamAdded = false;
-      let teamsToAdd: Array<BattleTeam> = [];
-      for (let allyToSearch of searchedTeams) {
-        teamsToAdd = teamsToAdd.concat(
-          this.getAllyTeams(allyToSearch).filter(
-            (b) => searchedIdsTeam.indexOf(b.id) == -1
-          )
-        );
-      }
-      if (teamsToAdd && teamsToAdd.length > 0) {
-        wasTeamAdded = true;
-        searchedTeams = teamsToAdd;
-        supportiveTeams = supportiveTeams.concat(teamsToAdd);
-        searchedIdsTeam = searchedIdsTeam.concat(teamsToAdd.map((a) => a.id));
-      }
-    } while (wasTeamAdded);
-    return supportiveTeams;
+    return this.state.getSupportiveTeams(team);
   }
-  //Enemies of Foes
   getBeneficialTeams(team: BattleTeam): Array<BattleTeam> {
-    const enemiesTeam: Array<BattleTeam> = this.getEnemyTeams(team);
-    const alliesTeam: Array<BattleTeam> = this.getAllyTeams(team);
-    const supportivesTeam: Array<BattleTeam> = this.getSupportiveTeams(team);
-    let searchedIdsTeam: Array<string> = enemiesTeam.map((a) => a.id);
-    searchedIdsTeam = searchedIdsTeam.concat(alliesTeam.map((a) => a.id));
-    searchedIdsTeam = searchedIdsTeam.concat(supportivesTeam.map((a) => a.id));
-    let beneficialTeams: Array<BattleTeam> = [];
-    let teamsToAdd: Array<BattleTeam> = [];
-    for (let enemyToSearch of enemiesTeam) {
-      teamsToAdd = teamsToAdd.concat(
-        this.getEnemyTeams(enemyToSearch).filter(
-          (b) => searchedIdsTeam.indexOf(b.id) == -1
-        )
-      );
-    }
-    beneficialTeams = beneficialTeams.concat(teamsToAdd);
-    return beneficialTeams;
+    return this.state.getBeneficialTeams(team);
   }
   getEnemyTeams(team: BattleTeam): Array<BattleTeam> {
-    const enemiesTeam: Array<BattleTeam> = team.relationships
-      .filter(
-        (rel) => rel.behaviour == BattleContext.RELATIONSHIP_BEHAVIOUR.FOE
-      )
-      .map((rel) => rel.team);
-    return enemiesTeam;
+    return this.state.getEnemyTeams(team);
   }
-  //adversarial are allies of foes
   getAdversarialTeams(team: BattleTeam): Array<BattleTeam> {
-    const enemiesTeam: Array<BattleTeam> = this.getEnemyTeams(team);
-    let searchedIdsTeam: Array<string> = enemiesTeam.map((a) => a.id);
-    let searchedTeams: Array<BattleTeam> = enemiesTeam;
-    let wasTeamAdded = false;
-    let adversarialTeams: Array<BattleTeam> = [];
-    do {
-      wasTeamAdded = false;
-      let teamsToAdd: Array<BattleTeam> = [];
-      for (let allyToSearch of searchedTeams) {
-        teamsToAdd = teamsToAdd.concat(
-          this.getAllyTeams(allyToSearch).filter(
-            (b) => searchedIdsTeam.indexOf(b.id) == -1
-          )
-        );
-      }
-      if (teamsToAdd && teamsToAdd.length > 0) {
-        wasTeamAdded = true;
-        searchedTeams = teamsToAdd;
-        adversarialTeams = adversarialTeams.concat(teamsToAdd);
-        searchedIdsTeam = searchedIdsTeam.concat(teamsToAdd.map((a) => a.id));
-      }
-    } while (wasTeamAdded);
-    return adversarialTeams;
+    return this.state.getAdversarialTeams(team);
   }
-  //Enemies of allies
   getDetrimentalTeams(team: BattleTeam): Array<BattleTeam> {
-    const enemiesTeam: Array<BattleTeam> = this.getEnemyTeams(team);
-    const alliesTeam: Array<BattleTeam> = this.getAllyTeams(team);
-    const adversarialTeam: Array<BattleTeam> = this.getAdversarialTeams(team);
-    let searchedIdsTeam: Array<string> = enemiesTeam.map((a) => a.id);
-    searchedIdsTeam = searchedIdsTeam.concat(alliesTeam.map((a) => a.id));
-    searchedIdsTeam = searchedIdsTeam.concat(adversarialTeam.map((a) => a.id));
-    let detrimentalTeams: Array<BattleTeam> = [];
-    let teamsToAdd: Array<BattleTeam> = [];
-    for (let allyToSearch of alliesTeam) {
-      teamsToAdd = teamsToAdd.concat(
-        this.getEnemyTeams(allyToSearch).filter(
-          (b) => searchedIdsTeam.indexOf(b.id) == -1
-        )
-      );
-    }
-    detrimentalTeams = detrimentalTeams.concat(teamsToAdd);
-    return detrimentalTeams;
+    return this.state.getDetrimentalTeams(team);
   }
   async removeActionFromUI(action: BattleActionSlot) {
-    this.removeElFromUI(document.getElementById(action.id));
+    this.renderer.removeActionSlotById(action.id);
   }
   actionSlotToElementUI(actionSlot: BattleActionSlot) {
-    const slotP = document.createElement('p');
-    slotP.classList.add(
-      `turn-slot-${this.toNameKey(
-        actionSlot.battleActor.team.name
-      )}-${this.toNameKey(actionSlot.battleActor.character.name)}`
-    );
-    const message = `${actionSlot.battleActor.character.name}`;
-    slotP.innerHTML = message;
-    slotP.id = actionSlot.id;
-    this.orderPanel.appendChild(slotP);
+    this.renderer.actionSlotToElementUI(actionSlot);
   }
   async updateTeamInfoUI() {
-    const adversarialTeams = this.battleTeams.filter((team) => !team.supporter);
-    const supporterTeams = this.battleTeams.filter(
-      (team) => team.supporter == true
-    );
-
-    //this.allyTeamsPanel.innerHTML = '';
-    //this.adversarialTeamsPanel.innerHTML = '';
-    adversarialTeams.forEach((team) => {
-      doTeamHolderUI(team, this.adversarialTeamsPanel);
-    });
-    supporterTeams.forEach((team) => {
-      doTeamHolderUI(team, this.allyTeamsPanel);
-    });
-
-    function doTeamHolderUI(team: BattleTeam, teamHolderPanel: HTMLElement) {
-      let teamPanel = document.getElementById(team.id);
-      let teamPanelExists = true;
-      if (!teamPanel) {
-        teamPanelExists = false;
-        teamPanel = document.createElement('div');
-        teamPanel.id = team.id;
-      }
-      teamPanel.classList.add('team');
-      if (team.supporter) teamPanel.classList.add('supporter');
-      if (team.adversarial) teamPanel.classList.add('adversarial');
-      if (
-        team.relationships.filter(
-          (rel) =>
-            rel.team.isPlayer &&
-            rel.behaviour >= BattleContext.RELATIONSHIP_BEHAVIOUR.FOE
-        ).length > 0
-      ) {
-        teamPanel.classList.add('foe');
-      }
-      if (
-        team.relationships.filter(
-          (rel) =>
-            rel.team.isPlayer &&
-            rel.behaviour == BattleContext.RELATIONSHIP_BEHAVIOUR.ALLY
-        ).length > 0
-      ) {
-        teamPanel.classList.add('ally');
-      }
-      if (team.isPlayer) {
-        teamPanel.classList.add('player');
-      }
-
-      team.actors.forEach((actor) => {
-        const chara = actor.character;
-        let actorEl = document.getElementById(actor.character.id);
-        let actorElPanelExists = true;
-        if (!actorEl) {
-          actorElPanelExists = false;
-          actorEl = document.createElement('div');
-          actorEl.id = actor.character.id;
-          const actorText = document.createElement('p');
-          actorEl.appendChild(actorText);
-        }
-        actorEl.getElementsByTagName('p')[0].innerHTML = `<strong>${
-          chara.name
-        }</strong> ${GaugeCalc.getCurrentValueString(
-          chara,
-          chara.gauges.VITALITY
-        )}`;
-
-        actorEl.classList.add('actor');
-        if (chara.isFainted()) {
-          actorEl.classList.add('defeated');
-        }
-
-        if (!actorElPanelExists) teamPanel.appendChild(actorEl);
-      });
-      if (!teamPanelExists) teamHolderPanel.appendChild(teamPanel);
-    }
-
-    this.retreatedTeams.forEach((team) => {
-      const id = team.id;
-      const el = document.getElementById(id);
-      if (el) {
-      }
-    });
+    this.renderer.updateTeamInfoUI(this.battleTeams, this.retreatedTeams);
   }
   setOrderActionListUI() {
-    this.actionSlots.forEach((actionSlot: BattleActionSlot, index: number) => {
-      const el = document.getElementById(actionSlot.id);
-      if (el) el.style.order = `${index}`;
-    });
+    this.renderer.setOrderActionListUI();
   }
   showHitTakenOnTargetUI() {
-    this.turnInfo.moves.forEach((move) => {
-      move.targets.forEach((target: any) => {
-        const aimedChar = target.aimedChar;
-        const actor = aimedChar;
-        const targetPanel = document.getElementById(actor.id);
-        if (targetPanel) {
-          targetPanel.classList.remove('hit-taken');
-          targetPanel.classList.add('hit-taken');
-        }
-      });
-    });
-  }
-  removeElFromUI(el: HTMLElement | null) {
-    if (el) {
-      el.classList.remove('shrink-slide-out');
-      el.classList.add('shrink-slide-out');
-      setTimeout(() => {
-        el.remove();
-      }, 300);
-    }
+    this.renderer.showHitTakenOnTargetUI();
   }
 }

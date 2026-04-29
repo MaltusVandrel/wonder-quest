@@ -1,10 +1,4 @@
-import {
-  defaultGauge,
-  Gauge,
-  GAUGE_KEYS,
-  GAUGE_TITLES,
-  GaugeKey,
-} from '../../models/gauge';
+import { defaultGauge, Gauge, GAUGE_KEYS, GAUGE_TITLES, GaugeKey } from '../../models/gauge';
 import { Actor } from '../../models/actor';
 
 let GAUGES: Gauge[] = [];

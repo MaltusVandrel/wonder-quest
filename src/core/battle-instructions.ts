@@ -1,13 +1,13 @@
 import { MoveBonk } from '@/models/move';
 import {
   BattleActionSlot,
-  BattleActionType,
   BattleActor,
   BattleContext,
   BattleInstruction,
   BattleInstructionExpression,
   BattleTeam,
 } from './battle-context';
+import { BattleActionType } from '@/core/battle/types';
 
 export const BATTLE_INSTRUCTIONS = {
   GET_RANDOM_ALIVE_ADVERSARY: function (
@@ -29,17 +29,11 @@ export const BATTLE_INSTRUCTIONS = {
     const beneficialTeams: BattleTeam[] = battle.getBeneficialTeams(team);
 
     let aimedTeam: BattleTeam | undefined;
-    const teamClusters: Array<Array<BattleTeam>> = [
-      enemyTeams,
-      adversarialTeams,
-      detrimentalTeams,
-    ];
+    const teamClusters: Array<Array<BattleTeam>> = [enemyTeams, adversarialTeams, detrimentalTeams];
     for (const teamCluster of teamClusters) {
       const possibleAimedTeams = battle.getTeamsWithAliveActors(teamCluster);
       const possibleAimedTeam =
-        possibleAimedTeams[
-          Math.floor(possibleAimedTeams.length * Math.random())
-        ];
+        possibleAimedTeams[Math.floor(possibleAimedTeams.length * Math.random())];
       if (possibleAimedTeam) {
         aimedTeam = possibleAimedTeam;
         break;
@@ -64,9 +58,7 @@ export const BATTLE_INSTRUCTIONS = {
       throw e;
     }
     const aimedBattleActor =
-      aliveAimedBattleActors[
-        Math.floor(aliveAimedBattleActors.length * Math.random())
-      ];
+      aliveAimedBattleActors[Math.floor(aliveAimedBattleActors.length * Math.random())];
     try {
       battle.turnInfo.aimedActor = aimedBattleActor;
     } catch (e) {

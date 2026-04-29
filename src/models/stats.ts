@@ -43,8 +43,7 @@ export const STAT_TITLES: { [key in StatKey]: string } = {
   KARMA: 'karma', //useful in gathering randomnes of favor of entity/gods
 };
 export const STAT_DESCRIPTIONS: { [key in StatKey]: string } = {
-  STRENGTH:
-    "Represents how phisically powerful the body is;\n it's good for phisical damage",
+  STRENGTH: "Represents how phisically powerful the body is;\n it's good for phisical damage",
   ENDURANCE:
     'Represents the capability of sustain and mitigate damage, good for its good for defense and stamina',
   VIGOR:
@@ -53,36 +52,34 @@ export const STAT_DESCRIPTIONS: { [key in StatKey]: string } = {
     'Represents how fast someone acts and reacts, good for attack priority, evasion, finese damage, map movement and stamina',
   DEXTERITY:
     'Represents how precise someone are, good for accurracy, finese damage, stamina, and a bit of everything',
-  PERCEPTION:
-    'Represents how sharp your senses are, good accurracy and evasion',
+  PERCEPTION: 'Represents how sharp your senses are, good accurracy and evasion',
   INTELLIGENCE:
     'Represents how dependable someone mind is, good for spells, mana, and reises XP potential',
   CUNNING:
     'Represents how sharp someone is, good for spells, mana, raises the quickness to learn something and helps with gathering info.',
   RESOLVE:
     'Represents mental resilience, great for mana, good for resisting some some spells and mildly affects positively stamina',
-  CHARISMA:
-    'Represents aprocheability and vibes, helps with interactions, good for some spells',
+  CHARISMA: 'Represents aprocheability and vibes, helps with interactions, good for some spells',
   INTUITION:
     'Represents the instrinsical instinct, the gut feeling, good for sensing deception, and gathering unspoke info',
   LUCK: 'Represents the likelyness of fortuitus results in random situations, good for critical strikes, and a little good for everything',
-  POTENCY:
-    'Represents the base power and will over magic, good for spells, good for mana',
+  POTENCY: 'Represents the base power and will over magic, good for spells, good for mana',
   RESISTENCE: 'Represents the resistency agains magic and effects',
   ESOTERISM:
     'Represents familiarity with magic vibes, good for magic items, entity and god granted spells, good for mana',
   KARMA:
     'Represents the intensity of your impression on entities and gods, good for interaction with otherwordly, good for granted spells and mana',
 };
-export const STAT_INFOS: { [key in StatKey]: StatInfo } = Object.keys(
-  STAT_KEY
-).reduce((acc, key) => {
-  acc[key as StatKey] = {
-    title: STAT_TITLES[key as StatKey],
-    description: STAT_DESCRIPTIONS[key as StatKey],
-  };
-  return acc;
-}, {} as { [key in StatKey]: StatInfo });
+export const STAT_INFOS: { [key in StatKey]: StatInfo } = Object.keys(STAT_KEY).reduce(
+  (acc, key) => {
+    acc[key as StatKey] = {
+      title: STAT_TITLES[key as StatKey],
+      description: STAT_DESCRIPTIONS[key as StatKey],
+    };
+    return acc;
+  },
+  {} as { [key in StatKey]: StatInfo }
+);
 
 export interface Stat {
   key: string;

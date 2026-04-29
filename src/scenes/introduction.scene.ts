@@ -1,6 +1,5 @@
 import * as Phaser from 'phaser';
 import { GameDataService } from '@/services/game-data.service';
-import { setUpIntroductionUI } from '@/utils/ui-elements.util';
 
 const READING_TIME = 5000;
 const EASE_IN_TWEEN_DURATION = 1500;
@@ -23,15 +22,10 @@ export class IntroductionScene extends Phaser.Scene {
     super({ key: 'introduction-scene' });
   }
   init(data: { isContinue: boolean }) {
-    if (data && data.isContinue !== undefined)
-      this.isContinue = data.isContinue;
+    if (data && data.isContinue !== undefined) this.isContinue = data.isContinue;
   }
   preload() {
-    this.load.font(
-      'Monocraft Sans',
-      'assets/Monocraft-nerd-fonts-patched.ttf',
-      'truetype'
-    );
+    this.load.font('Monocraft Sans', 'assets/Monocraft-nerd-fonts-patched.ttf', 'truetype');
     this.setBlackBackGround();
     this.scene.bringToTop();
     this.load.image('particle', 'assets/particula.png');
@@ -69,11 +63,10 @@ export class IntroductionScene extends Phaser.Scene {
       this.fadeOutAndDestroy();
     });
     */
-    if (!this.isContinue) {
-      setUpIntroductionUI();
-    } else {
+    if (this.isContinue) {
       this.fadeOutAndDestroy();
     }
+    // Introdução / criação de personagem agora é gerenciada pelo React IntroductionOverlay
   }
 
   setBlackBackGround() {

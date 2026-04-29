@@ -37,21 +37,21 @@ export const GAUGE_ABBREVIATION: { [key in GaugeKey]: string } = {
   MANA: 'mp',
 };
 export const GAUGE_DESCRIPTIONS: { [key in GaugeKey]: string } = {
-  VITALITY:
-    'Represents the overall health and energy that keeps you awake and alive.',
+  VITALITY: 'Represents the overall health and energy that keeps you awake and alive.',
   STAMINA:
     'Represents the energy reserve that allows you to do task and an extra boost in actions. ',
   MANA: 'Represents the allowance to manipulate the supernatural powers.',
 };
-export const GAUGE_INFOS: { [key in GaugeKey]: GaugeInfo } = Object.keys(
-  GAUGE_KEYS
-).reduce((acc, key) => {
-  acc[key as GaugeKey] = {
-    title: GAUGE_TITLES[key as GaugeKey],
-    description: GAUGE_DESCRIPTIONS[key as GaugeKey],
-  };
-  return acc;
-}, {} as { [key in GaugeKey]: GaugeInfo });
+export const GAUGE_INFOS: { [key in GaugeKey]: GaugeInfo } = Object.keys(GAUGE_KEYS).reduce(
+  (acc, key) => {
+    acc[key as GaugeKey] = {
+      title: GAUGE_TITLES[key as GaugeKey],
+      description: GAUGE_DESCRIPTIONS[key as GaugeKey],
+    };
+    return acc;
+  },
+  {} as { [key in GaugeKey]: GaugeInfo }
+);
 export const GAUGE_MODFIERS: {
   [key in GaugeKey]: { [key in StatKey]: number };
 } = {
@@ -132,18 +132,11 @@ export const defaultGauge: Gauge = {
 };
 
 export class GaugeCalc {
-  static getPercentualValueString(
-    parent: Actor | Company,
-    gauge: Gauge
-  ): string {
+  static getPercentualValueString(parent: Actor | Company, gauge: Gauge): string {
     return GaugeCalc.getPercentualValue(parent, gauge).toFixed(2);
   }
   static getPercentualValue(parent: Actor | Company, gauge: Gauge): number {
-    return (
-      (GaugeCalc.getCurrentValue(parent, gauge) /
-        GaugeCalc.getValue(parent, gauge)) *
-      100
-    );
+    return (GaugeCalc.getCurrentValue(parent, gauge) / GaugeCalc.getValue(parent, gauge)) * 100;
   }
   static getCurrentValueString(parent: Actor | Company, gauge: Gauge): string {
     return (
@@ -155,18 +148,10 @@ export class GaugeCalc {
   static getCurrentValue(parent: Actor | Company, gauge: Gauge) {
     return GaugeCalc.getValue(parent, gauge) - gauge.consumed;
   }
-  static canHandleValue(
-    value: number,
-    parent: Actor | Company,
-    gauge: Gauge
-  ): boolean {
+  static canHandleValue(value: number, parent: Actor | Company, gauge: Gauge): boolean {
     return GaugeCalc.getUnhandableValue(value, parent, gauge) > 0;
   }
-  static getUnhandableValue(
-    value: number,
-    parent: Actor | Company,
-    gauge: Gauge
-  ): number {
+  static getUnhandableValue(value: number, parent: Actor | Company, gauge: Gauge): number {
     return GaugeCalc.getCurrentValue(parent, gauge) - value;
   }
 
@@ -191,11 +176,7 @@ export class GaugeCalc {
           member.character,
           member.character.gauges[GAUGE_KEYS.STAMINA]
         );
-        if (
-          member.positions.some(
-            (position) => position == COMPANY_POSITION.LEADER
-          )
-        ) {
+        if (member.positions.some((position) => position == COMPANY_POSITION.LEADER)) {
           leaderValue = localValue;
         }
         if (localValue > biggestValue) {

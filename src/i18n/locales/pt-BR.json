@@ -1,10 +1,13 @@
 {
   "menu": {
     "title": "WonderQuest",
+    "startGame": "Iniciar Jogo",
     "newGame": "Novo Jogo",
     "continue": "Continuar",
     "editor": "Editor de Mundo",
     "settings": "Configurações",
+    "options": "Opções",
+    "optionsPlaceholder": "Peça ao tech lead para tirar a cabeça da bunda e fazer o menu de opções.",
     "quit": "Sair"
   },
   "game": {
@@ -12,7 +15,10 @@
     "stats": "Atributos",
     "map": "Mapa",
     "pause": "Pausar",
-    "resume": "Retomar"
+    "resume": "Retomar",
+    "rest": "Descansar",
+    "stamina": "Vigor",
+    "openCompany": "Abrir companhia"
   },
   "editor": {
     "tools": {
@@ -29,6 +35,27 @@
       "entities": "Entidades",
       "paths": "Caminhos"
     }
+  },
+  "introduction": {
+    "chooseName": "Escolha o nome do vaso:",
+    "arise": "Despertar",
+    "realmWelcome": "Um reino te recebe além do véu nebuloso, ele respira por {{years}} ciclos.",
+    "emergedVessel": "Você é apenas um desejo para moldá-lo e emergiu o vaso <strong>{{name}}</strong> de sob as fumaças fantasmas para executar sua vontade.",
+    "vesselHollow": "O vaso é oco para ser preenchido com memórias vividas.",
+    "crossMist": "{{name}} atravessa a névoa sépia..."
+  },
+  "battle": {
+    "chooseTarget": "Escolha o alvo",
+    "back": "Voltar"
+  },
+  "dialog": {
+    "ok": "OK",
+    "companyTitle": "Companhia",
+    "level": "Nível",
+    "skillPoints": "Pontos de Habilidade",
+    "autoBattle": "Batalha Automática?",
+    "noMembers": "Nenhum membro na companhia.",
+    "battleTitle": "Batalha!!"
   },
   "settings": {
     "language": "Idioma",

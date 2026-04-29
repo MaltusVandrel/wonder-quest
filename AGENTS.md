@@ -283,9 +283,9 @@ BootScene → PreloadScene → MenuScene → OverworldScene
 ## 10. Alias de Importação
 
 ```ts
-import { algo } from "@/components/atoms/Algo"; // src/components/atoms/Algo
-import { store } from "@/store"; // src/store
-import type { AppConfig } from "@/types"; // src/types
+import { algo } from '@/components/atoms/Algo'; // src/components/atoms/Algo
+import { store } from '@/store'; // src/store
+import type { AppConfig } from '@/types'; // src/types
 ```
 
 O alias `@/` está configurado no `vite.config.ts` e `tsconfig.app.json`.
@@ -306,16 +306,16 @@ O diretório `skills/` contém skills especializadas instaladas a partir do repo
 
 ### Skills Instaladas
 
-| Categoria             | Skills                                                                                           |
-| --------------------- | ------------------------------------------------------------------------------------------------ |
-| **Base / Qualidade**  | `clean-code`, `debugging-strategies`                                                             |
-| **Game Dev**          | `game-development`, `game-design`, `game-art`, `game-audio`, `2d-games`, `web-games`, `pc-games` |
-| **Canvas / Render**   | `canvas-design`                                                                                  |
-| **Frontend / React**  | `react-best-practices`, `react-patterns`, `react-state-management`, `frontend-design`          |
-| **TypeScript**        | `typescript-expert`                                                                              |
-| **i18n**              | `i18n-localization`                                                                              |
-| **Arte / UI / UX**    | `design-taste-frontend`                                                                          |
-| **Animação / Motion** | `animejs-animation`, `fixing-motion-performance`                                                 |
+| Categoria             | Skills                                                                                                         |
+| --------------------- | -------------------------------------------------------------------------------------------------------------- |
+| **Base / Qualidade**  | `clean-code`, `debugging-strategies`                                                                           |
+| **Game Dev**          | `game-development`, `game-design`, `game-art`, `game-audio`, `2d-games`, `web-games`, `pc-games`               |
+| **Canvas / Render**   | `canvas-design`                                                                                                |
+| **Frontend / React**  | `react-best-practices`, `react-patterns`, `react-state-management`, `frontend-design`                          |
+| **TypeScript**        | `typescript-expert`                                                                                            |
+| **i18n**              | `i18n-localization`                                                                                            |
+| **Arte / UI / UX**    | `design-taste-frontend`                                                                                        |
+| **Animação / Motion** | `animejs-animation`, `fixing-motion-performance`                                                               |
 | **Performance**       | `performance-engineer`, `performance-optimizer`, `web-performance-optimization`, `react-component-performance` |
 
 ---

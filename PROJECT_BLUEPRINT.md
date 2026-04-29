@@ -138,8 +138,8 @@ type StatKey = keyof typeof STAT_KEY;
 interface Stat {
   key: string;
   title: string;
-  value: number;      // valor base
-  modValue: number;   // valor modificado
+  value: number; // valor base
+  modValue: number; // valor modificado
 }
 
 const defaultStat: Stat = { key: 'base', title: 'base', value: 10, modValue: 10 };
@@ -194,12 +194,12 @@ interface FigureData {
     skillPoints: number;
     growthPlan: XPGrowthPlan;
   };
-  configuration?: any;  // ex: { autoBattle: false }
+  configuration?: any; // ex: { autoBattle: false }
   extra?: any;
 }
 
 class Actor {
-  id: string;                    // gerado por timestamp
+  id: string; // gerado por timestamp
   name: string;
   level: number;
   data: FigureData;
@@ -209,10 +209,10 @@ class Actor {
   static untieCircularReference(figure: Actor): any;
   static instantiate(data: any): Actor;
 
-  isFainted(): boolean;          // vitality current <= 0
-  getInitiative(): number;       // = getActionSpeed()
-  getNormalSpeed(): number;      // baseado em AGI*2.5 + DEX + PRC + ITT / 2.5
-  getActionSpeed(): number;      // normalSpeed + rand(LUK influence) + level/4
+  isFainted(): boolean; // vitality current <= 0
+  getInitiative(): number; // = getActionSpeed()
+  getNormalSpeed(): number; // baseado em AGI*2.5 + DEX + PRC + ITT / 2.5
+  getActionSpeed(): number; // normalSpeed + rand(LUK influence) + level/4
 }
 ```
 
@@ -233,7 +233,7 @@ class Company {
   title: string;
   members: Array<{ character: Actor; positions: COMPANY_POSITION[] }>;
   inventory: Item[];
-  stamina: Gauge;                // stamina coletiva (média ponderada dos membros)
+  stamina: Gauge; // stamina coletiva (média ponderada dos membros)
 
   static untieCircularReference(figure: Company): any;
   static instantiate(data: any): Company;
@@ -248,9 +248,24 @@ interface CompanyTeam {
 ### 3.5 Moves (Sistema de Ataques Data-Driven)
 
 ```typescript
-enum MoveType { MOVE = 'move', SPELL = 'spell', ART = 'art', TECHNIC = 'technic', SKILL = 'skill' }
-enum MoveLearningStatus { CONCEPTUALIZED = 'conceptualized', LEARNED = 'learned', MASTERED = 'mastered' }
-enum MoveClassificationType { DAMAGE = 'damage', HEALING = 'healing', EFFECT = 'effect', OTHER = 'other' }
+enum MoveType {
+  MOVE = 'move',
+  SPELL = 'spell',
+  ART = 'art',
+  TECHNIC = 'technic',
+  SKILL = 'skill',
+}
+enum MoveLearningStatus {
+  CONCEPTUALIZED = 'conceptualized',
+  LEARNED = 'learned',
+  MASTERED = 'mastered',
+}
+enum MoveClassificationType {
+  DAMAGE = 'damage',
+  HEALING = 'healing',
+  EFFECT = 'effect',
+  OTHER = 'other',
+}
 
 interface StatInfluence {
   stat: StatKey;
@@ -259,7 +274,7 @@ interface StatInfluence {
 
 // Linguagem de script embutida (Mini-VM)
 type MoveBehaviour =
-  | { type: 'GET'; key: string; value: string }           // avalia expressão e armazena
+  | { type: 'GET'; key: string; value: string } // avalia expressão e armazena
   | { type: 'CONDITION'; check: string; then: MoveBehaviour[]; else?: MoveBehaviour[] }
   | { type: 'APPLY'; target: string; key: string; op: 'add' | 'sub' | 'set'; value: string }
   | { type: 'HIT'; action: string; key: string; value: string };
@@ -331,15 +346,15 @@ const PROPERTY_LIST: { [key: string]: Property } = {
 ### 3.7 Item (Placeholder)
 
 ```typescript
-class Item {}  // placeholder para futuro sistema de itens
+class Item {} // placeholder para futuro sistema de itens
 ```
 
 ### 3.8 Zone / ZoneResource
 
 ```typescript
 interface MapZone {
-  influence: number;            // "saúde" da zona
-  biomeBoundIntensity: number;  // chance de spread do bioma
+  influence: number; // "saúde" da zona
+  biomeBoundIntensity: number; // chance de spread do bioma
   originBoundIntensity: number; // chance de spread da origem
   origin: { x: number; y: number };
 }
@@ -377,7 +392,7 @@ enum BIOME_TYPES {
 
 interface Biome {
   type: BIOME_TYPES;
-  color: number;           // hex integer
+  color: number; // hex integer
   staminaCost: number;
   timeCost: number;
   regionId?: string;
@@ -412,7 +427,11 @@ export abstract class Context {
 
 ```typescript
 // Enum de tipos de ação
-enum BattleActionType { FLEE, ATTACK, WAIT }
+enum BattleActionType {
+  FLEE,
+  ATTACK,
+  WAIT,
+}
 
 // Enum de eventos de batalha
 enum BATTLE_EVENT_TYPE {
@@ -435,7 +454,7 @@ interface BattleTeam {
   name: string;
   key: string;
   actors: Array<BattleActor>;
-  actionBehaviour: number;      // PLAYER=0, AUTO=1
+  actionBehaviour: number; // PLAYER=0, AUTO=1
   isPlayer: boolean;
   relationships: Array<TeamRelationship>;
   disadvantage: boolean;
@@ -445,7 +464,7 @@ interface BattleTeam {
 
 interface TeamRelationship {
   team: BattleTeam;
-  behaviour: number;            // ALLY=-1, PLAYER=0, FOE=1
+  behaviour: number; // ALLY=-1, PLAYER=0, FOE=1
 }
 
 // Ator em batalha (wrapper de Actor)
@@ -453,7 +472,7 @@ interface BattleActor {
   character: Actor;
   team: BattleTeam;
   speed: number;
-  progress: number;             // progresso no turno
+  progress: number; // progresso no turno
   isAuto: boolean;
   arrivalTurn: number;
   legendaryActions: number;
@@ -513,7 +532,10 @@ interface BattleEvent {
   calculatedOccurence: boolean;
   getNextTurnToOccur?: (battle: BattleContext) => number;
   nextTurnToOccur?: number;
-  event: (battle: BattleContext, itself: BattleEvent) => {
+  event: (
+    battle: BattleContext,
+    itself: BattleEvent
+  ) => {
     stopBattle?: boolean;
     stopAll?: boolean;
     message?: string;
@@ -575,13 +597,13 @@ class BattleContext extends Context {
 
   // Métodos principais
   static build(...panels, scheme: BattleScheme): BattleContext;
-  async start(): Promise<void>;                    // inicia a batalha
-  async unravelBattle(): Promise<void>;            // loop principal de turnos
-  doTeams(): void;                                 // monta times a partir do scheme
-  doActionList(): void;                            // popula actionSlots baseado em velocidade
+  async start(): Promise<void>; // inicia a batalha
+  async unravelBattle(): Promise<void>; // loop principal de turnos
+  doTeams(): void; // monta times a partir do scheme
+  doActionList(): void; // popula actionSlots baseado em velocidade
   async triggerEvents(type: BATTLE_EVENT_TYPE): Promise<boolean>;
-  async markFaintedActors(): Promise<void>;        // aplica XP, checa fainted
-  async retreatFoelessTeams(): Promise<void>;      // remove times sem inimigos
+  async markFaintedActors(): Promise<void>; // aplica XP, checa fainted
+  async retreatFoelessTeams(): Promise<void>; // remove times sem inimigos
   async doEndOrNextTurn(currentTeam: BattleTeam): Promise<void>;
 
   // Relacionamentos entre times
@@ -597,7 +619,11 @@ class BattleContext extends Context {
   isThereAnyAdversaryAlive(team: BattleTeam): boolean;
   chooseAction(char: Actor): Promise<BattleInstructionExpression>;
   removeActorFromBattle(actorToRemove: BattleActor): void;
-  async addNewBattleActor(timeStamp: number, actorSchema: BattleActorSchema, team: BattleTeam): Promise<void>;
+  async addNewBattleActor(
+    timeStamp: number,
+    actorSchema: BattleActorSchema,
+    team: BattleTeam
+  ): Promise<void>;
   static delay(ms?: number): Promise<any>;
 }
 ```
@@ -628,21 +654,21 @@ steps: [
     then: [{ type: 'HIT', action: 'bonked', key: 'hit', value: '$damage - $reduction' }],
     else: [{ type: 'HIT', action: 'bruised', key: 'hit', value: '1' }],
   },
-]
+];
 ```
 
 ### 4.4 Sistema de XP
 
 ```typescript
 interface XPGrowthPlan {
-  baseGoal: number;                        // XP base (ex: 100)
-  aimedBaseMatches: number;                // encontros para upar (ex: 6)
-  percentualBaseGoalIncrement: number;     // incremento por nível (ex: 0.125)
-  goalVisualMultiplierAdjustment: number;  // ajuste visual (ex: 5)
-  levelDifferenceInfluence: number;        // influência de diferença de lvl (ex: 2.5)
-  firstSoftLevelCap: number;               // primeiro soft cap (ex: 50)
-  recurringGoalPostSoftLevelCap: number;   // meta pós-soft cap (ex: 25)
-  skillPointsOnUp: number;                 // pontos por up (ex: 16)
+  baseGoal: number; // XP base (ex: 100)
+  aimedBaseMatches: number; // encontros para upar (ex: 6)
+  percentualBaseGoalIncrement: number; // incremento por nível (ex: 0.125)
+  goalVisualMultiplierAdjustment: number; // ajuste visual (ex: 5)
+  levelDifferenceInfluence: number; // influência de diferença de lvl (ex: 2.5)
+  firstSoftLevelCap: number; // primeiro soft cap (ex: 50)
+  recurringGoalPostSoftLevelCap: number; // meta pós-soft cap (ex: 25)
+  skillPointsOnUp: number; // pontos por up (ex: 16)
 }
 
 const defaultXPGrowthPlan: XPGrowthPlan = {
@@ -670,7 +696,11 @@ enum ChallangeDificultyXPInfluence {
 
 class XPGrowth {
   static get(plan: XPGrowthPlan): XPGrowth;
-  xpGain(skillLevel: number, challangeLevel: number, dificultyInfluence?: ChallangeDificultyXPInfluence): number;
+  xpGain(
+    skillLevel: number,
+    challangeLevel: number,
+    dificultyInfluence?: ChallangeDificultyXPInfluence
+  ): number;
   xpToUp(skillLevel: number): number;
 }
 ```
@@ -719,8 +749,8 @@ interface EncounterScheme {
   key: string;
   title: string;
   description: string | Array<string>;
-  chance: number;              // probabilidade de trigger
-  demandsAttention: boolean;   // abre diálogo modal
+  chance: number; // probabilidade de trigger
+  demandsAttention: boolean; // abre diálogo modal
   blocksOtherEncounters?: boolean;
   priority?: number;
   canDismiss?: boolean;
@@ -735,7 +765,9 @@ interface Encounter {
 }
 
 const ENCOUNTERS: { [key in BIOME_TYPES]: Array<EncounterScheme> } = {
-  [BIOME_TYPES.PLAINS]: [ /* Funny Bunny, fox.wolf.bunny, etc. */ ],
+  [BIOME_TYPES.PLAINS]: [
+    /* Funny Bunny, fox.wolf.bunny, etc. */
+  ],
   // ... outros biomas vazios no momento
 };
 
@@ -747,7 +779,7 @@ function checkIfEncountersHappensOnTravel(x: number, y: number): Array<Encounter
 ```typescript
 interface MapRegion {
   id: number;
-  name: string;                // gerado proceduralmente
+  name: string; // gerado proceduralmente
   seedBiomeType: BIOME_TYPES;
   seedTile: { x: number; y: number };
   relativeBiomes: Array<BIOME_TYPES>;
@@ -770,7 +802,7 @@ const HERO_BUILDER = {
   getAHero(level: number, data: { name: string }): Actor {
     // setStats(being, 22) — maxValue para distribuição
     // setGauges(being, 100)
-  }
+  },
 };
 
 // Slime Builder
@@ -779,7 +811,7 @@ const SLIME_BUILDER = {
     // name = 'Slime'
     // setStats(being, 9 + level)
     // setGauges(being, 60)
-  }
+  },
 };
 
 // Stats Setter
@@ -806,7 +838,7 @@ function setGauges(being: Actor, value?: number): void {
 class MapGeneratorUtils {
   static seed: String;
   static layers: Array<{
-    key: string;        // 'elevation', 'moisture', 'temperature', 'localVariation', 'wonder'
+    key: string; // 'elevation', 'moisture', 'temperature', 'localVariation', 'wonder'
     octaves: number;
     persistence: number;
     lacunarity: number;
@@ -854,9 +886,14 @@ interface UncoveredCell {
 
 class MapPathUtils {
   static DIRECTIONS: Array<Array<number>> = [
-    [-1, -1], [0, -1], [1, -1],
-    [-1,  0],          [1,  0],
-    [-1,  1], [0,  1], [1,  1],
+    [-1, -1],
+    [0, -1],
+    [1, -1],
+    [-1, 0],
+    [1, 0],
+    [-1, 1],
+    [0, 1],
+    [1, 1],
   ];
 
   static calculatePath(
@@ -879,10 +916,12 @@ class MapPathUtils {
 
 ```typescript
 class CalcUtil {
-  static FUN_NUMBERS = { /* valores de probabilidade nomeados */ };
+  static FUN_NUMBERS = {
+    /* valores de probabilidade nomeados */
+  };
   static getRandom(max: number): number;
   static coinFlip(): boolean;
-  static genId(): string;  // baseado em timestamp
+  static genId(): string; // baseado em timestamp
 }
 ```
 
@@ -902,16 +941,20 @@ abstract class ColorUtils {
 
 ```typescript
 interface TimeData {
-  years: number; months: number; days: number;
-  hours: number; minutes: number; seconds: number;
+  years: number;
+  months: number;
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
 }
 
 interface GameData {
-  time: number;                          // minutos totais desde início
+  time: number; // minutos totais desde início
   companyData: Company;
   mapSeed: string;
-  mapPos: { x: number; y: number };     // offset do grid visível
-  playerPos: { x: number; y: number };   // posição central do jogador no grid
+  mapPos: { x: number; y: number }; // offset do grid visível
+  playerPos: { x: number; y: number }; // posição central do jogador no grid
   screenSize: { x: number; y: number };
   registeredRegions: Array<MapRegion>;
   encounterData: { [key: string]: any }; // dados persistentes de encontros
@@ -921,7 +964,7 @@ interface OverallGameDataParamter {
   biome?: Biome;
   pos?: { x: number; y: number };
   company?: Company;
-  encounterTriggerType?: string;  // 'travel', etc.
+  encounterTriggerType?: string; // 'travel', etc.
   battleScheme?: BattleScheme;
 }
 
@@ -934,7 +977,7 @@ class GameDataService {
   static minutesInAHour = 60;
   static hoursInADay = 24;
   static daysInAMonth = 28;
-  static daysInAWeek = 7;         // daysInAMonth / 4
+  static daysInAWeek = 7; // daysInAMonth / 4
   static daysInASeason = daysInAMonth * 4 + daysInAWeek;
   static monthsInAYear = 13;
   static daysInAYear = daysInAMonth * monthsInAYear;
@@ -945,9 +988,9 @@ class GameDataService {
   static GAME_DATA: GameData;
 
   static getTimeData(totalMinutes?: number): TimeData;
-  static getFormattedTime(totalMinutes?: number): TimeData;  // com padding 2 dígitos
-  static saveData(): void;      // localStorage, trata circular refs
-  static loadData(): void;      // localStorage, reinstantia Company
+  static getFormattedTime(totalMinutes?: number): TimeData; // com padding 2 dígitos
+  static saveData(): void; // localStorage, trata circular refs
+  static loadData(): void; // localStorage, reinstantia Company
   static existsData(): boolean;
   static clearData(): void;
 }
@@ -1245,17 +1288,17 @@ LOAD:
 
 ## 12. Assets Necessários
 
-| Arquivo | Tipo | Descrição |
-|---------|------|-----------|
-| `assets/tiles.png` | Spritesheet 32×256 | Tileset (8 tiles de 32×32) — preparado para uso futuro |
-| `assets/tiles.xcf` | GIMP source | Edição do tileset |
-| `assets/particula.png` | Sprite 7×7 | Partícula para efeitos visuais |
-| `assets/cursor.png` | Sprite 32×32 | Cursor customizado |
-| `assets/Monocraft-nerd-fonts-patched.ttf` | Fonte | Monoespaçada estilo pixel/terminal |
-| `assets/fonts/caviar_dreams/*.ttf` | Fonte | 4 variações (normal, bold, italic, bold-italic) |
-| `assets/fonts/rpgawesome-webfont.*` | Fonte de ícones | Ícones temáticos RPG |
-| `assets/rpg-awesome/rpg-awesome.min.css` | CSS | Folha de estilos para ícones |
-| `assets/img/bg/placeholder.png` | Imagem 960×448 | Background placeholder |
+| Arquivo                                   | Tipo               | Descrição                                              |
+| ----------------------------------------- | ------------------ | ------------------------------------------------------ |
+| `assets/tiles.png`                        | Spritesheet 32×256 | Tileset (8 tiles de 32×32) — preparado para uso futuro |
+| `assets/tiles.xcf`                        | GIMP source        | Edição do tileset                                      |
+| `assets/particula.png`                    | Sprite 7×7         | Partícula para efeitos visuais                         |
+| `assets/cursor.png`                       | Sprite 32×32       | Cursor customizado                                     |
+| `assets/Monocraft-nerd-fonts-patched.ttf` | Fonte              | Monoespaçada estilo pixel/terminal                     |
+| `assets/fonts/caviar_dreams/*.ttf`        | Fonte              | 4 variações (normal, bold, italic, bold-italic)        |
+| `assets/fonts/rpgawesome-webfont.*`       | Fonte de ícones    | Ícones temáticos RPG                                   |
+| `assets/rpg-awesome/rpg-awesome.min.css`  | CSS                | Folha de estilos para ícones                           |
+| `assets/img/bg/placeholder.png`           | Imagem 960×448     | Background placeholder                                 |
 
 > **Nota:** O projeto atual **não usa áudio**. O tileset é carregado mas não utilizado (mapa usa retângulos coloridos).
 
@@ -1263,18 +1306,18 @@ LOAD:
 
 ## 13. Padrões de Design Resumidos
 
-| Padrão | Implementação |
-|--------|--------------|
-| **Registry / Singleton por tipo** | `Context.ACTIVE_CONTEXTS` |
-| **State Machine** | `BATTLE_EVENT_TYPE` com gatilhos |
-| **Strategy** | `BattleInstruction` — IA plugável |
-| **Command / Mini-VM** | `MoveBehaviour` interpretado por `doAttack` |
-| **Data-Driven / DSL** | `MoveExpression` — ataques como dados |
-| **Factory / Builder** | `HERO_BUILDER`, `SLIME_BUILDER`, `BattleContext.build()` |
-| **Template Method** | `HTMLCustomDialogElement` com subclasses |
-| **Web Components** | Diálogos customizados (`customElements.define`) |
-| **Utility Class** | `CalcUtil`, `StatCalc`, `GaugeCalc` (estáticos) |
-| **Producer-Consumer** | `MessageHandler` — fila de mensagens |
+| Padrão                            | Implementação                                            |
+| --------------------------------- | -------------------------------------------------------- |
+| **Registry / Singleton por tipo** | `Context.ACTIVE_CONTEXTS`                                |
+| **State Machine**                 | `BATTLE_EVENT_TYPE` com gatilhos                         |
+| **Strategy**                      | `BattleInstruction` — IA plugável                        |
+| **Command / Mini-VM**             | `MoveBehaviour` interpretado por `doAttack`              |
+| **Data-Driven / DSL**             | `MoveExpression` — ataques como dados                    |
+| **Factory / Builder**             | `HERO_BUILDER`, `SLIME_BUILDER`, `BattleContext.build()` |
+| **Template Method**               | `HTMLCustomDialogElement` com subclasses                 |
+| **Web Components**                | Diálogos customizados (`customElements.define`)          |
+| **Utility Class**                 | `CalcUtil`, `StatCalc`, `GaugeCalc` (estáticos)          |
+| **Producer-Consumer**             | `MessageHandler` — fila de mensagens                     |
 
 ---
 
@@ -1298,4 +1341,4 @@ LOAD:
 
 ---
 
-*Fim do Blueprint. Este documento contém todos os schemas, estruturas e conexões necessários para replicar ou expandir a arquitetura do WonderQuest.*
+_Fim do Blueprint. Este documento contém todos os schemas, estruturas e conexões necessários para replicar ou expandir a arquitetura do WonderQuest._
