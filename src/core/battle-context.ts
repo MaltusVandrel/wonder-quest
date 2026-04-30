@@ -10,7 +10,7 @@ import { SLIME_BUILDER } from '@/data/builder/slime-builder';
 import { COMPANY_POSITION } from '@/models/company';
 import { ChallangeDificultyXPInfluence, defaultXPGrowthPlan, XPGrowth } from './xp-calc';
 
-import { MoveBonk, MoveExpression } from '@/models/move';
+import { MoveBonk, MoveExpression, MoveTempest, MoveWhirlwind } from '@/models/move';
 import { BattleInstructionRegistry } from '@/core/battle/instructions';
 import { doAttack } from './battle-context.attack';
 import { BattleState } from '@/core/battle/state/BattleState';
@@ -419,18 +419,22 @@ export class BattleContext extends Context {
             return;
           }
 
-          this.renderer.showTargetSelection(
-            targets,
-            (selectedTarget) => {
+          this.renderer.startTargetSelection({
+            mode: 'actor',
+            availableActors: targets,
+            minTargets: 1,
+            maxTargets: 1,
+            moveName: MoveBonk.defaultExpression.name || 'Atacar',
+            onConfirm: (selectedActors) => {
               this.renderer.clearActionMenu();
               resolve({
                 actionType: BattleActionType.ATTACK,
-                move: MoveBonk.defaultExpression, // TODO: permitir escolha de movimento
-                actorTargets: [[selectedTarget]],
+                move: MoveBonk.defaultExpression,
+                actorTargets: [selectedActors],
               });
             },
-            showMainMenu
-          );
+            onCancel: showMainMenu,
+          });
         };
 
         const resolveDefend = () => {
@@ -455,8 +459,82 @@ export class BattleContext extends Context {
           resolve({ actionType: BattleActionType.WAIT });
         };
 
+        const resolveTechnique = () => {
+          this.renderer.clearActionMenu();
+
+          const availableMoves: MoveExpression[] = [
+            MoveWhirlwind.defaultExpression,
+            MoveTempest.defaultExpression,
+          ];
+
+          this.renderer.showActionMenu(char.name, [
+            ...availableMoves.map((move) => ({
+              label: move.name,
+              onSelect: () => resolveMove(move),
+            })),
+            { label: 'Voltar', onSelect: showMainMenu },
+          ]);
+        };
+
+        const resolveMove = (move: MoveExpression) => {
+          const mode = move.targetMode || 'actor';
+          const minTargets = move.targetMinCount ?? 1;
+          const maxTargets = move.targetMaxCount ?? 1;
+
+          const enemyTeams = this.state.getEnemyTeams(actor.team);
+          const adversarialTeams = this.state.getAdversarialTeams(actor.team);
+          const detrimentalTeams = this.state.getDetrimentalTeams(actor.team);
+          const allAdvTeams = [...enemyTeams, ...adversarialTeams, ...detrimentalTeams];
+
+          const availableActors = allAdvTeams
+            .flatMap((t) => t.actors)
+            .filter((a) => !a.character.isFainted());
+
+          const availableTeams = allAdvTeams.filter((t) =>
+            t.actors.some((a) => !a.character.isFainted())
+          );
+
+          const hasActors = availableActors.length > 0;
+          const hasTeams = availableTeams.length > 0;
+
+          if (
+            (mode === 'actor' && !hasActors) ||
+            (mode === 'team' && !hasTeams) ||
+            (mode === 'mixed' && !hasActors && !hasTeams)
+          ) {
+            this.writeMessage('Não há alvos disponíveis!');
+            resolve({ actionType: BattleActionType.WAIT });
+            return;
+          }
+
+          this.renderer.startTargetSelection({
+            mode,
+            availableActors,
+            availableTeams,
+            minTargets,
+            maxTargets,
+            moveName: move.name,
+            onConfirm: (selectedActors, selectedTeams) => {
+              this.renderer.clearActionMenu();
+              const instruction: BattleInstructionExpression = {
+                actionType: BattleActionType.ATTACK,
+                move,
+              };
+              if (selectedActors.length > 0) {
+                instruction.actorTargets = [selectedActors];
+              }
+              if (selectedTeams.length > 0) {
+                instruction.teamTargets = [selectedTeams];
+              }
+              resolve(instruction);
+            },
+            onCancel: showMainMenu,
+          });
+        };
+
         this.renderer.showActionMenu(char.name, [
           { label: 'Atacar', onSelect: resolveAttack },
+          { label: 'Técnica', onSelect: resolveTechnique },
           { label: 'Defender', onSelect: resolveDefend },
           { label: 'Item', onSelect: resolveUseItem },
           { label: 'Convencer', onSelect: resolveConvince },

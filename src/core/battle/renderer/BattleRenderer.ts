@@ -7,6 +7,7 @@ import {
 } from '@/core/battle/types';
 import { GaugeCalc } from '@/models/gauge';
 import type { IBattleRenderer } from './IBattleRenderer';
+import type { TargetSelectionConfig } from './target-selection';
 
 export interface BattleRendererElements {
   textPanel: HTMLElement;
@@ -75,27 +76,14 @@ export class BattleRenderer implements IBattleRenderer {
     return this.addActionButton('Do Shit ' + actorName + '!', onConfirm);
   }
 
-  /** Renderiza a seleção de alvo para ataques. */
-  showTargetSelection(
-    targets: BattleActor[],
-    onSelectTarget: (target: BattleActor) => void,
-    onCancel?: () => void
-  ): void {
-    this.clearActionMenu();
+  /** @deprecated A seleção interativa de alvos não é suportada na implementação legada DOM. */
+  startTargetSelection(_config: TargetSelectionConfig): void {
+    // noop — implementação legada não suporta seleção interativa no painel de times
+  }
 
-    const title = document.createElement('p');
-    title.classList.add('action-menu-title');
-    title.innerText = 'Escolha o alvo';
-    this.elements.actionMenu.appendChild(title);
-
-    targets.forEach((target) => {
-      const label = `${target.character.name} (${target.team.name})`;
-      this.addActionButton(label, () => onSelectTarget(target));
-    });
-
-    if (onCancel) {
-      this.addActionButton('← Voltar', onCancel);
-    }
+  /** @deprecated A seleção interativa de alvos não é suportada na implementação legada DOM. */
+  cancelTargetSelection(): void {
+    // noop
   }
 
   toNameKey(name: string): string {

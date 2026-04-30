@@ -46,7 +46,12 @@
   },
   "battle": {
     "chooseTarget": "Escolha o alvo",
-    "back": "Voltar"
+    "back": "Voltar",
+    "selectOneTarget": "Selecione 1 alvo ({{selected}} selecionado)",
+    "selectNTargets": "Selecione {{count}} alvos ({{selected}} selecionados)",
+    "selectTargetsRange": "Selecione de {{min}} a {{max}} alvos ({{selected}} selecionados)",
+    "confirm": "Confirmar",
+    "cancel": "Cancelar"
   },
   "dialog": {
     "ok": "OK",

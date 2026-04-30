@@ -685,6 +685,53 @@ div#toast-holder {
     display: flex;
     flex-wrap: wrap;
     min-height: 47px;
+
+    .target-selection-ui {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      width: 100%;
+
+      .target-selection-hint {
+        margin: 0;
+        font-size: 0.9rem;
+        color: #e8e8e8;
+        opacity: 0.85;
+      }
+
+      .target-selection-actions {
+        display: flex;
+        gap: 8px;
+      }
+    }
+  }
+
+  div.team,
+  div.actor {
+    transition: all 0.15s ease;
+
+    &.target-selectable {
+      cursor: pointer;
+      box-shadow: 0 0 6px 1px rgba(201, 162, 39, 0.6);
+      border-color: #c9a227 !important;
+
+      &:hover {
+        box-shadow: 0 0 10px 2px rgba(201, 162, 39, 0.9);
+        transform: scale(1.02);
+      }
+    }
+
+    &.target-selected {
+      box-shadow: 0 0 8px 2px rgba(255, 215, 0, 0.9);
+      border-color: #ffd700 !important;
+      background-color: rgba(201, 162, 39, 0.25) !important;
+    }
+
+    &.target-unavailable {
+      opacity: 0.35;
+      filter: grayscale(0.85);
+      cursor: not-allowed;
+    }
   }
 }
 .negativo {

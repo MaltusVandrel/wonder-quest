@@ -2,7 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BattleContext } from '@/core/battle-context';
 import type { BattleScheme } from '@/core/battle-context';
-import { useBattleRenderer } from './hooks/useBattleRenderer';
+import {
+  useBattleRenderer,
+  isActorSelected,
+  isTeamSelected,
+  isActorSelectable,
+  isTeamSelectable,
+  selectedCount,
+} from './hooks/useBattleRenderer';
 import { PhaserBlock } from './PhaserBlock';
 import { RelationshipBehaviour } from '@/core/battle/types';
 import { GaugeCalc } from '@/models/gauge';
@@ -19,9 +26,19 @@ function toNameKey(name: string): string {
 export const BattleDialog: React.FC<BattleDialogProps> = ({ scheme, onClose }) => {
   const { t } = useTranslation();
   const [canClose, setCanClose] = useState(false);
-  const { state, renderer } = useBattleRenderer();
+  const {
+    state,
+    renderer,
+    setActive,
+    toggleActorSelection,
+    toggleTeamSelection,
+    confirmTargetSelection,
+    cancelTargetSelection,
+  } = useBattleRenderer();
 
   useEffect(() => {
+    setActive(true);
+
     const battContext = BattleContext.build(renderer, scheme);
 
     battContext.onEnd(() => {
@@ -31,9 +48,13 @@ export const BattleDialog: React.FC<BattleDialogProps> = ({ scheme, onClose }) =
     battContext.start();
 
     return () => {
+      // Desativa o renderer para ignorar callbacks de BattleContext antigos
+      setActive(false);
+      // Força o término da batalha
+      battContext.fallbackEndBattle = true;
       BattleContext.ACTIVE_CONTEXTS['battle'] = undefined;
     };
-  }, [scheme, renderer]);
+  }, [scheme, renderer, setActive]);
 
   const adversarialTeams = state.teams.filter((team) => !team.supporter);
   const supporterTeams = state.teams.filter((team) => team.supporter);
@@ -60,6 +81,21 @@ export const BattleDialog: React.FC<BattleDialogProps> = ({ scheme, onClose }) =
     return classes.join(' ');
   };
 
+  const isInTargetSelection = state.targetSelection !== null;
+  const ts = state.targetSelection;
+
+  const handleActorClick = (actor: typeof adversarialTeams[0]['actors'][0]) => {
+    if (!isInTargetSelection) return;
+    if (!isActorSelectable(state, actor)) return;
+    toggleActorSelection(actor);
+  };
+
+  const handleTeamClick = (team: typeof adversarialTeams[0]) => {
+    if (!isInTargetSelection) return;
+    if (!isTeamSelectable(state, team)) return;
+    toggleTeamSelection(team);
+  };
+
   return (
     <PhaserBlock className="dialog-overlay battle-dialog-overlay">
       <div className="dialog-element dialog-battle-element">
@@ -73,25 +109,57 @@ export const BattleDialog: React.FC<BattleDialogProps> = ({ scheme, onClose }) =
         </header>
 
         <section className="teams adversarial-teams">
-          {adversarialTeams.map((team) => (
-            <div key={team.id} id={team.id} className={getTeamClasses(team)}>
-              {team.actors.map((actor) => (
-                <div
-                  key={actor.character.id}
-                  id={actor.character.id}
-                  className={`actor ${actor.character.isFainted() ? 'defeated' : ''}`}
-                >
-                  <p>
-                    <strong>{actor.character.name}</strong>{' '}
-                    {GaugeCalc.getCurrentValueString(
-                      actor.character,
-                      actor.character.gauges.VITALITY
-                    )}
-                  </p>
-                </div>
-              ))}
-            </div>
-          ))}
+          {adversarialTeams.map((team) => {
+            const teamSelectable = isInTargetSelection && isTeamSelectable(state, team);
+            const teamSel = isTeamSelected(state, team);
+            return (
+              <div
+                key={team.id}
+                id={team.id}
+                className={[
+                  getTeamClasses(team),
+                  teamSelectable ? 'target-selectable' : '',
+                  teamSel ? 'target-selected' : '',
+                  isInTargetSelection && !teamSelectable ? 'target-unavailable' : '',
+                ].join(' ')}
+                onClick={() => handleTeamClick(team)}
+                role={teamSelectable ? 'button' : undefined}
+                tabIndex={teamSelectable ? 0 : undefined}
+              >
+                {team.actors.map((actor) => {
+                  const actorSelectable = isInTargetSelection && isActorSelectable(state, actor);
+                  const actorSel = isActorSelected(state, actor);
+                  return (
+                    <div
+                      key={actor.character.id}
+                      id={actor.character.id}
+                      className={[
+                        'actor',
+                        actor.character.isFainted() ? 'defeated' : '',
+                        actorSelectable ? 'target-selectable' : '',
+                        actorSel ? 'target-selected' : '',
+                        isInTargetSelection && !actorSelectable ? 'target-unavailable' : '',
+                      ].join(' ')}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleActorClick(actor);
+                      }}
+                      role={actorSelectable ? 'button' : undefined}
+                      tabIndex={actorSelectable ? 0 : undefined}
+                    >
+                      <p>
+                        <strong>{actor.character.name}</strong>{' '}
+                        {GaugeCalc.getCurrentValueString(
+                          actor.character,
+                          actor.character.gauges.VITALITY
+                        )}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })}
         </section>
 
         <div className="battle-content">
@@ -115,25 +183,57 @@ export const BattleDialog: React.FC<BattleDialogProps> = ({ scheme, onClose }) =
         </div>
 
         <section className="teams ally-teams">
-          {supporterTeams.map((team) => (
-            <div key={team.id} id={team.id} className={getTeamClasses(team)}>
-              {team.actors.map((actor) => (
-                <div
-                  key={actor.character.id}
-                  id={actor.character.id}
-                  className={`actor ${actor.character.isFainted() ? 'defeated' : ''}`}
-                >
-                  <p>
-                    <strong>{actor.character.name}</strong>{' '}
-                    {GaugeCalc.getCurrentValueString(
-                      actor.character,
-                      actor.character.gauges.VITALITY
-                    )}
-                  </p>
-                </div>
-              ))}
-            </div>
-          ))}
+          {supporterTeams.map((team) => {
+            const teamSelectable = isInTargetSelection && isTeamSelectable(state, team);
+            const teamSel = isTeamSelected(state, team);
+            return (
+              <div
+                key={team.id}
+                id={team.id}
+                className={[
+                  getTeamClasses(team),
+                  teamSelectable ? 'target-selectable' : '',
+                  teamSel ? 'target-selected' : '',
+                  isInTargetSelection && !teamSelectable ? 'target-unavailable' : '',
+                ].join(' ')}
+                onClick={() => handleTeamClick(team)}
+                role={teamSelectable ? 'button' : undefined}
+                tabIndex={teamSelectable ? 0 : undefined}
+              >
+                {team.actors.map((actor) => {
+                  const actorSelectable = isInTargetSelection && isActorSelectable(state, actor);
+                  const actorSel = isActorSelected(state, actor);
+                  return (
+                    <div
+                      key={actor.character.id}
+                      id={actor.character.id}
+                      className={[
+                        'actor',
+                        actor.character.isFainted() ? 'defeated' : '',
+                        actorSelectable ? 'target-selectable' : '',
+                        actorSel ? 'target-selected' : '',
+                        isInTargetSelection && !actorSelectable ? 'target-unavailable' : '',
+                      ].join(' ')}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleActorClick(actor);
+                      }}
+                      role={actorSelectable ? 'button' : undefined}
+                      tabIndex={actorSelectable ? 0 : undefined}
+                    >
+                      <p>
+                        <strong>{actor.character.name}</strong>{' '}
+                        {GaugeCalc.getCurrentValueString(
+                          actor.character,
+                          actor.character.gauges.VITALITY
+                        )}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })}
         </section>
 
         <menu>
@@ -152,29 +252,48 @@ export const BattleDialog: React.FC<BattleDialogProps> = ({ scheme, onClose }) =
               ))}
             </>
           )}
-          {state.targetSelection && (
-            <>
-              <p className="action-menu-title">{t('battle.chooseTarget')}</p>
-              {state.targetSelection.targets.map((target, i) => (
+
+          {ts && (
+            <div className="target-selection-ui">
+              <p className="action-menu-title">
+                {ts.config.moveName || t('battle.chooseTarget')}
+              </p>
+              <p className="target-selection-hint">
+                {ts.config.minTargets === ts.config.maxTargets
+                  ? ts.config.minTargets === 1
+                    ? t('battle.selectOneTarget', {
+                        selected: selectedCount(state),
+                      })
+                    : t('battle.selectNTargets', {
+                        count: ts.config.minTargets,
+                        selected: selectedCount(state),
+                      })
+                  : t('battle.selectTargetsRange', {
+                      min: ts.config.minTargets,
+                      max: ts.config.maxTargets,
+                      selected: selectedCount(state),
+                    })}
+              </p>
+              <div className="target-selection-actions">
                 <button
-                  key={i}
                   className="ui-game-button"
-                  onClick={() => state.targetSelection!.onSelectTarget(target)}
+                  onClick={confirmTargetSelection}
+                  disabled={selectedCount(state) < ts.config.minTargets}
                   type="button"
                 >
-                  {target.character.name} ({target.team.name})
+                  {t('battle.confirm')}
                 </button>
-              ))}
-              {state.targetSelection.onCancel && (
-                <button
-                  className="ui-game-button"
-                  onClick={state.targetSelection.onCancel}
-                  type="button"
-                >
-                  ← {t('battle.back')}
-                </button>
-              )}
-            </>
+                {ts.config.onCancel && (
+                  <button
+                    className="ui-game-button"
+                    onClick={cancelTargetSelection}
+                    type="button"
+                  >
+                    {t('battle.cancel')}
+                  </button>
+                )}
+              </div>
+            </div>
           )}
         </menu>
       </div>

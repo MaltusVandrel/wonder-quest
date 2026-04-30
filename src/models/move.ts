@@ -129,6 +129,13 @@ export interface MoveExpression {
   //conditionalBehaviour:boolean // action(battleContext,MoveExpression):MoveExpression
   //specialBehaviour:boolean // action(battleContext,MoveExpression)
   steps: Array<MoveBehaviour>;
+
+  /** Modo de seleção de alvo. 'actor' = atores individuais, 'team' = times inteiros, 'mixed' = ambos. */
+  targetMode?: 'actor' | 'team' | 'mixed';
+  /** Número mínimo de alvos (atores ou times) que devem ser selecionados. */
+  targetMinCount?: number;
+  /** Número máximo de alvos (atores ou times) que podem ser selecionados. */
+  targetMaxCount?: number;
 }
 export type MoveBehaviour =
   | { type: 'GET'; key: string; value: string }
@@ -221,5 +228,159 @@ export const MoveBonk: Move = {
     dodgingStatus: [{ stat: STAT_KEY.AGILITY, influence: 1 }],
     resistenceStatus: [{ stat: STAT_KEY.ENDURANCE, influence: 1 }],
     characteristics: [PROPERTY_LIST['damage_type_impact']],
+
+    targetMode: 'actor',
+    targetMinCount: 1,
+    targetMaxCount: 1,
+  },
+};
+
+export const MoveWhirlwind: Move = {
+  key: 'technic.whirlwind',
+  name: 'Furação',
+  defaultExpression: {
+    moveKey: 'technic.whirlwind',
+    type: MoveType.TECHNIC,
+    name: 'whirlwind',
+    description: '',
+    level: 1,
+    xp: 0,
+    learned: MoveLearningStatus.LEARNED,
+    steps: [
+      {
+        type: 'GET',
+        key: 'reduction',
+        value: '$target.stats.ENDURANCE.value * 0.05',
+      },
+      { type: 'GET', key: 'damage', value: '$source.stats.STRENGTH.value * 1.5' },
+      { type: 'GET', key: 'hit', value: '$random' },
+      {
+        type: 'CONDITION',
+        check: '$hit > 0.2',
+        then: [
+          {
+            type: 'HIT',
+            action: 'whirlwinded',
+            key: 'hit',
+            value: '$damage - $reduction',
+          },
+        ],
+        else: [
+          { type: 'HIT', action: 'grazed', key: 'hit', value: '1' },
+        ],
+      },
+    ],
+    power: 12,
+    criticalChance: 0.15,
+    criticalMultiplier: 1.75,
+    hitChance: 0.7,
+    overHitInfluence: 0.1,
+
+    gaugeCostInfluenceOnFumble: 0,
+    gaugeCostInfluenceOnDodge: 0.5,
+
+    isMultiAttack: false,
+    multiAttackMaxHits: 1,
+    multiAttackEndOnMiss: false,
+    multiAttackHitChanceOnHitInfluence: 1,
+    multiAttackOverHitOnHitInfluence: 1,
+    multiAttackPowerOnHitInfluence: 1,
+    multiAttackCriticalChanceOnHitInfluence: 1,
+    multiAttackCriticalOnHitInfluence: 1,
+
+    gaugeCosts: [
+      {
+        gauge: GAUGE_KEYS.STAMINA,
+        cost: 25,
+        costReduction: [{ stat: STAT_KEY.ENDURANCE, influence: 1 }],
+      },
+    ],
+
+    statusInfluence: [{ stat: STAT_KEY.STRENGTH, influence: 3 }],
+    hitStatus: [{ stat: STAT_KEY.DEXTERITY, influence: 1 }],
+    critStatus: [{ stat: STAT_KEY.LUCK, influence: 1 }],
+
+    dodgingStatus: [{ stat: STAT_KEY.AGILITY, influence: 1 }],
+    resistenceStatus: [{ stat: STAT_KEY.ENDURANCE, influence: 1 }],
+    characteristics: [PROPERTY_LIST['damage_type_slash']],
+
+    targetMode: 'actor',
+    targetMinCount: 2,
+    targetMaxCount: 3,
+  },
+};
+
+export const MoveTempest: Move = {
+  key: 'technic.tempest',
+  name: 'Tempestade',
+  defaultExpression: {
+    moveKey: 'technic.tempest',
+    type: MoveType.TECHNIC,
+    name: 'tempest',
+    description: '',
+    level: 1,
+    xp: 0,
+    learned: MoveLearningStatus.LEARNED,
+    steps: [
+      {
+        type: 'GET',
+        key: 'reduction',
+        value: '$target.stats.ENDURANCE.value * 0.03',
+      },
+      { type: 'GET', key: 'damage', value: '$source.stats.STRENGTH.value * 1.2' },
+      { type: 'GET', key: 'hit', value: '$random' },
+      {
+        type: 'CONDITION',
+        check: '$hit > 0.25',
+        then: [
+          {
+            type: 'HIT',
+            action: 'tempested',
+            key: 'hit',
+            value: '$damage - $reduction',
+          },
+        ],
+        else: [
+          { type: 'HIT', action: 'grazed', key: 'hit', value: '1' },
+        ],
+      },
+    ],
+    power: 10,
+    criticalChance: 0.1,
+    criticalMultiplier: 1.5,
+    hitChance: 0.65,
+    overHitInfluence: 0.08,
+
+    gaugeCostInfluenceOnFumble: 0,
+    gaugeCostInfluenceOnDodge: 0.5,
+
+    isMultiAttack: false,
+    multiAttackMaxHits: 1,
+    multiAttackEndOnMiss: false,
+    multiAttackHitChanceOnHitInfluence: 1,
+    multiAttackOverHitOnHitInfluence: 1,
+    multiAttackPowerOnHitInfluence: 1,
+    multiAttackCriticalChanceOnHitInfluence: 1,
+    multiAttackCriticalOnHitInfluence: 1,
+
+    gaugeCosts: [
+      {
+        gauge: GAUGE_KEYS.STAMINA,
+        cost: 30,
+        costReduction: [{ stat: STAT_KEY.ENDURANCE, influence: 1 }],
+      },
+    ],
+
+    statusInfluence: [{ stat: STAT_KEY.STRENGTH, influence: 2 }],
+    hitStatus: [{ stat: STAT_KEY.DEXTERITY, influence: 1 }],
+    critStatus: [{ stat: STAT_KEY.LUCK, influence: 1 }],
+
+    dodgingStatus: [{ stat: STAT_KEY.AGILITY, influence: 1 }],
+    resistenceStatus: [{ stat: STAT_KEY.ENDURANCE, influence: 1 }],
+    characteristics: [PROPERTY_LIST['damage_type_electric']],
+
+    targetMode: 'team',
+    targetMinCount: 1,
+    targetMaxCount: 1,
   },
 };
